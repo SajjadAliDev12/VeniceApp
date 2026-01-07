@@ -28,6 +28,8 @@ A comprehensive Point of Sale (POS) and management solution designed for a sweet
 4.  **Run:**
     * Open the solution in Visual Studio and click **Start**.
 
+    Notice : Printing Module Currently simulates the action with a user alert. Full implementation is on hold pending specific thermal printer drivers and hardware integration.
+
 ## 📸 Screenshots
 <img width="1919" height="1079" alt="Screenshot 2026-01-06 160826" src="https://github.com/user-attachments/assets/96b328de-a0e2-47e2-809c-e0fcd514d8b0" />
 <img width="1919" height="1079" alt="Screenshot 2026-01-06 160925" src="https://github.com/user-attachments/assets/ed6b8037-f9bc-4b3e-be28-aa0e4b0c2da1" />
