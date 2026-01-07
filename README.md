@@ -17,13 +17,14 @@ A comprehensive Point of Sale (POS) and management solution designed for a sweet
 ## ⚙️ Setup & Installation
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/SajjadAliDev12/VeniceApp.git](https://github.com/SajjadAliDev12/VeniceApp.git)
+    git clone [https://github.com/SajjadAliDev12/VeniceApp.git]
     ```
 2.  **Database Setup:**
     * Locate the `VeniceDataBaseSetup.sql` file in the root folder.
-    * Open SQL Server Management Studio (SSMS) and run the script to generate the database and tables.
+    * Open SQL Server Management Studio (SSMS) and Create New DataBase With The Name `VinceSweetsDB`.
+    * run the script to generate the database and tables.
 3.  **Configuration:**
-    * Open `App.config` and update the `connectionString` to match your local SQL Server instance name.
+    * Open `appsettings.json` and update the `connectionString` to match your local SQL Server instance name.
 4.  **Run:**
     * Open the solution in Visual Studio and click **Start**.
 
