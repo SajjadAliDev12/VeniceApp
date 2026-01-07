@@ -20,7 +20,7 @@ A comprehensive Point of Sale (POS) and management solution designed for a sweet
     git clone [https://github.com/SajjadAliDev12/VeniceApp.git](https://github.com/SajjadAliDev12/VeniceApp.git)
     ```
 2.  **Database Setup:**
-    * Locate the `DatabaseScript.sql` file in the root folder.
+    * Locate the `VeniceDataBaseSetup.sql` file in the root folder.
     * Open SQL Server Management Studio (SSMS) and run the script to generate the database and tables.
 3.  **Configuration:**
     * Open `App.config` and update the `connectionString` to match your local SQL Server instance name.
