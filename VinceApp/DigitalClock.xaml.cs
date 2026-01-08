@@ -33,7 +33,14 @@ namespace VinceApp
 
         private void UpdateClock()
         {
-            txtTime.Text = DateTime.Now.ToString("hh:mm tt");
+            if (DateTime.Now.Second % 2 == 0)
+            {
+                txtTime.Text = DateTime.Now.ToString("hh" + ":" +"mm tt" );
+            }
+            else
+            {
+                txtTime.Text = DateTime.Now.ToString("mm" + " " + "hh tt");
+            }
         }
 
         // تنظيف الذاكرة عند إغلاق الأداة (اختياري ولكنه جيد)

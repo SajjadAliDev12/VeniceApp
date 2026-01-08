@@ -26,10 +26,7 @@ namespace VinceKitchen
             _timer.Tick += async (s, e) => await LoadKitchenOrders();
             _timer.Start();
 
-            DispatcherTimer clockTimer = new DispatcherTimer();
-            clockTimer.Interval = TimeSpan.FromSeconds(1);
-            clockTimer.Tick += (s, e) => txtClock.Text = DateTime.Now.ToString("hh:mm tt");
-            clockTimer.Start();
+            
 
             _ = LoadKitchenOrders();
         }

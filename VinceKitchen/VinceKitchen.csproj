@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VinceApp.Data\VinceApp.Data.csproj" />
+    <ProjectReference Include="..\VinceApp\VinceApp.csproj" />
   </ItemGroup>
 
 </Project>
