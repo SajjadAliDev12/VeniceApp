@@ -4,7 +4,7 @@ namespace VinceApp
 {
     public partial class TableActionWindow : Window
     {
-        // متغير لنعرف ماذا اختار المستخدم
+        // "View" = عرض الفاتورة
         // "NewOrder" = طلب جديد
         // "Clear" = إخلاء
         // "Cancel" = إلغاء
@@ -13,6 +13,12 @@ namespace VinceApp
         public TableActionWindow()
         {
             InitializeComponent();
+        }
+
+        private void ViewBill_Click(object sender, RoutedEventArgs e)
+        {
+            UserChoice = "View";
+            this.Close();
         }
 
         private void NewOrder_Click(object sender, RoutedEventArgs e)

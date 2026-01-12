@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
+using VinceApp.Data.Models;
 
 namespace VinceApp.Data;
 
@@ -24,7 +25,7 @@ public partial class VinceSweetsDbContext : DbContext
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<RestaurantTable> RestaurantTables { get; set; }
-
+    public virtual DbSet<User> Users { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -113,7 +114,17 @@ public partial class VinceSweetsDbContext : DbContext
             entity.Property(e => e.Status).HasDefaultValue(0);
             entity.Property(e => e.TableName).HasMaxLength(100);
         });
+        string defaultHash = "A6xnQhbz4Vx2HupVJV8GfVU2I8izILRFlp4T+XjHSE8=";
 
+        modelBuilder.Entity<User>().HasData(new User
+        {
+            Id = 1,
+            Username = "admin",
+            PasswordHash = defaultHash, // 1234
+            SecurityQuestion = "ما هو الكود الافتراضي؟",
+            SecurityAnswerHash = defaultHash, // 1234
+            Role = "Admin"
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

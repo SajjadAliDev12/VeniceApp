@@ -18,7 +18,7 @@ namespace VinceApp
         {
             // إعداد المؤقت مرة واحدة
             timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Interval = TimeSpan.FromMilliseconds(500);
             timer.Tick += Timer_Tick;
             timer.Start();
 
@@ -33,14 +33,8 @@ namespace VinceApp
 
         private void UpdateClock()
         {
-            if (DateTime.Now.Second % 2 == 0)
-            {
-                txtTime.Text = DateTime.Now.ToString("hh" + ":" +"mm tt" );
-            }
-            else
-            {
-                txtTime.Text = DateTime.Now.ToString("mm" + " " + "hh tt");
-            }
+            DateTime now = DateTime.Now;
+            txtTime.Text = now.ToString("hh:mm tt");
         }
 
         // تنظيف الذاكرة عند إغلاق الأداة (اختياري ولكنه جيد)

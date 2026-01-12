@@ -1,0 +1,100 @@
+﻿<Page x:Class="VinceApp.Pages.OrdersPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="أرشيف الطلبات" FlowDirection="RightToLeft" Background="White">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#F5F5F5" Padding="10" CornerRadius="10" Margin="0,0,0,15">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="بحث برقم الفاتورة:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+                <TextBox x:Name="txtSearch" Width="200" Height="30" FontSize="14" VerticalContentAlignment="Center" Padding="5" KeyDown="TxtSearch_KeyDown"/>
+
+                <Button Content="🔍 بحث" Width="80" Height="30" Margin="10,0" Background="#2196F3" Foreground="White" Click="Search_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <Button Content="🔄 تحديث" Width="80" Height="30" Background="#607D8B" Foreground="White" Click="Refresh_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <DataGrid x:Name="dgOrders" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column" Background="White" RowHeight="45">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="رقم الفاتورة" Binding="{Binding OrderNumber}" Width="100" FontWeight="Bold"/>
+                <DataGridTextColumn Header="التاريخ والوقت" Binding="{Binding OrderDate, StringFormat='yyyy/MM/dd hh:mm tt'}" Width="180"/>
+                <DataGridTextColumn Header="المجموع" Binding="{Binding TotalAmount, StringFormat={}{0:N0} د.ع}" Width="120" FontWeight="Bold" Foreground="#2E7D32"/>
+                <DataGridTextColumn Header="الحالة" Binding="{Binding OrderStatus}" Width="100"/>
+
+                <DataGridTemplateColumn Header="العمليات" Width="180">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button Content="👁️ تفاصيل" Width="80" Height="30" Background="#FF9800" Foreground="White" Margin="2" Click="ViewDetails_Click" Tag="{Binding Id}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <Button Content="🗑️ حذف" Width="60" Height="30" Background="#F44336" Foreground="White" Margin="2" Click="DeleteOrder_Click" Tag="{Binding Id}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
+            <Button x:Name="btnPrev" Content="السابق" Width="100" Height="35" Background="#E0E0E0" Click="PrevPage_Click">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock x:Name="txtPageInfo" Text="صفحة 1" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="20,0"/>
+
+            <Button x:Name="btnNext" Content="التالي" Width="100" Height="35" Background="#E0E0E0" Click="NextPage_Click">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Page>

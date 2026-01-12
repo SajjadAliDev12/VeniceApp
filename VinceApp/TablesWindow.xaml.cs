@@ -20,7 +20,7 @@ namespace VinceApp
         public TablesWindow()
         {
             InitializeComponent();
-            _ = LoadTables();
+            
         }
 
         // ============================
@@ -150,14 +150,14 @@ namespace VinceApp
                                         else if (dialog.UserChoice == "View")
                                         {
                                             // اختار عرض -> نفتح الفاتورة للقراءة فقط
-                                            OpenCashierWindow(orderId, null);
+                                            OpenCashierWindow(orderId, null, null);
                                         }
                                         // إذا اختار Cancel لا نفعل شيئاً
                                     }
                                     else
                                     {
                                         // === إذا كان غير مدفوع: نفتح الكاشير مباشرة للدفع ===
-                                        OpenCashierWindow(orderId, null);
+                                        OpenCashierWindow(orderId, null, null);
                                     }
                                 }
                             };
@@ -169,7 +169,7 @@ namespace VinceApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطأ: {ex.Message}");
+                MessageBox.Show($"حدث خطأ","خطأ",MessageBoxButton.OK,MessageBoxImage.Error);
             }
         }
         private async Task CompleteOrderAsync(int orderId)
@@ -189,7 +189,7 @@ namespace VinceApp
                     }
                     await LoadTables(); // تحديث الشاشة
                 }
-                catch { MessageBox.Show("فشل التحديث"); }
+                catch { MessageBox.Show("فشل التحديث","فشل",MessageBoxButton.OK,MessageBoxImage.Error); }
             }
         }
 
@@ -227,6 +227,7 @@ namespace VinceApp
 
             try
             {
+                // ================= التعامل مع الطاولة المدفوعة =================
                 if (table.Status == TABLE_PAID)
                 {
                     var dialog = new TableActionWindow();
@@ -238,28 +239,69 @@ namespace VinceApp
                         return;
                     }
 
-                    if (dialog.UserChoice == "Clear")
+                    // --- خيار 1: عرض الفاتورة (جديد) ---
+                    if (dialog.UserChoice == "View")
                     {
                         using (var context = new VinceSweetsDbContext())
                         {
-                            var dbTable = await context.RestaurantTables.FindAsync(table.Id);
-                            if (dbTable != null)
+                            // نبحث عن الطلب المدفوع المرتبط بهذه الطاولة
+                            // نأخذ الأحدث (OrderByDescending) تحسباً لوجود أكثر من طلب قديم
+                            var paidOrder = await context.Orders
+                                .OrderByDescending(o => o.OrderDate)
+                                .FirstOrDefaultAsync(o => o.TableId == table.Id && o.OrderStatus == "Paid");
+
+                            if (paidOrder != null)
                             {
-                                dbTable.Status = TABLE_FREE;
-                                await context.SaveChangesAsync();
+                                // نفتح النافذة (وبما أن الحالة Paid، ستفتح للقراءة فقط تلقائياً)
+                                OpenCashierWindow(paidOrder.Id, table.Id,table.TableName);
+                            }
+                            else
+                            {
+                                MessageBox.Show("لم يتم العثور على الفاتورة المدفوعة!", "خطأ");
                             }
                         }
-                        await LoadTables();
                         btn.IsEnabled = true;
-                        return;
+                        return; // نخرج هنا ولا ننشئ طلباً جديداً
                     }
 
+                    // --- خيار 2: إخلاء الطاولة ---
+                    if (dialog.UserChoice == "Clear")
+                    {
+                        if (MessageBox.Show("سيتم اخلاء هذه الطاولة \n هل انت متاكد؟", "تأكيد", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                        {
+                            using (var context = new VinceSweetsDbContext())
+                            {
+                                var dbTable = await context.RestaurantTables.FindAsync(table.Id);
+                                if (dbTable != null)
+                                {
+                                    dbTable.Status = TABLE_FREE;
+                                    // يمكن هنا أيضاً تحويل حالة الطلب المدفوع إلى Completed إذا أردت أرشفته نهائياً
+                                    // var order = ...; order.OrderStatus = "Completed";
+                                    await context.SaveChangesAsync();
+                                }
+                            }
+                            await LoadTables();
+                            btn.IsEnabled = true;
+                            return;
+                        }
+                        else
+                        {
+                            // إذا تراجع عن الإخلاء
+                            btn.IsEnabled = true;
+                            return;
+                        }
+                    }
+
+                    // --- خيار 3: طلب جديد ---
                     if (dialog.UserChoice == "NewOrder")
                     {
+                        // نجعل الحالة فارغة مؤقتاً لكي يسمح الكود بالأسفل بإنشاء طلب جديد
+                        // ملاحظة: هذا لن يؤثر على الداتا بيس فوراً، فقط في الذاكرة لتجاوز الشرط
                         table.Status = TABLE_FREE;
                     }
                 }
 
+                // ================= المنطق العادي (إنشاء/فتح طلب) =================
                 int orderId;
 
                 using (var context = new VinceSweetsDbContext())
@@ -268,6 +310,7 @@ namespace VinceApp
                     {
                         if (table.Status == TABLE_FREE)
                         {
+                            // إنشاء طلب جديد
                             var newOrder = new Order
                             {
                                 OrderNumber = await GenerateDailyOrderNumber(context),
@@ -278,9 +321,8 @@ namespace VinceApp
                             };
 
                             context.Orders.Add(newOrder);
-
-                            var dbTable = await context.RestaurantTables.FindAsync(table.Id);
-                            if (dbTable != null) dbTable.Status = TABLE_BUSY;
+                            // ⚠️ ملاحظة: لا نغير حالة الطاولة هنا (كما اتفقنا سابقاً)
+                            // ستتغير فقط عند ضغط "حفظ" داخل الكاشير
 
                             await context.SaveChangesAsync();
                             await tx.CommitAsync();
@@ -289,17 +331,16 @@ namespace VinceApp
                         }
                         else
                         {
+                            // فتح طلب مفتوح موجود
                             var existingOrder = await context.Orders.FirstOrDefaultAsync(o =>
                                 o.TableId == table.Id && o.OrderStatus == "Open");
 
                             if (existingOrder == null)
                             {
+                                // حالة نادرة: الطاولة مشغولة لكن لا يوجد طلب مفتوح (خطأ بيانات)
+                                // نصفر الطاولة ونعيد التحميل
                                 var dbTable = await context.RestaurantTables.FindAsync(table.Id);
-                                if (dbTable != null)
-                                {
-                                    dbTable.Status = TABLE_FREE;
-                                    await context.SaveChangesAsync();
-                                }
+                                if (dbTable != null) { dbTable.Status = TABLE_FREE; await context.SaveChangesAsync(); }
                                 await LoadTables();
                                 btn.IsEnabled = true;
                                 return;
@@ -309,7 +350,7 @@ namespace VinceApp
                     }
                 }
 
-                OpenCashierWindow(orderId, table.Id);
+                OpenCashierWindow(orderId, table.Id,table.TableName);
             }
             catch (Exception ex)
             {
@@ -352,11 +393,11 @@ namespace VinceApp
                     orderId = newOrder.Id;
                 }
 
-                OpenCashierWindow(orderId, null);
+                OpenCashierWindow(orderId, null,null);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"تعذر إنشاء طلب سفري.\n{ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"تعذر إنشاء طلب سفري.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -373,13 +414,17 @@ namespace VinceApp
         {
             Application.Current.Shutdown();
         }
-
+        private void OpenAdmin_Click(object sender, RoutedEventArgs e)
+        {
+            LoginWindow login = new LoginWindow();
+            login.ShowDialog(); // يفتح النافذة ويمنع استخدام الخلفية حتى تغلق
+        }
         // ============================
         // أدوات مساعدة
         // ============================
-        private void OpenCashierWindow(int orderId, int? tableId)
+        private void OpenCashierWindow(int orderId, int? tableId,string? TableName)
         {
-            MainWindow cashier = new MainWindow(orderId, tableId);
+            MainWindow cashier = new MainWindow(orderId, tableId,TableName);
             this.Hide();
             cashier.ShowDialog();
             this.Show();
@@ -392,6 +437,11 @@ namespace VinceApp
                 o.OrderDate.HasValue &&
                 o.OrderDate.Value.Date == DateTime.Now.Date);
             return count + 1;
+        }
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            _ = LoadTables();
         }
     }
 }

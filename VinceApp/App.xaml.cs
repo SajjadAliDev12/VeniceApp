@@ -14,9 +14,13 @@ namespace VinceApp
             using (var context = new VinceSweetsDbContext())
             {
                 //  يطبق أي تغييرات جديدة في الداتا بيس تلقائياً
-                
-                context.Database.Migrate();
-            }
+                try
+                { context.Database.Migrate();
+                }catch (Exception ex) 
+                {
+                    MessageBox.Show("خطأ في قاعدة البيانات لا يمكن تشغيل البرنامج!","خطأ",MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                }
             try
             {
                 // عملية التنظيف عند بدء التشغيل
