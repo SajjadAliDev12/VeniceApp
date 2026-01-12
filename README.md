@@ -26,4 +26,15 @@ A comprehensive Point of Sale (POS) and management solution designed for a sweet
 
 ## USE the userName (admin) and Password (12345) to enter the management page
 
-## THE APP IS STILL UNDER DEVELOPMENT
+# 🚧 Project Status: Under Development
+
+## 📸 Screenshots
+<img width="1919" height="1079" alt="Screenshot 2026-01-06 160925" src="https://github.com/user-attachments/assets/1f9713aa-f59b-4434-b5a9-a90cab914c33" />
+<img width="1918" height="1079" alt="Screenshot 2026-01-06 160911" src="https://github.com/user-attachments/assets/3b8b5b08-8d3a-4643-aae2-0de434a330ca" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-06 160904" src="https://github.com/user-attachments/assets/0c5cadca-10c2-405f-8f40-271a9b084aaa" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-06 160836" src="https://github.com/user-attachments/assets/61bdcd06-b0c1-40a6-9b96-a33964ea826b" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-06 160826" src="https://github.com/user-attachments/assets/110fbea1-3113-4b1b-a92b-8de5259fa96c" />
+
+<img width="1919" height="1079" alt="Screenshot 2026-01-12 210704" src="https://github.com/user-attachments/assets/e7fd9369-35e1-4ae9-ae73-6333c631ff01" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-12 210657" src="https://github.com/user-attachments/assets/746be492-2a8c-47ef-91da-431dd5143fcb" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-12 210651" src="https://github.com/user-attachments/assets/e5c5426e-c7d5-436b-824f-428d4014c2ed" />
