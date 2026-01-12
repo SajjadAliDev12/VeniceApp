@@ -8,7 +8,7 @@ A comprehensive Point of Sale (POS) and management solution designed for a sweet
 * **Hybrid Database Architecture:** Utilizes local SQL Server for stability and supports Azure SQL for cloud data accessibility.
 * **Menu Management:** Full control over categories, items, and pricing.
 * **Dailey , Monthly , Yearly Sales Reports.**
-* **User Management Page **
+* **User Management Page**
 
 ## 🛠️ Technology Stack
 * **Language:** C#
