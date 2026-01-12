@@ -7,8 +7,8 @@ A comprehensive Point of Sale (POS) and management solution designed for a sweet
 * **Kitchen Display System (KDS):** A dedicated real-time read-only screen for the kitchen staff to view and track incoming orders instantly.
 * **Hybrid Database Architecture:** Utilizes local SQL Server for stability and supports Azure SQL for cloud data accessibility.
 * **Menu Management:** Full control over categories, items, and pricing.
-* **Dailey , Monthly , Yearly Sales Reports.
-* **User Management Page 
+* **Dailey , Monthly , Yearly Sales Reports.**
+* **User Management Page **
 
 ## 🛠️ Technology Stack
 * **Language:** C#
