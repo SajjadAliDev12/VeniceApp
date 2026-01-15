@@ -24,7 +24,7 @@ A comprehensive Point of Sale (POS) and management solution designed for a sweet
 3. Ensure the connectionstring is correct on the ("appsettings.json") inside VinceApp Folder
 4. Build the app and run
 
-## USE the userName (admin) and Password (12345) to enter the management page
+## USE the userName (admin) and Password (1234) to enter the management page
 
 # 🚧 Project Status: Under Development
 
