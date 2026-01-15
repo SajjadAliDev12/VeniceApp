@@ -42,7 +42,7 @@
                 <DataGridTextColumn Header="رقم الفاتورة" Binding="{Binding OrderNumber}" Width="100" FontWeight="Bold"/>
                 <DataGridTextColumn Header="التاريخ والوقت" Binding="{Binding OrderDate, StringFormat='yyyy/MM/dd hh:mm tt'}" Width="180"/>
                 <DataGridTextColumn Header="المجموع" Binding="{Binding TotalAmount, StringFormat={}{0:N0} د.ع}" Width="120" FontWeight="Bold" Foreground="#2E7D32"/>
-                <DataGridTextColumn Header="الحالة" Binding="{Binding OrderStatus}" Width="100"/>
+                <DataGridTextColumn Header="الحالة" Binding="{Binding StatusText}" Width="100"/>
 
                 <DataGridTemplateColumn Header="العمليات" Width="180">
                     <DataGridTemplateColumn.CellTemplate>

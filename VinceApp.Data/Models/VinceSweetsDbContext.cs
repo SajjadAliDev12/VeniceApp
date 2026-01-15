@@ -62,9 +62,7 @@ public partial class VinceSweetsDbContext : DbContext
             entity.Property(e => e.OrderDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.OrderStatus)
-                .HasMaxLength(50)
-                .HasDefaultValue("Open");
+            
             entity.Property(e => e.TotalAmount)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 0)");

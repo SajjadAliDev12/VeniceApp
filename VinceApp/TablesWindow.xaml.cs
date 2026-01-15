@@ -16,7 +16,7 @@ namespace VinceApp
         private const int TABLE_FREE = 0;
         private const int TABLE_BUSY = 1;
         private const int TABLE_PAID = 2;
-
+        private int? _ParentOrderID = null;
         public TablesWindow()
         {
             InitializeComponent();
@@ -41,7 +41,6 @@ namespace VinceApp
                         return;
                     }
 
-                    // --- رسم الطاولات (لم يتغير) ---
                     if (!await context.RestaurantTables.AnyAsync())
                     {
                         for (int i = 1; i <= 12; i++)
@@ -49,10 +48,11 @@ namespace VinceApp
                         await context.SaveChangesAsync();
                     }
 
+                    // رسم الطاولات (لم يتغير)
                     var tables = await context.RestaurantTables.AsNoTracking().OrderBy(t => t.TableNumber).ToListAsync();
-
                     foreach (var table in tables)
                     {
+                        // ... (كود رسم الطاولات كما هو بدون تغيير) ...
                         Button btnTable = new Button
                         {
                             Width = 250,
@@ -84,19 +84,21 @@ namespace VinceApp
                     }
 
                     // =========================================================
-                    // التعديل هنا: منطق الطلبات السفرية (Open + Paid)
+                    // التعديل الجذري: منطق الطلبات السفرية (Booleans)
                     // =========================================================
                     if (TakeawayPanel != null)
                     {
-                        // نجلب الطلبات المفتوحة والمدفوعة (التي لم تسلم بعد)
+                        // 1. التعديل في الاستعلام: نجلب أي طلب لم يتم تسليمه بعد (بغض النظر عن الدفع والجاهزية)
                         var takeawayOrders = await context.Orders
-                            .Where(o => o.TableId == null && (o.OrderStatus == "Open" || o.OrderStatus == "Paid"))
+                            .Where(o => o.TableId == null && !o.isServed)
                             .OrderByDescending(o => o.OrderDate)
                             .ToListAsync();
 
                         foreach (var order in takeawayOrders)
                         {
-                            bool isPaid = order.OrderStatus == "Paid";
+                            // قراءة الحالات
+                            bool isPaid = order.isPaid;
+                            bool isReady = order.isReady; // جاهز من المطبخ
 
                             Button btnTakeaway = new Button
                             {
@@ -104,60 +106,88 @@ namespace VinceApp
                                 Margin = new Thickness(0, 5, 0, 5),
                                 Foreground = Brushes.White,
                                 Tag = order.Id,
-                                ToolTip = "اضغط بالزر الأيسر للعرض، وبالزر الأيمن للخيارات"
                             };
 
-                            // تنسيق الألوان حسب الحالة
+                            // 2. التعديل في الألوان: إضافة الحالة البرتقالية (جاهز)
                             if (isPaid)
                             {
-                                // أخضر غامق للمدفوع
+                                // أخضر غامق (مدفوع) - الأولوية القصوى
                                 btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(46, 125, 50));
                                 btnTakeaway.BorderBrush = Brushes.LightGreen;
                             }
+                            else if (isReady)
+                            {
+                                // برتقالي (جاهز ولكن غير مدفوع) - انتبه هنا
+                                btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                                btnTakeaway.BorderBrush = Brushes.OrangeRed;
+                            }
                             else
                             {
-                                // بنفسجي للمفتوح
+                                // بنفسجي (غير جاهز وغير مدفوع)
                                 btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(106, 27, 154));
                                 btnTakeaway.BorderBrush = Brushes.Purple;
                             }
                             btnTakeaway.BorderThickness = new Thickness(2);
 
-                            // النص داخل الزر
-                            string statusText = isPaid ? "✅ (مدفوع)" : "⏳ (انتظار)";
+                            // النصوص
+                            string statusText;
+                            if (isPaid) statusText = "✅ (مدفوع)";
+                            else if (isReady) statusText = "🔔 (جاهز)";
+                            else statusText = "⏳ (تحضير)";
+
                             string time = order.OrderDate?.ToString("hh:mm tt") ?? "";
 
                             var stack = new StackPanel { Orientation = Orientation.Vertical };
-                            stack.Children.Add(new TextBlock { Text = $"📦 طلب #{order.OrderNumber} {statusText}", FontWeight = FontWeights.Bold, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center });
+                            stack.Children.Add(new TextBlock { Text = $"📦 #{order.OrderNumber} {statusText}", FontWeight = FontWeights.Bold, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center });
                             stack.Children.Add(new TextBlock { Text = $"{time}", FontSize = 12, Foreground = Brushes.LightGray, HorizontalAlignment = HorizontalAlignment.Center });
                             btnTakeaway.Content = stack;
 
-                            // 1. الزر الأيسر: فتح الفاتورة (للتعديل أو العرض)
+                            // 3. التعديل في الحدث (المنطق المبسط)
                             btnTakeaway.Click += async (s, e) =>
                             {
                                 if (s is Button b && b.Tag is int orderId)
                                 {
-                                    if (isPaid)
+                                    // القاعدة الذهبية:
+                                    // إذا لم يدفع (سواء كان جاهزاً أم لا) -> افتح الكاشير للدفع
+                                    if (!isPaid)
                                     {
-                                        // === إذا كان مدفوعاً: نفتح نافذة الخيارات (لمس) ===
+                                        OpenCashierWindow(orderId, null, null, null);
+                                    }
+                                    // إذا دفع -> افتح الخيارات (تسليم/إضافة)
+                                    else
+                                    {
                                         var dialog = new TakeawayOptionsWindow();
-                                        dialog.ShowDialog(); // ننتظر اختيار المستخدم
+                                        dialog.ShowDialog();
 
                                         if (dialog.UserChoice == "Serve")
                                         {
-                                            // اختار تسليم -> نخفي الطلب
                                             await CompleteOrderAsync(orderId);
                                         }
                                         else if (dialog.UserChoice == "View")
                                         {
-                                            // اختار عرض -> نفتح الفاتورة للقراءة فقط
-                                            OpenCashierWindow(orderId, null, null);
+                                            OpenCashierWindow(orderId, null, null, null);
                                         }
-                                        // إذا اختار Cancel لا نفعل شيئاً
-                                    }
-                                    else
-                                    {
-                                        // === إذا كان غير مدفوع: نفتح الكاشير مباشرة للدفع ===
-                                        OpenCashierWindow(orderId, null, null);
+                                        else if (dialog.UserChoice == "Add")
+                                        {
+                                            using (var ctx = new VinceSweetsDbContext())
+                                            {
+                                                var childOrder = new Order
+                                                {
+                                                    OrderNumber = await GenerateDailyOrderNumber(ctx),
+                                                    TableId = null,
+                                                    isPaid = false,
+                                                    isSentToKitchen = false,
+                                                    isReady = false,
+                                                    isServed = false,
+                                                    OrderDate = DateTime.Now,
+                                                    TotalAmount = 0,
+                                                    ParentOrderId = orderId
+                                                };
+                                                ctx.Orders.Add(childOrder);
+                                                await ctx.SaveChangesAsync();
+                                                OpenCashierWindow(childOrder.Id, null, null, orderId);
+                                            }
+                                        }
                                     }
                                 }
                             };
@@ -169,7 +199,7 @@ namespace VinceApp
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"حدث خطأ","خطأ",MessageBoxButton.OK,MessageBoxImage.Error);
+                MessageBox.Show($"حدث خطأ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         private async Task CompleteOrderAsync(int orderId)
@@ -183,7 +213,7 @@ namespace VinceApp
                         var order = await context.Orders.FindAsync(orderId);
                         if (order != null)
                         {
-                            order.OrderStatus = "Completed"; // حالة جديدة تعني انتهى
+                            order.isServed = true; // حالة جديدة تعني انتهى
                             await context.SaveChangesAsync();
                         }
                     }
@@ -239,7 +269,7 @@ namespace VinceApp
                         return;
                     }
 
-                    // --- خيار 1: عرض الفاتورة (جديد) ---
+                    
                     if (dialog.UserChoice == "View")
                     {
                         using (var context = new VinceSweetsDbContext())
@@ -248,12 +278,12 @@ namespace VinceApp
                             // نأخذ الأحدث (OrderByDescending) تحسباً لوجود أكثر من طلب قديم
                             var paidOrder = await context.Orders
                                 .OrderByDescending(o => o.OrderDate)
-                                .FirstOrDefaultAsync(o => o.TableId == table.Id && o.OrderStatus == "Paid");
+                                .FirstOrDefaultAsync(o => o.TableId == table.Id && (o.isPaid));
 
                             if (paidOrder != null)
                             {
                                 // نفتح النافذة (وبما أن الحالة Paid، ستفتح للقراءة فقط تلقائياً)
-                                OpenCashierWindow(paidOrder.Id, table.Id,table.TableName);
+                                OpenCashierWindow(paidOrder.Id, table.Id,table.TableName,null);
                             }
                             else
                             {
@@ -275,8 +305,7 @@ namespace VinceApp
                                 if (dbTable != null)
                                 {
                                     dbTable.Status = TABLE_FREE;
-                                    // يمكن هنا أيضاً تحويل حالة الطلب المدفوع إلى Completed إذا أردت أرشفته نهائياً
-                                    // var order = ...; order.OrderStatus = "Completed";
+                                    
                                     await context.SaveChangesAsync();
                                 }
                             }
@@ -295,8 +324,11 @@ namespace VinceApp
                     // --- خيار 3: طلب جديد ---
                     if (dialog.UserChoice == "NewOrder")
                     {
-                        // نجعل الحالة فارغة مؤقتاً لكي يسمح الكود بالأسفل بإنشاء طلب جديد
-                        // ملاحظة: هذا لن يؤثر على الداتا بيس فوراً، فقط في الذاكرة لتجاوز الشرط
+                        using var context = new VinceSweetsDbContext();
+                        var ParentOrder = await context.Orders
+                                .OrderByDescending(o => o.OrderDate)
+                                .FirstOrDefaultAsync(o => o.TableId == table.Id && (o.isPaid));
+                        _ParentOrderID = ParentOrder?.Id;
                         table.Status = TABLE_FREE;
                     }
                 }
@@ -315,9 +347,13 @@ namespace VinceApp
                             {
                                 OrderNumber = await GenerateDailyOrderNumber(context),
                                 TableId = table.Id,
-                                OrderStatus = "Open",
+                                isPaid = false,
+                                isServed = false,
+                                isReady = false,
+                                isSentToKitchen = false,
                                 OrderDate = DateTime.Now,
-                                TotalAmount = 0
+                                TotalAmount = 0,
+                                ParentOrderId = _ParentOrderID
                             };
 
                             context.Orders.Add(newOrder);
@@ -326,14 +362,14 @@ namespace VinceApp
 
                             await context.SaveChangesAsync();
                             await tx.CommitAsync();
-
+                            _ParentOrderID = null;
                             orderId = newOrder.Id;
                         }
                         else
                         {
                             // فتح طلب مفتوح موجود
                             var existingOrder = await context.Orders.FirstOrDefaultAsync(o =>
-                                o.TableId == table.Id && o.OrderStatus == "Open");
+                                o.TableId == table.Id && !o.isPaid);
 
                             if (existingOrder == null)
                             {
@@ -350,7 +386,7 @@ namespace VinceApp
                     }
                 }
 
-                OpenCashierWindow(orderId, table.Id,table.TableName);
+                OpenCashierWindow(orderId, table.Id,table.TableName,null);
             }
             catch (Exception ex)
             {
@@ -365,13 +401,15 @@ namespace VinceApp
         // ============================
         // طلب سفري جديد
         // ============================
-        private async void TakeawayButton_Click(object sender, RoutedEventArgs e)
+        private async void TakeawayButton_Click(object sender, RoutedEventArgs e )
         {
+            
             var btn = sender as Button;
             if (btn != null) btn.IsEnabled = false;
-
+            
             try
             {
+                _ParentOrderID = null;
                 int orderId;
 
                 using (var context = new VinceSweetsDbContext())
@@ -381,9 +419,13 @@ namespace VinceApp
                     {
                         OrderNumber = await GenerateDailyOrderNumber(context),
                         TableId = null, // سفري
-                        OrderStatus = "Open",
+                        isPaid = false,
+                        isSentToKitchen = false,
+                        isReady = false,
+                        isServed = false,
                         OrderDate = DateTime.Now,
-                        TotalAmount = 0
+                        TotalAmount = 0,
+                        ParentOrderId = null
                     };
 
                     context.Orders.Add(newOrder);
@@ -392,8 +434,8 @@ namespace VinceApp
 
                     orderId = newOrder.Id;
                 }
-
-                OpenCashierWindow(orderId, null,null);
+                
+                OpenCashierWindow(orderId, null,null,null);
             }
             catch (Exception ex)
             {
@@ -417,14 +459,14 @@ namespace VinceApp
         private void OpenAdmin_Click(object sender, RoutedEventArgs e)
         {
             LoginWindow login = new LoginWindow();
-            login.ShowDialog(); // يفتح النافذة ويمنع استخدام الخلفية حتى تغلق
+            login.ShowDialog(); 
         }
         // ============================
         // أدوات مساعدة
         // ============================
-        private void OpenCashierWindow(int orderId, int? tableId,string? TableName)
+        private void OpenCashierWindow(int orderId, int? tableId,string? TableName , int? _ParentOrderId = null)
         {
-            MainWindow cashier = new MainWindow(orderId, tableId,TableName);
+            MainWindow cashier = new MainWindow(orderId, tableId,TableName ,_ParentOrderId);
             this.Hide();
             cashier.ShowDialog();
             this.Show();
@@ -443,5 +485,7 @@ namespace VinceApp
         {
             _ = LoadTables();
         }
+
+        
     }
 }

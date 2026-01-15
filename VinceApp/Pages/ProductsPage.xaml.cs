@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using VinceApp.Data;
 using VinceApp.Data.Models;
+using System.Threading.Tasks;
 
 namespace VinceApp.Pages
 {
@@ -21,22 +22,23 @@ namespace VinceApp.Pages
         public ProductsPage()
         {
             InitializeComponent();
-            LoadData();
+            Loaded +=async(_,__) =>
+            await LoadData();
         }
-
+        
         // 1. تحميل البيانات (تصنيفات + منتجات)
-        private void LoadData()
+        private async Task LoadData()
         {
             try
             {
-                using (var context = new VinceSweetsDbContext())
+                await using (var context = new VinceSweetsDbContext())
                 {
                     // تحميل التصنيفات للـ ComboBox
-                    var categories = context.Categories.ToList();
+                    var categories =await context.Categories.ToListAsync();
                     cmbCategories.ItemsSource = categories;
 
                     // تحميل المنتجات للجدول (مع عمل Include للتصنيف)
-                    var products = context.Products.Include(p => p.Category).ToList();
+                    var products = await context.Products.Include(p => p.Category).ToListAsync();
                     dgProducts.ItemsSource = products;
                 }
             }

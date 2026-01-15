@@ -13,24 +13,54 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,15">
-            <TextBlock x:Name="txtTitle" Text="فاتورة رقم #1234" FontSize="22" FontWeight="Bold" Foreground="#3E2723"/>
-            <TextBlock x:Name="txtDate" Text="التاريخ: 2025/01/01" FontSize="14" Foreground="Gray"/>
+            <DockPanel LastChildFill="False">
+                <TextBlock x:Name="txtTitle" Text="فاتورة رقم #0000" FontSize="22" FontWeight="Bold" Foreground="#3E2723"/>
+                <Border x:Name="borderType" CornerRadius="5" Padding="10,2" DockPanel.Dock="Left" Background="#EEE">
+                    <TextBlock x:Name="txtOrderType" Text="نوع الطلب" FontSize="14" FontWeight="SemiBold" Foreground="#555"/>
+                </Border>
+            </DockPanel>
+            <TextBlock x:Name="txtDate" Text="التاريخ: --/--/----" FontSize="14" Foreground="Gray" Margin="0,5,0,0"/>
         </StackPanel>
 
         <DataGrid x:Name="dgDetails" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
-                  HeadersVisibility="Column" Background="White" RowHeight="35" BorderThickness="1" BorderBrush="#EEE">
+                  HeadersVisibility="Column" Background="White" RowHeight="35" BorderThickness="1" BorderBrush="#EEE"
+                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE">
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsTotalRow}" Value="True">
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="Background" Value="#E0F2F1"/>
+                            <Setter Property="Foreground" Value="#00695C"/>
+                            <Setter Property="FontSize" Value="14"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
             <DataGrid.Columns>
                 <DataGridTextColumn Header="المنتج" Binding="{Binding ProductName}" Width="*"/>
-                <DataGridTextColumn Header="السعر" Binding="{Binding Price, StringFormat={}{0:N0}}" Width="80"/>
-                <DataGridTextColumn Header="الكمية" Binding="{Binding Quantity}" Width="60"/>
+                <DataGridTextColumn Header="السعر" Binding="{Binding Price, StringFormat={}{0:N0}, TargetNullValue=''}" Width="80"/>
+                <DataGridTextColumn Header="الكمية" Binding="{Binding Quantity, TargetNullValue=''}" Width="60"/>
                 <DataGridTextColumn Header="الإجمالي" Binding="{Binding Total, StringFormat={}{0:N0}}" Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
 
-        <Button Grid.Row="2" Content="إغلاق" Height="40" Width="100" Margin="0,15,0,0"
+        <Button Grid.Row="2" Content="إغلاق" Height="40" Margin="101,15,314,0"
                 Background="#5D4037" Foreground="White" Click="Close_Click">
             <Button.Template>
                 <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+        <Button Grid.Row="2" Content="طباعة" Height="40" Margin="323,15,85,0"
+             Background="#5D4037" Foreground="White" Click="Button_Click">
+            <Button.Template>
+                <ControlTemplate TargetType="{x:Type Button}">
                     <Border Background="{TemplateBinding Background}" CornerRadius="5">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>

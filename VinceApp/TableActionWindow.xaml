@@ -27,7 +27,7 @@
                     </Button.Resources>
                 </Button>
 
-                <Button Content="➕ طلب جديد / تعديل" Height="50" Margin="0,0,0,10"
+                <Button Content="➕ أضافة ملحق للطلب" Height="50" Margin="0,0,0,10"
                         Background="#4CAF50" Foreground="White" FontSize="18" FontWeight="Bold"
                         Click="NewOrder_Click">
                     <Button.Resources>

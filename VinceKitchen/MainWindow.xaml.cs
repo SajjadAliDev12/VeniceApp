@@ -51,7 +51,7 @@ namespace VinceKitchen
                         var activeOrders = await context.Orders
                             .Include(o => o.OrderDetails)
                             .ThenInclude(d => d.Product)
-                            .Where(o => (o.OrderStatus == "Open" || o.OrderStatus == "Paid")
+                            .Where(o => (o.isPaid  || o.isSentToKitchen)
                                         && o.OrderDetails.Any(d => d.Product.IsKitchenItem == true && !d.IsServed))
                             .OrderBy(o => o.OrderDate)
                             .ToListAsync();
@@ -77,7 +77,8 @@ namespace VinceKitchen
                                 // بدلاً من الاتصال بالداتا بيس (Find)
                                 var tableObj = tables.FirstOrDefault(t => t.Id == order.TableId);
                                 string tableName = tableObj != null ? $"طاولة {tableObj.TableNumber}" : "📦 سفري";
-
+                                if (order.ParentOrderId != null)
+                                    tableName += " - ملحق";
                                 list.Add(new KitchenOrderViewModel
                                 {
                                     OrderId = order.Id,
@@ -158,6 +159,7 @@ namespace VinceKitchen
                                     {
                                         item.IsServed = true;
                                     }
+                                    order.isReady = true;
                                     await context.SaveChangesAsync();
                                     return true;
                                 }

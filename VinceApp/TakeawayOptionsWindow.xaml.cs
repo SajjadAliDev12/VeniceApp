@@ -28,5 +28,11 @@ namespace VinceApp
         {
             Close();
         }
+
+        private void btnAdd_Click(object sender, RoutedEventArgs e)
+        {
+            UserChoice = "Add";
+            Close();
+        }
     }
 }

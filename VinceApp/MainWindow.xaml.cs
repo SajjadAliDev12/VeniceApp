@@ -11,6 +11,7 @@ using VinceApp.Data;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using VinceApp.Services;
 
 
 namespace VinceApp
@@ -24,7 +25,7 @@ namespace VinceApp
     {
         private readonly int _currentOrderId;
         private readonly int? _currentTableId;
-
+        private int? _parentOrderId = null;
         // إدارة الحالة (State Management)
         private bool _isReadOnly = false;
         private bool _isDirty = false; // هل تم تعديل السلة دون حفظ؟
@@ -39,12 +40,12 @@ namespace VinceApp
 
         private List<Product> AllProducts = new();
 
-        public MainWindow(int orderId, int? tableId, string? TableName)
+        public MainWindow(int orderId, int? tableId, string? TableName, int? _ParentOrderId = null)
         {
             InitializeComponent();
             _currentOrderId = orderId;
             _currentTableId = tableId;
-
+            _parentOrderId = _ParentOrderId;
             // تحديد العنوان
             if (_currentTableId.HasValue) Title.Text = $"طاولة رقم {_currentTableId} ({TableName})";
             else Title.Text = "طلب سفري";
@@ -110,28 +111,48 @@ namespace VinceApp
             using (var context = new VinceSweetsDbContext())
             {
                 var order = await context.Orders.FindAsync(_currentOrderId);
-                if (order != null && (order.OrderStatus == "Paid" || order.OrderStatus == "Completed"))
+                if (order != null && (order.isPaid || order.isServed || order.isReady))
                 {
                     _isReadOnly = true;
-                    EnableReadOnlyMode();
+                    EnableReadOnlyMode(order);
                 }
             }
         }
 
-        private void EnableReadOnlyMode()
+        // عدل تعريف الدالة لتستقبل كائن الطلب
+        private void EnableReadOnlyMode(Order order = null)
         {
-            Title.Text += " (للعرض فقط - مدفوع)";
-            Title.Foreground = Brushes.Red;
+            // قفل أدوات التعديل دائماً
             itemsControlProducts.IsEnabled = false;
             icCategories.IsEnabled = false;
             lstCart.IsEnabled = false;
 
-            // إخفاء زر الحفظ وتحويل زر الدفع لإغلاق
+            // إخفاء زر الحفظ لأننا لا نستطيع تعديل المحتوى
             btnConfirm.Visibility = Visibility.Collapsed;
-            if (btnPay != null)
+
+            if (order != null)
             {
-                btnPay.Content = "إغلاق";
-                btnPay.Background = Brushes.Gray;
+                // الحالة 1: الطلب انتهى مالياً (مدفوع أو مسلم)
+                if (order.isPaid || order.isServed)
+                {
+                    Title.Text += " (للعرض فقط)";
+                    Title.Foreground = Brushes.Red;
+
+                    if (btnPay != null)
+                    {
+                        btnPay.Content = "إغلاق";
+                        btnPay.Background = Brushes.Gray;
+                    }
+                }
+                // الحالة 2: الطلب جاهز من المطبخ لكن لم يدفع (القفل التشغيلي)
+                else if (order.isReady)
+                {
+                    Title.Text += " (جاهز - لا يمكن التعديل)";
+                    Title.Foreground = Brushes.OrangeRed;
+
+                    // هنا لا نغير زر الدفع، نتركه كما هو لكي يدفع الكاشير
+                    // ولكن بما أن _isReadOnly = true، يجب تعديل زر الدفع ليسمح بالدفع
+                }
             }
         }
 
@@ -220,13 +241,26 @@ namespace VinceApp
             }
         }
 
-        // ===================== زر الحفظ (تأكيد الطلب) =====================
         private async void ConfirmOrder_Click(object sender, RoutedEventArgs e)
         {
             if (_isReadOnly) return;
-            if (!CartItems.Any() && !_deletedDetailsIds.Any()) return; // لا يوجد شيء للحفظ
+            if (!CartItems.Any() && !_deletedDetailsIds.Any()) return;
 
+            // 1. حفظ التفاصيل
             await SaveChangesToDatabaseAsync();
+
+            // 2. تحديث حالة الإرسال للمطبخ (مهم جداً)
+            using (var context = new VinceSweetsDbContext())
+            {
+                var order = await context.Orders.FindAsync(_currentOrderId);
+                // نحدث الحالة فقط إذا لم يكن مرسلاً من قبل
+                if (order != null && !order.isSentToKitchen)
+                {
+                    order.isSentToKitchen = true;
+                    await context.SaveChangesAsync();
+                }
+            }
+
             MessageBox.Show("تم حفظ الطلب وإرساله للمطبخ.", "تأكيد", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
@@ -258,7 +292,7 @@ namespace VinceApp
                             ProductName = item.Name,
                             Price = item.Price,
                             Quantity = item.Quantity,
-                            // هنا يمكن إضافة IsSentToKitchen = true مستقبلاً
+                            
                         };
                         context.OrderDetails.Add(newDetail);
                     }
@@ -278,6 +312,10 @@ namespace VinceApp
                 var order = await context.Orders.FindAsync(_currentOrderId);
                 if (order != null)
                 {
+                    if (_parentOrderId != null)
+                    {
+                        order.ParentOrderId = _parentOrderId;
+                    }
                     order.TotalAmount = currentOrderTotal;
                 }
                 if (_currentTableId.HasValue)
@@ -305,21 +343,17 @@ namespace VinceApp
         // ===================== زر الدفع (حفظ + دفع) =====================
         private async void PayButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isReadOnly)
+            // التعديل هنا:
+            // نفحص هل الزر تحول إلى "إغلاق"؟ (أي أن الطلب مدفوع سابقاً)
+            if (btnPay.Content.ToString() == "إغلاق")
             {
                 Close();
                 return;
             }
 
+            // إذا لم يكن مدفوعاً، أكمل عملية الدفع حتى لو كان _isReadOnly (بسبب أنه جاهز)
             if (!CartItems.Any()) return;
 
-            // 1. حفظ التغييرات أولاً (في حال عدل ولم يضغط حفظ)
-            if (_isDirty)
-            {
-                await SaveChangesToDatabaseAsync();
-            }
-
-            // 2. إظهار نافذة الدفع
             _totalAmountToPay = CartItems.Sum(i => i.TotalPrice);
             txtOverlayTotal.Text = _totalAmountToPay.ToString("N0");
             _currentInput = "0";
@@ -331,37 +365,51 @@ namespace VinceApp
         {
             if (!decimal.TryParse(_currentInput, out var paid) || paid < _totalAmountToPay)
             {
-                MessageBox.Show("المبلغ غير كافٍ!", "تنبيه");
+                MessageBox.Show("المبلغ غير كافٍ!", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             try
             {
+                // 1. حفظ أي تعديلات أخيرة في السلة
+                await SaveChangesToDatabaseAsync();
+
                 using (var context = new VinceSweetsDbContext())
                 {
                     var order = await context.Orders.FindAsync(_currentOrderId);
-                    if (order != null) order.OrderStatus = "Paid";
+                    if (order != null)
+                    {
+                        order.isPaid = true;          // تحديد أنه مدفوع
+                        order.isSentToKitchen = true; // ضروري: إرسال للمطبخ تلقائياً عند الدفع
+                    }
 
                     if (_currentTableId.HasValue)
                     {
                         var table = await context.RestaurantTables.FindAsync(_currentTableId.Value);
-                        if (table != null) table.Status = 2; // Paid
+                        if (table != null) table.Status = 2; // تغيير لون الطاولة لمدفوع
                     }
+
                     await context.SaveChangesAsync();
                 }
 
-                MessageBox.Show("تم الدفع بنجاح.");
+                // الطباعة
+                TicketPrinter Pr = new TicketPrinter();
+                Pr.Print(_currentOrderId, false);
+
+                MessageBox.Show("تم الدفع بنجاح.", "Paid", MessageBoxButton.OK, MessageBoxImage.Information);
                 PaymentOverlay.Visibility = Visibility.Collapsed;
                 Close();
             }
-            catch { MessageBox.Show("فشل الدفع"); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("فشل الدفع: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
-
         // ===================== الخروج (الحماية) =====================
         private async void ExitButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isReadOnly) { Close(); return; }
-
+            
             // فحص التعديلات غير المحفوظة
             if (_isDirty)
             {
@@ -408,7 +456,7 @@ namespace VinceApp
         private void Numpad_Backspace_Click(object sender, RoutedEventArgs e) { _currentInput = _currentInput.Length > 1 ? _currentInput[..^1] : "0"; UpdatePaymentDisplay(); }
         private void UpdatePaymentDisplay() { decimal.TryParse(_currentInput, out var paid); txtPaidAmount.Text = paid.ToString("N0"); var change = paid - _totalAmountToPay; txtChangeAmount.Text = change < 0 ? "غير كافٍ" : change.ToString("N0"); txtChangeAmount.Foreground = change < 0 ? Brushes.Red : Brushes.Green; }
 
-        // زر تصدير المنيو (كما هو)
+        
         
     }
 

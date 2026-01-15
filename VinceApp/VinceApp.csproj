@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>gondola.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,9 +37,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <COMReference Include="{d37e2a3e-8545-3a39-9f4f-31827c9124ab}">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>4</VersionMinor>
+      <VersionMajor>2</VersionMajor>
+      <Guid>d37e2a3e-8545-3a39-9f4f-31827c9124ab</Guid>
+    </COMReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="gondola.ico" />
     <Content Include="Images\Brownie.jpeg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -115,6 +126,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>

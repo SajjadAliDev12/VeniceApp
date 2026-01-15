@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VinceApp.Data;
 
@@ -11,9 +12,11 @@ using VinceApp.Data;
 namespace VinceApp.Data.Migrations
 {
     [DbContext(typeof(VinceSweetsDbContext))]
-    partial class VinceSweetsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260115063510_change-order-table")]
+    partial class changeordertable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,6 +103,12 @@ namespace VinceApp.Data.Migrations
 
                     b.Property<int>("OrderNumber")
                         .HasColumnType("int");
+
+                    b.Property<string>("OrderStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Open");
 
                     b.Property<int?>("ParentOrderId")
                         .HasColumnType("int");

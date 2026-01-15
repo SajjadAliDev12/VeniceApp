@@ -46,7 +46,7 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
-                    <Button Content="إلغاء / جديد" Width="100" Height="40" Background="#E0E0E0" Foreground="#333" Margin="5" Click="Clear_Click">
+                    <Button Content="إلغاء" Width="100" Height="40" Background="#E0E0E0" Foreground="#333" Margin="5" Click="Clear_Click">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" CornerRadius="5">

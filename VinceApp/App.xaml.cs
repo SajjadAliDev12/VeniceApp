@@ -50,17 +50,17 @@ namespace VinceApp
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    //context.Database.EnsureCreated();
+                    context.Database.EnsureCreated();
 
                     var oldOrders = context.Orders
-                        .Where(o => o.OrderStatus == "Open" && o.OrderDate.Value.Date < System.DateTime.Now.Date)
+                        .Where(o => !o.isPaid && o.OrderDate.Value.Date < System.DateTime.Now.Date)
                         .ToList();
 
                     if (oldOrders.Any())
                     {
                         foreach (var order in oldOrders)
                         {
-                            order.OrderStatus = "Cancelled";
+                            order.isServed = true;
                             if (order.TableId.HasValue)
                             {
                                 var tableToFree = context.RestaurantTables.Find(order.TableId.Value);
@@ -78,7 +78,7 @@ namespace VinceApp
                         {
                             bool hasActiveOrder = context.Orders.Any(o =>
                                 o.TableId == table.Id &&
-                                o.OrderStatus == "Open" &&
+                                !o.isPaid &&
                                 o.OrderDate.Value.Date == System.DateTime.Now.Date);
 
                             if (!hasActiveOrder)

@@ -9,12 +9,16 @@
     </Page.Resources>
 
     <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="104*"/>
+            <RowDefinition Height="461*"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="350"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="10" Padding="15" Margin="0,0,20,0">
+        <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="10" Padding="15" Margin="0,0,20,0" Grid.RowSpan="2">
             <StackPanel>
                 <TextBlock Text="بيانات المنتج" FontSize="18" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
 
@@ -71,7 +75,7 @@
             </StackPanel>
         </Border>
 
-        <DataGrid x:Name="dgProducts" Grid.Column="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column" Background="White" RowHeight="60">
+        <DataGrid x:Name="dgProducts" Grid.Column="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column" Background="White" RowHeight="60" Grid.RowSpan="2">
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="الصورة" Width="80">
                     <DataGridTemplateColumn.CellTemplate>

@@ -173,13 +173,19 @@ namespace VinceApp.Pages
                 {
                     using (var context = new VinceSweetsDbContext())
                     {
-                        var user = context.Users.Find(id);
-                        if (user != null)
+                        try
                         {
-                            context.Users.Remove(user);
-                            context.SaveChanges();
-                            LoadUsers();
-                            ClearFields();
+                            var user = context.Users.Find(id);
+                            if (user != null)
+                            {
+                                context.Users.Remove(user);
+                                context.SaveChanges();
+                                LoadUsers();
+                                ClearFields();
+                            }
+                        }
+                        catch (Exception ex) { 
+                        MessageBox.Show("حصل خطأ في حذف المستخدم","Error",MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                 }

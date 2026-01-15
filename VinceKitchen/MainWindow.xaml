@@ -55,8 +55,8 @@
                         </Border.ToolTip>
                     </Border>
 
-
-                    <VinceApp:DigitalClock />
+                    <VinceApp:DigitalClock></VinceApp:DigitalClock>
+                    
                 </StackPanel>
             </Grid>
         </Border>

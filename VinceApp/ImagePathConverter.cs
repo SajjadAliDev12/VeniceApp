@@ -85,7 +85,7 @@ namespace VinceApp
             // === السطر السحري للتسريع ===
             // نقول للبرنامج: لا تحمل الصورة بدقة 4K، حملها بعرض 100 بكسل فقط
             // لأننا سنعرضها في أيقونة صغيرة. هذا يقلل الحجم من 5MB إلى 5KB!
-            bitmap.DecodePixelWidth = 300;
+            //bitmap.DecodePixelWidth = 300;
 
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
             bitmap.UriSource = uri;

@@ -29,7 +29,7 @@ namespace VinceApp.Pages
                     // 1. الاستعلام الأساسي: نريد الطلبات المدفوعة فقط (أو الكل حسب رغبتك)
                     // هنا سنجلب Paid و Completed
                     var query = context.Orders
-                        .Where(o => o.OrderStatus == "Paid" || o.OrderStatus == "Completed");
+                        .Where(o => o.isPaid);
 
                     // 2. حساب عدد الصفحات
                     int totalCount = query.Count();
