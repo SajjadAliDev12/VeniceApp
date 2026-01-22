@@ -1,0 +1,63 @@
+﻿<UserControl x:Class="VinceApp.ToastControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Height="70" Width="350" Margin="0,5,10,5"
+             FontFamily="Segoe UI" FlowDirection="RightToLeft"
+             Cursor="Hand" MouseLeftButtonUp="UserControl_MouseLeftButtonUp"
+             Opacity="0">
+
+    <!-- ✅ هذا يمنع اهتزاز الواجهة لأن الحركة تصبح Visual فقط -->
+    <UserControl.RenderTransform>
+        <TranslateTransform x:Name="ToastTransform" Y="20"/>
+    </UserControl.RenderTransform>
+
+    <UserControl.Resources>
+        <Storyboard x:Key="FadeIn">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.25"/>
+            <DoubleAnimation Storyboard.TargetName="ToastTransform"
+                             Storyboard.TargetProperty="Y"
+                             From="-20" To="0" Duration="0:0:0.25"
+                             DecelerationRatio="0.9"/>
+        </Storyboard>
+
+        <Storyboard x:Key="FadeOut" Completed="FadeOut_Completed">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                             From="1" To="0" Duration="0:0:0.25"/>
+            <DoubleAnimation Storyboard.TargetName="ToastTransform"
+                             Storyboard.TargetProperty="Y"
+                             From="0" To="-20" Duration="0:0:0.25"/>
+        </Storyboard>
+    </UserControl.Resources>
+
+    <Border x:Name="MainBorder" CornerRadius="8" Background="#333333" BorderThickness="0,0,5,0">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3" Color="Black"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="50"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="30"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock x:Name="IconText" Grid.Column="0" Text="✓"
+                       FontSize="24" FontWeight="Bold"
+                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                       Foreground="White"/>
+
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="5,0">
+                <TextBlock x:Name="TxtTitle" Text="تمت العملية" FontWeight="Bold" Foreground="White" FontSize="14"/>
+                <TextBlock x:Name="TxtMessage" Text="تم حفظ الطلب بنجاح" Foreground="#DDDDDD" FontSize="12" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <TextBlock Grid.Column="2" Text="✕" Foreground="#AAAAAA"
+                       VerticalAlignment="Top" HorizontalAlignment="Right"
+                       Margin="5" FontSize="10"/>
+        </Grid>
+    </Border>
+</UserControl>

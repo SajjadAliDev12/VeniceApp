@@ -1,0 +1,112 @@
+﻿<Page x:Class="VinceApp.Pages.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="الإعدادات" FlowDirection="RightToLeft" Background="White">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="⚙️ إعدادات النظام" FontSize="24" FontWeight="Bold" Foreground="#5D4037" Margin="0,0,0,20"/>
+
+        <TabControl Grid.Row="1" BorderThickness="0" Background="Transparent">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="Padding" Value="15,10"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Style>
+            </TabControl.Resources>
+
+            <TabItem Name="tabctrlBackup" Header="النسخ الاحتياطي والأستعادة">
+                <ScrollViewer>
+                    <StackPanel Margin="10">
+                        <GroupBox Header="إدارة البيانات والنسخ الاحتياطي" Margin="0,0,0,15" Padding="10">
+                            <StackPanel>
+                                <TextBlock Text="تحذير: استعادة نسخة سابقة سيقوم بمسح كافة البيانات الحالية واستبدالها." 
+                   Foreground="Red" FontSize="11" Margin="0,0,0,10"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Content="📥 إنشاء نسخة احتياطية (Backup)" 
+                    Background="#009688" Foreground="White" Height="40" Margin="0,0,5,0" 
+                    Click="Backup_Click"/>
+
+                                    <Button Grid.Column="1" Content="📤 استعادة نسخة سابقة (Restore)" 
+                    Background="#F44336" Foreground="White" Height="40" Margin="5,0,0,0" Click="Restore_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="إعدادات البريد (SMTP)" Padding="10">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,5,0">
+                                        <TextBlock Text="خادم البريد (Host):" Foreground="Gray"/>
+                                        <TextBox x:Name="txtSmtpServer" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                        <TextBlock Text="البورت (Port):" Foreground="Gray"/>
+                                        <TextBox x:Name="txtPort" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="بريد المرسل (Email):" Foreground="Gray"/>
+                                <TextBox x:Name="txtSenderEmail" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
+
+                                <TextBlock Text="رمز التطبيق (App Password):" Foreground="Gray"/>
+                                <PasswordBox x:Name="txtSenderPass" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
+
+                                <Button Content="حفظ إعدادات البريد" Background="#2196F3" Foreground="White" Height="35" Click="SaveMail_Click"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Name="TabctrlStore" Header="إعدادات المتجر والفواتير">
+                <ScrollViewer>
+                    <StackPanel Margin="10">
+                        <GroupBox x:Name="grbxInfo" Header="بيانات المتجر (تظهر في الفاتورة)" Padding="10" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="اسم المتجر:" Foreground="Gray"/>
+                                <TextBox x:Name="txtStoreName" Height="30" Margin="0,5,0,10"/>
+
+                                <TextBlock Text="رقم الهاتف:" Foreground="Gray"/>
+                                <TextBox x:Name="txtStorePhone" Height="30" Margin="0,5,0,10"/>
+
+                                <TextBlock Text="العنوان:" Foreground="Gray"/>
+                                <TextBox x:Name="txtStoreAddress" Height="30" Margin="0,5,0,10"/>
+
+                                <TextBlock Text="تذييل الفاتورة (Footer):" Foreground="Gray"/>
+                                <TextBox x:Name="txtReceiptFooter" Height="30" Margin="0,5,0,10"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="إعدادات الطباعة" Padding="10">
+                            <StackPanel>
+                                <TextBlock Text="الطابعة الافتراضية للفواتير:" Foreground="Gray"/>
+                                <ComboBox x:Name="cmbPrinters" Height="35" Margin="0,5,0,10"/>
+
+                                <CheckBox x:Name="chkAutoPrint" Content="طباعة الفاتورة تلقائياً بعد الحفظ" Margin="0,5"/>
+
+                                <Button Content="حفظ إعدادات المتجر" Background="#4CAF50" Foreground="White" Height="35" Margin="0,15,0,0" Click="SaveStore_Click"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</Page>

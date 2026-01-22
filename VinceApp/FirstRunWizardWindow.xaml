@@ -1,0 +1,115 @@
+﻿<Window x:Class="VinceApp.FirstRunWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="إعداد أول تشغيل"
+        Height="520" Width="560"
+        MinHeight="520" MinWidth="560"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock FontSize="20" FontWeight="Bold" Text="إعداد أول تشغيل"/>
+            <TextBlock Opacity="0.75" Margin="0,4,0,0"
+                       Text="أكمل الخطوات التالية مرة واحدة فقط، بعدها لن تظهر هذه الصفحة."/>
+        </StackPanel>
+
+        <!-- Body -->
+        <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" CornerRadius="8" Padding="12">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Step 1 -->
+                    <TextBlock Grid.Row="0" FontWeight="Bold" FontSize="14"
+                               Text="1) ضبط السيرفر والاتصال بقاعدة البيانات"/>
+                    <TextBlock Grid.Row="1" Margin="0,4,0,8" Opacity="0.75"
+                               Text="افتح الإعدادات، أدخل بيانات السيرفر، ثم اختبر الاتصال واحفظ."/>
+                    <Button Grid.Row="2" Content="فتح إعدادات السيرفر"
+                            Height="36" HorizontalAlignment="Left" Padding="18,0"
+                            Click="OpenServerSettings_Click"/>
+
+                    <Separator Grid.Row="3" Margin="0,14,0,14"/>
+
+                    <!-- Step 2 -->
+                    <TextBlock Grid.Row="4" FontWeight="Bold" FontSize="14"
+                               Text="2) إدخال رمز التفعيل"/>
+                    <Grid Grid.Row="5" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="رمز التفعيل"/>
+                        <PasswordBox Grid.Column="1" x:Name="txtActivationKey" Height="32"/>
+                    </Grid>
+
+                    <TextBlock Grid.Row="6" x:Name="txtStatus" Margin="0,10,0,0"
+                               Foreground="DarkRed" TextWrapping="Wrap"/>
+
+                    <Separator Grid.Row="7" Margin="0,14,0,14"/>
+
+                    <!-- Step 3 -->
+                    <TextBlock Grid.Row="8" FontWeight="Bold" FontSize="14"
+                               Text="3) إنشاء حساب المدير (Admin)"/>
+
+                    <Grid Grid.Row="9" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="اسم المستخدم"/>
+                        <TextBox   Grid.Row="0" Grid.Column="1" x:Name="txtAdminUsername" Height="32"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,0,0"
+                                   Text="كلمة المرور"/>
+                        <PasswordBox Grid.Row="1" Grid.Column="1" x:Name="txtAdminPassword" Height="32" Margin="0,8,0,0"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,0,0"
+                                   Text="الاسم الكامل"/>
+                        <TextBox   Grid.Row="2" Grid.Column="1" x:Name="txtAdminFullName" Height="32" Margin="0,8,0,0"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,8,0,0"
+                                   Text="البريد الإلكتروني"/>
+                        <TextBox   Grid.Row="3" Grid.Column="1" x:Name="txtAdminEmail" Height="32" Margin="0,8,0,0"/>
+                    </Grid>
+
+                    <TextBlock Grid.Row="10" Margin="0,10,0,0" Opacity="0.7" TextWrapping="Wrap"
+                               Text="ملاحظة: سيتم إنشاء هذا الحساب مرة واحدة فقط، وبعدها ستسجل الدخول به من شاشة الدخول."/>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="إلغاء" Width="90" Height="34" Margin="0,0,8,0" Click="Cancel_Click"/>
+            <Button Content="حفظ" Width="120" Height="34" Click="Finish_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
