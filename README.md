@@ -92,7 +92,23 @@ Under Active Development Features, performance, and usability improvements are c
 ---
 
 ## 📸 Screenshots
-(Screenshots of the POS interface, kitchen display, and management panels will be added here)
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004222" src="https://github.com/user-attachments/assets/b48505d2-653f-4566-ba1b-cf345b4e3a05" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004212" src="https://github.com/user-attachments/assets/5800a0ad-1ca6-49fa-8910-83afa1ea7347" />
+<img width="475" height="524" alt="Screenshot 2026-01-23 004157" src="https://github.com/user-attachments/assets/f88e3f8c-5fb2-4fba-8a7b-03d10e6139b6" />
+<img width="445" height="503" alt="Screenshot 2026-01-23 004124" src="https://github.com/user-attachments/assets/b9a08ae8-2db3-4cd2-9797-bd0ca6f1e66d" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004658" src="https://github.com/user-attachments/assets/fe293d51-16a1-4b2b-b711-3e8d34a79be0" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004623" src="https://github.com/user-attachments/assets/f8991f85-a0ad-415f-b4d8-1a32c285b9cc" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004609" src="https://github.com/user-attachments/assets/22ea552b-7461-49da-9832-9e9e5abc0002" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004552" src="https://github.com/user-attachments/assets/e367349c-1a43-42ce-888e-7dc9052f1812" />
+<img width="494" height="730" alt="Screenshot 2026-01-23 004516" src="https://github.com/user-attachments/assets/a1a3082c-b4dc-40b5-8dc4-055668b42861" />
+<img width="530" height="737" alt="Screenshot 2026-01-23 004450" src="https://github.com/user-attachments/assets/31a13a49-2bda-40be-9d1d-1cfbf9fe5932" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004430" src="https://github.com/user-attachments/assets/723139a4-ac29-4147-aecd-c3a02542f43b" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004320" src="https://github.com/user-attachments/assets/abbc4049-466c-45a1-a1a3-e5b032a91382" />
+<img width="785" height="737" alt="Screenshot 2026-01-23 004307" src="https://github.com/user-attachments/assets/96f4b5f3-2b70-40ed-8e8a-13995a2da97e" />
+<img width="782" height="743" alt="Screenshot 2026-01-23 004257" src="https://github.com/user-attachments/assets/72ce0fd3-81de-4cf5-98f3-af5473c2af78" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004240" src="https://github.com/user-attachments/assets/e660d420-3780-4376-bcf5-1969c37f7874" />
+<img width="1919" height="1079" alt="Screenshot 2026-01-23 004234" src="https://github.com/user-attachments/assets/cebfc6a6-f37a-4c05-bfd6-04a6ecb9b01e" />
+
 
 ---
 
