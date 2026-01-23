@@ -11,6 +11,7 @@ using VinceApp.Data.Models;
 using VinceApp.Services;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 namespace VinceApp
 
@@ -74,9 +75,15 @@ namespace VinceApp
         public MainWindow(int orderId, int? tableId, string? TableName, int? _ParentOrderId = null)
 
         {
-
+            string soundFile = FIlePathFinder.GetPath("Windows Navigation Start.wav");
             InitializeComponent();
-
+            if (System.IO.File.Exists(soundFile))
+            {
+                using (var player = new System.Media.SoundPlayer(soundFile))
+                {
+                    player.Play();
+                }
+            }
             _currentOrderId = orderId;
 
             _currentTableId = tableId;
@@ -121,7 +128,7 @@ namespace VinceApp
 
                 {
 
-                    
+
                     ToastControl.Show("error", "خطأ في التحميل", ToastControl.NotificationType.Error);
                     Log.Error(ex, "failed to obtain data from database");
 
@@ -185,21 +192,21 @@ namespace VinceApp
 
                  .Select(d => new CartItemViewModel
 
-                {
+                 {
 
-                    OrderDetailId = d.Id, // نحتفظ بالـ ID الأصلي
+                     OrderDetailId = d.Id, // نحتفظ بالـ ID الأصلي
 
-                    ProductId = d.ProductId,
+                     ProductId = d.ProductId,
 
-                    Name = d.ProductName,
+                     Name = d.ProductName,
 
-                    Price = d.Price,
+                     Price = d.Price,
 
-                    Quantity = d.Quantity,
+                     Quantity = d.Quantity,
 
-                    TotalPrice = d.Price * d.Quantity
+                     TotalPrice = d.Price * d.Quantity
 
-                }).ToListAsync();
+                 }).ToListAsync();
 
 
 
@@ -530,9 +537,9 @@ namespace VinceApp
             }
 
 
-           ToastControl.Show("تم الحفظ", " تم حفظ الطلب بنجاح وارساله الى المطبخ", ToastControl.NotificationType.Success);
+            ToastControl.Show("تم الحفظ", " تم حفظ الطلب بنجاح وارساله الى المطبخ", ToastControl.NotificationType.Success);
 
-            
+
 
         }
 
@@ -797,7 +804,7 @@ namespace VinceApp
                 // ... (إغلاق النافذة) ...
                 ToastControl.Show("تم الدفع", "تم الدفع بنجاح", ToastControl.NotificationType.Success);
                 //MessageBox.Show("تم الدفع بنجاح.", "Paid", MessageBoxButton.OK, MessageBoxImage.Information);
-                
+
                 PaymentOverlay.Visibility = Visibility.Collapsed;
                 this.DialogResult = wasPaid;
                 Close();
@@ -861,7 +868,7 @@ namespace VinceApp
             catch (Exception ex)
             {
                 ToastControl.Show("خطأ", "حدث خطأ في البرنامج!", ToastControl.NotificationType.Error);
-                
+
                 Log.Error(ex, "Table window fault");
             }
 
@@ -1018,5 +1025,4 @@ namespace VinceApp
         protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     }
-
 }

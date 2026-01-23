@@ -88,12 +88,10 @@ namespace VinceApp
                         TablesPanel.Children.Add(btnTable);
                     }
 
-                    // =========================================================
-                    // التعديل الجذري: منطق الطلبات السفرية (Booleans)
-                    // =========================================================
+                    
                     if (TakeawayPanel != null)
                     {
-                        // 1. التعديل في الاستعلام: نجلب أي طلب لم يتم تسليمه بعد (بغض النظر عن الدفع والجاهزية)
+                        
                         var takeawayOrders = await context.Orders
                             .Where(o => o.TableId == null && !o.isServed)
                             .OrderByDescending(o => o.OrderDate)
@@ -101,10 +99,9 @@ namespace VinceApp
 
                         foreach (var order in takeawayOrders)
                         {
-                            // قراءة الحالات
+                           
                             bool isPaid = order.isPaid;
-                            bool isReady = order.isReady; // جاهز من المطبخ
-
+                            bool isReady = order.isReady; 
                             Button btnTakeaway = new Button
                             {
                                 Height = 80,
@@ -113,28 +110,28 @@ namespace VinceApp
                                 Tag = order.Id,
                             };
 
-                            // 2. التعديل في الألوان: إضافة الحالة البرتقالية (جاهز)
+                            
                             if (isPaid)
                             {
-                                // أخضر غامق (مدفوع) - الأولوية القصوى
+                                
                                 btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(46, 125, 50));
                                 btnTakeaway.BorderBrush = Brushes.LightGreen;
                             }
                             else if (isReady)
                             {
-                                // برتقالي (جاهز ولكن غير مدفوع) - انتبه هنا
+                                
                                 btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
                                 btnTakeaway.BorderBrush = Brushes.OrangeRed;
                             }
                             else
                             {
-                                // بنفسجي (غير جاهز وغير مدفوع)
+                                
                                 btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(106, 27, 154));
                                 btnTakeaway.BorderBrush = Brushes.Purple;
                             }
                             btnTakeaway.BorderThickness = new Thickness(2);
 
-                            // النصوص
+                            
                             string statusText;
                             if (isPaid) statusText = "✅ (مدفوع)";
                             else if (isReady) statusText = "🔔 (جاهز)";
@@ -147,18 +144,16 @@ namespace VinceApp
                             stack.Children.Add(new TextBlock { Text = $"{time}", FontSize = 12, Foreground = Brushes.LightGray, HorizontalAlignment = HorizontalAlignment.Center });
                             btnTakeaway.Content = stack;
 
-                            // 3. التعديل في الحدث (المنطق المبسط)
                             btnTakeaway.Click += async (s, e) =>
                             {
                                 if (s is Button b && b.Tag is int orderId)
                                 {
-                                    // القاعدة الذهبية:
-                                    // إذا لم يدفع (سواء كان جاهزاً أم لا) -> افتح الكاشير للدفع
+
                                     if (!isPaid)
                                     {
                                         OpenCashierWindow(orderId, null, null, null);
                                     }
-                                    // إذا دفع -> افتح الخيارات (تسليم/إضافة)
+                                    
                                     else
                                     {
                                         var dialog = new TakeawayOptionsWindow();
@@ -205,7 +200,7 @@ namespace VinceApp
             catch (Exception ex)
             {
                 Log.Error(ex, "error with LoadTable() in tableswindow");
-                MessageBox.Show($"حدث خطأ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                ToastControl.Show("خطأ", "حدث خطأ في البرنامج", ToastControl.NotificationType.Error);
             }
         }
         public void ApplyPermissions()
@@ -226,13 +221,15 @@ namespace VinceApp
                         var order = await context.Orders.FindAsync(orderId);
                         if (order != null)
                         {
-                            order.isServed = true; // حالة جديدة تعني انتهى
+                            order.isServed = true; 
                             await context.SaveChangesAsync();
                         }
                     }
-                    await LoadTables(); // تحديث الشاشة
+                    await LoadTables(); ToastControl.Show("تم اكمال الطلب", "تم اخفاء الطلب من القائمة ", ToastControl.NotificationType.Info);
                 }
-                catch(Exception ex) { MessageBox.Show("فشل التحديث","فشل",MessageBoxButton.OK,MessageBoxImage.Error); Log.Error(ex, "error with CompleteOrderAsync in tableswindow"); }
+                catch(Exception ex) {
+                    ToastControl.Show( "فشل","فشل التحديث",ToastControl.NotificationType.Error);  Log.Error(ex, "error with CompleteOrderAsync in tableswindow");
+                }
             }
         }
 
@@ -277,7 +274,7 @@ namespace VinceApp
                             }
                             else
                             {
-                                MessageBox.Show("لم يتم العثور على الفاتورة المدفوعة!", "خطأ");
+                                ToastControl.Show("خطأ", "لم يتم العثور على القائمة المدفوعه", ToastControl.NotificationType.Error);
                             }
                         }
                         btn.IsEnabled = true;
@@ -300,6 +297,7 @@ namespace VinceApp
                                 }
                             }
                             await LoadTables();
+                            ToastControl.Show("تم الاخلاء", "تم اخلاء الطاولة بنجاح", ToastControl.NotificationType.Success);
                             btn.IsEnabled = true;
                             return;
                         }
@@ -381,7 +379,7 @@ namespace VinceApp
             catch (Exception ex)
             {
                 Log.Error(ex, "error in tableswindow tableclick()");
-                MessageBox.Show($"حدث خطأ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                ToastControl.Show("خطأ", "حدث خطأ في البرنامج", ToastControl.NotificationType.Error);
             }
             finally
             {
@@ -431,7 +429,8 @@ namespace VinceApp
             catch (Exception ex)
             {
                 Log.Error(ex, "error at Takeaway in tableswindow");
-                MessageBox.Show($"تعذر إنشاء طلب سفري.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                ToastControl.Show( "خطأ","تعذر إنشاء طلب سفري.", ToastControl.NotificationType.Error);
+                
             }
             finally
             {
@@ -457,7 +456,8 @@ namespace VinceApp
         private void OpenAdmin_Click(object sender, RoutedEventArgs e)
         {
             if (CurrentUser.Role == (int)UserRole.Cashier)
-                return;
+                {ToastControl.Show("صلاحيات","هذه الصفحه مخصصة للمدراء فقط!",ToastControl.NotificationType.Info); 
+                return; }
 
             AdminWindow admin = new AdminWindow();
             admin.ShowDialog();
@@ -527,7 +527,8 @@ namespace VinceApp
             catch (Exception ex)
             {
                 Log.Error(ex, "error in Window_ContentRendered");
-                MessageBox.Show("حدث خطأ أثناء تحميل البيانات.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                ToastControl.Show("خطأ", "حدث خطأ أثناء تحميل البيانات.", ToastControl.NotificationType.Error);
+                
             }
             finally
             {

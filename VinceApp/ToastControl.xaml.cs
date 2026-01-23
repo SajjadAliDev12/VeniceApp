@@ -6,6 +6,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using VinceApp.Pages;
+using System.IO;
+using VinceApp.Services;
 
 namespace VinceApp
 {
@@ -23,22 +25,37 @@ namespace VinceApp
 
         public static void Show(string title, string message, NotificationType type)
         {
+            
+            string soundFile = "";
+
             switch (type)
             {
                 case NotificationType.Success:
-                    System.Media.SystemSounds.Beep.Play(); // صوت نجاح خفيف
+                    // صوت لطيف للنجاح (موجود في أغلب نسخ ويندوز)
+                    soundFile = FIlePathFinder.GetPath("Windows Notify.wav");
                     break;
                 case NotificationType.Error:
-                    System.Media.SystemSounds.Hand.Play(); // صوت خطأ (Windows Error)
+                    // صوت خطأ قوي
+                    soundFile = FIlePathFinder.GetPath("Windows Pop-up Blocked.wav");
                     break;
                 case NotificationType.Warning:
-                    System.Media.SystemSounds.Exclamation.Play(); // صوت تنبيه
+                    // صوت تنبيه
+                    soundFile = FIlePathFinder.GetPath("Windows Unlock.wav");
                     break;
                 default:
-                    System.Media.SystemSounds.Beep.Play(); // صوت عادي
+                    soundFile = FIlePathFinder.GetPath("Windows Notify.wav"); 
                     break;
             }
-                    Application.Current.Dispatcher.Invoke(() =>
+
+            // تشغيل الصوت في الخلفية (Async) حتى لا يجمد الشاشة
+            if (System.IO.File.Exists(soundFile))
+            {
+                using (var player = new System.Media.SoundPlayer(soundFile))
+                {
+                    player.Play();
+                }
+            }
+            Application.Current.Dispatcher.Invoke(() =>
             {
                 // ✅ استهدف النافذة النشطة (أي شاشة مفتوحة الآن)
                 Window targetWindow =
@@ -64,7 +81,7 @@ namespace VinceApp
                 // يظهر بالأحدث فوق (اختياري)
                 container.Children.Insert(0, toast);
                 // أو تحت:
-                // container.Children.Add(toast);
+                //container.Children.Add(toast);
             });
         }
 

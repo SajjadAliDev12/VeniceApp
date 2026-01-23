@@ -69,13 +69,14 @@ namespace VinceApp.Services
                 }
                 else
                 {
-                    MessageBox.Show($"لا يمكن الوصول للطابعة المحددة: {pDoc.PrinterSettings.PrinterName}", "خطأ طابعة");
+                    ToastControl.Show("خطأ في الطابعة", "لا يمكن الوصول للطابعة المحددة", ToastControl.NotificationType.Error);
+                    
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "error with ticket Printer service");
-                MessageBox.Show("تأكد من الطابعة.\n" + ex.Message);
+                ToastControl.Show("خطأ في الطابعة", "لا يمكن الطباعة", ToastControl.NotificationType.Error);
             }
         }
 

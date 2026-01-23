@@ -34,6 +34,11 @@
     <None Remove="Images\Roll.png" />
     <None Remove="Images\turkish.jpg" />
     <None Remove="Images\Water.jpg" />
+    <None Remove="Sounds\notify.wav" />
+    <None Remove="Sounds\Windows Navigation Start.wav" />
+    <None Remove="Sounds\Windows Notify.wav" />
+    <None Remove="Sounds\Windows Pop-up Blocked.wav" />
+    <None Remove="Sounds\Windows Unlock.wav" />
   </ItemGroup>
 
   <ItemGroup>
@@ -134,6 +139,24 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VinceApp.Data\VinceApp.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Sounds\notify.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Windows Navigation Start.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Windows Notify.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Windows Pop-up Blocked.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Windows Unlock.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

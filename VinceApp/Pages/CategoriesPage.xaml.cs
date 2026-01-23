@@ -118,7 +118,7 @@ namespace VinceApp.Pages
                             bool hasProducts = context.Products.Any(p => p.CategoryId == id);
                             if (hasProducts)
                             {
-                                ToastControl.Show( "منع الحذف","لا يمكن حذف هذا التصنيف لأنه يحتوي على منتجات.\nيرجى حذف المنتجات أو نقلها أولاً.", ToastControl.NotificationType.Success);
+                                ToastControl.Show( "منع الحذف","لا يمكن حذف هذا التصنيف لأنه يحتوي على منتجات.\nيرجى حذف المنتجات أو نقلها أولاً.", ToastControl.NotificationType.Warning);
                                 
                                 return;
                             }
