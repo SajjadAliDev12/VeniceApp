@@ -152,13 +152,17 @@ namespace VinceApp.Pages
         }
 
         // دالة مساعدة لنسخ الصورة
+        // دالة مساعدة لنسخ الصورة
         private string CopyImageToAppFolder(string sourcePath)
         {
             try
             {
-                // 1. تحديد مجلد الصور بجانب ملف الـ exe
-                string appPath = AppDomain.CurrentDomain.BaseDirectory;
-                string imagesFolder = Path.Combine(appPath, "Images");
+                // ✅ 1. تحديد مجلد الصور داخل AppData\Roaming
+                string imagesFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "VinceApp",
+                    "Images"
+                );
 
                 // إنشاء المجلد إذا لم يكن موجوداً
                 if (!Directory.Exists(imagesFolder))
@@ -171,8 +175,8 @@ namespace VinceApp.Pages
                 string newFileName = Guid.NewGuid().ToString() + extension;
                 string destPath = Path.Combine(imagesFolder, newFileName);
 
-                // 3. النسخ
-                File.Copy(sourcePath, destPath);
+                // 3. النسخ (overwrite = false)
+                File.Copy(sourcePath, destPath, false);
 
                 return newFileName; // نرجع الاسم فقط للحفظ في الداتا بيس
             }
@@ -180,10 +184,10 @@ namespace VinceApp.Pages
             {
                 Log.Error(ex, "error with Order page Image handling");
                 ToastControl.Show("معلومات", "فشل نسخ الصورة", ToastControl.NotificationType.Info);
-                
                 return null;
             }
         }
+
 
         // 4. التعديل
         private void Edit_Click(object sender, RoutedEventArgs e)
@@ -205,7 +209,13 @@ namespace VinceApp.Pages
                         // عرض الصورة القديمة في المعاينة
                         if (!string.IsNullOrEmpty(prod.ImagePath))
                         {
-                            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", prod.ImagePath);
+                            string fullPath = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+    "VinceApp",
+    "Images",
+    prod.ImagePath
+);
+
                             if (File.Exists(fullPath))
                             {
                                 imgPreview.Source = new BitmapImage(new Uri(fullPath));
@@ -234,11 +244,41 @@ namespace VinceApp.Pages
                         var prod = context.Products.Find(id);
                         if (prod != null)
                         {
+                            // ✅ احتفظ باسم الصورة قبل الحذف
+                            string imageNameToDelete = prod.ImagePath;
+
                             context.Products.Remove(prod);
                             context.SaveChanges();
+
                             ToastControl.Show("معلومات", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
-                            // (اختياري) هل نحذف ملف الصورة من المجلد؟
-                            // يفضل عدم الحذف فوراً تحسباً للخطأ، أو برمجتها لاحقاً في "تنظيف النظام"
+
+                            // ✅ حذف ملف الصورة (فقط إذا لم يكن مستخدم من منتجات أخرى)
+                            try
+                            {
+                                if (!string.IsNullOrWhiteSpace(imageNameToDelete))
+                                {
+                                    bool usedByAnother = context.Products.Any(p => p.ImagePath == imageNameToDelete);
+                                    if (!usedByAnother)
+                                    {
+                                        string imgFullPath = Path.Combine(
+                                            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                            "VinceApp",
+                                            "Images",
+                                            imageNameToDelete
+                                        );
+
+                                        if (File.Exists(imgFullPath))
+                                        {
+                                            File.Delete(imgFullPath);
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                // لا نكسر الحذف لو فشل حذف الملف
+                                Log.Error(ex, "error deleting product image file");
+                            }
 
                             LoadData();
                             ClearFields();

@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32; // للتعامل مع SaveFileDialog
+﻿using AutoUpdaterDotNET;
+using Microsoft.Win32; // للتعامل مع SaveFileDialog
 using Serilog;
 using System;
 using System.Drawing.Printing; // لجلب الطابعات
@@ -18,19 +19,31 @@ namespace VinceApp.Pages
     public partial class SettingsPage : Page
     {
         private readonly string _jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
-        public event Action<string,string> OnNotificationReqested;
+        public event Action<string, string> OnNotificationReqested;
+
         public SettingsPage()
         {
             InitializeComponent();
+
+            // ✅ عرض الإصدار الحالي (إذا عندك txtCurrentVersion)
+            try
+            {
+                if (txtCurrentVersion != null)
+                    txtCurrentVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "—";
+            }
+            catch { }
+
             LoadAllSettings();
             ApplyPermissions();
+
+            // ✅ تطبيق حالة الأصوات فور فتح الصفحة
+            ApplySoundSetting(chkdisableSounds?.IsChecked == true);
         }
 
         private void LoadAllSettings()
         {
             try
             {
-                
                 cmbPrinters.Items.Clear();
                 foreach (string printer in PrinterSettings.InstalledPrinters)
                 {
@@ -59,6 +72,17 @@ namespace VinceApp.Pages
                             txtReceiptFooter.Text = settings.ReceiptFooter;
                             chkAutoPrint.IsChecked = settings.PrintReceiptAfterSave;
 
+                            // ✅ الأصوات (لازم تكون عندك خاصية بالـ AppSetting اسمها DisableSounds)
+                            // ملاحظة: إذا الخاصية غير موجودة في AppSetting أضفها: public bool DisableSounds {get;set;}
+                            try
+                            {
+                                chkdisableSounds.IsChecked = settings.DisableSounds;
+                            }
+                            catch
+                            {
+                                // إذا ما عندك الحقل بعد، تجاهل بدون كسر الصفحة
+                            }
+
                             if (!string.IsNullOrEmpty(settings.PrinterName))
                             {
                                 cmbPrinters.SelectedItem = settings.PrinterName;
@@ -66,6 +90,9 @@ namespace VinceApp.Pages
                         }
                     }
                 }
+
+                // ✅ طبّق مباشرة بعد التحميل
+                ApplySoundSetting(chkdisableSounds?.IsChecked == true);
             }
             catch (Exception ex)
             {
@@ -76,7 +103,7 @@ namespace VinceApp.Pages
 
         private void ApplyPermissions()
         {
-            if(CurrentUser.Role == (int)UserRole.Cashier)
+            if (CurrentUser.Role == (int)UserRole.Cashier)
             {
                 tabctrlBackup.IsEnabled = false;
                 TabctrlStore.Focus();
@@ -86,10 +113,8 @@ namespace VinceApp.Pages
             {
                 tabctrlBackup.IsEnabled = false;
                 TabctrlStore.Focus();
-                
             }
         }
-        
 
         // --- زر حفظ إعدادات البريد ---
         private void SaveMail_Click(object sender, RoutedEventArgs e)
@@ -132,13 +157,26 @@ namespace VinceApp.Pages
                         settings.ReceiptFooter = txtReceiptFooter.Text;
                         settings.PrintReceiptAfterSave = chkAutoPrint.IsChecked == true;
 
+                        // ✅ حفظ خيار تعطيل الأصوات (يتطلب وجود DisableSounds في AppSetting)
+                        try
+                        {
+                            settings.DisableSounds = chkdisableSounds.IsChecked == true;
+                        }
+                        catch
+                        {
+                            // إذا الخاصية غير موجودة بعد، تجاهل حتى لا ينكسر الحفظ
+                        }
+
                         if (cmbPrinters.SelectedItem != null)
                             settings.PrinterName = cmbPrinters.SelectedItem.ToString();
                     }
 
                     context.SaveChanges();
 
-                    OnNotificationReqested?.Invoke("تم الحفظ","تم حفظ الإعدادات بنجاح");
+                    // ✅ طبّق حالة الأصوات فور الحفظ
+                    ApplySoundSetting(chkdisableSounds?.IsChecked == true);
+
+                    OnNotificationReqested?.Invoke("تم الحفظ", "تم حفظ الإعدادات بنجاح");
                 }
             }
             catch (Exception ex)
@@ -147,6 +185,64 @@ namespace VinceApp.Pages
                 MessageBox.Show($"خطأ: {ex.Message}");
             }
         }
+
+        // ✅ تطبيق خيار الأصوات على مستوى التطبيق
+        // ملاحظة: هذا لن يُسكت الأصوات تلقائياً إلا إذا كان تشغيل الأصوات عندك يمر عبر هذا الفلاغ
+        // الأفضل: قبل أي SoundPlayer.Play() أو MediaPlayer.Play() افحص هذا الفلاغ.
+        private void ApplySoundSetting(bool disableSounds)
+        {
+            try
+            {
+                // نخزنها بشكل عام داخل التطبيق
+                Application.Current.Properties["DisableSounds"] = disableSounds;
+
+                // لو عندك خدمة أصوات جاهزة بالمشروع، حط استدعاءها هنا بدون ما تغيّر بقية الكود
+                // مثال (إذا موجود عندك):
+                // SoundService.Enabled = !disableSounds;
+
+                if (txtUpdateStatus != null)
+                {
+                    // لا نغيّر تصميمك، فقط حالة بسيطة اختيارية
+                    // txtUpdateStatus.Text = disableSounds ? "الأصوات: متوقفة" : "الأصوات: مفعّلة";
+                }
+            }
+            catch { }
+        }
+
+        // ✅ حدث (اختياري) إذا تحب تطبيق الإيقاف فوراً عند تغيير الـ CheckBox بدون انتظار حفظ
+        private void chkdisableSounds_Checked(object sender, RoutedEventArgs e)
+        {
+            ApplySoundSetting(true);
+        }
+        private void chkdisableSounds_Unchecked(object sender, RoutedEventArgs e)
+        {
+            ApplySoundSetting(false);
+        }
+
+        // ✅ زر التحقق من تحديث (إذا أضفته بالـ XAML)
+        private void CheckUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/update.xml");
+            try
+            {
+                if (txtUpdateStatus != null)
+                    txtUpdateStatus.Text = "جاري التحقق من وجود تحديثات...";
+
+                // هنا اربط نظام التحديث عندك
+                // مثال: AutoUpdater.Start("https://.../update.xml");
+
+                if (txtUpdateStatus != null)
+                    txtUpdateStatus.Text = "تم بدء التحقق من التحديث.";
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "error with update check");
+                if (txtUpdateStatus != null)
+                    txtUpdateStatus.Text = "فشل التحقق من التحديث.";
+            }
+        }
+
         // --- زر استعادة النسخة الاحتياطية ---
         private async Task Restore_Click2(object sender, RoutedEventArgs e)
         {
@@ -185,7 +281,6 @@ namespace VinceApp.Pages
                     {
                         Log.Error(ex, "error with Settings page - restore database");
                         ToastControl.Show("خطأ", "فشلت عملية الاستعادة.", ToastControl.NotificationType.Error);
-                        
                     }
                     finally
                     {
@@ -194,6 +289,7 @@ namespace VinceApp.Pages
                 }
             }
         }
+
         // --- زر النسخ الاحتياطي ---
         private void Backup_Click(object sender, RoutedEventArgs e)
         {
@@ -219,7 +315,7 @@ namespace VinceApp.Pages
 
         private void Restore_Click(object sender, RoutedEventArgs e)
         {
-           Restore_Click2(sender, e);
+            Restore_Click2(sender, e);
         }
     }
 }

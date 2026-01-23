@@ -1,7 +1,7 @@
 ﻿<Window x:Class="VinceKitchen.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="إعدادات الاتصال" Height="500" Width="450"
+        Title="إعدادات الاتصال" Height="500" Width="470"
         WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         Background="#212121" FlowDirection="RightToLeft">
 
@@ -132,6 +132,24 @@
 
                     <Button Content="حفظ الإعدادات" Width="150" Height="45" Background="#4CAF50" Foreground="White" 
                             BorderThickness="0" FontSize="16" FontWeight="Bold" Click="SaveButton_Click" Margin="0,0,10,0">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="brd" Background="{TemplateBinding Background}" CornerRadius="6">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="brd" Property="Background" Value="#43A047"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="brd" Property="Background" Value="#2E7D32"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button Content="بحث عن تحديث" Width="150" Height="45" Background="#4CAF50" Foreground="White" 
+        BorderThickness="0" FontSize="16" FontWeight="Bold" Click="update_Click" Margin="0,0,10,0">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="brd" Background="{TemplateBinding Background}" CornerRadius="6">

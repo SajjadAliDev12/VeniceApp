@@ -1,15 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoUpdaterDotNET;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using VinceApp.Data;
-
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace VinceKitchen
 {
@@ -17,6 +20,13 @@ namespace VinceKitchen
     {
         private DispatcherTimer _timer;
         private bool _isBusy = false;
+
+        // ✅ نفس مكان حفظ الإعدادات في SettingsWindow
+        private static readonly string AppDataDir =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VinceKitchen");
+
+        private static readonly string ConfigFilePath =
+            Path.Combine(AppDataDir, "appsettings.user.json");
 
         public MainWindow()
         {
@@ -27,9 +37,49 @@ namespace VinceKitchen
             _timer.Tick += async (s, e) => await LoadKitchenOrders();
             _timer.Start();
 
-            
-
             _ = LoadKitchenOrders();
+        }
+
+        // ✅ قراءة ConnectionString من appsettings.user.json (إن وجد)
+        private static string? TryGetUserConnectionString()
+        {
+            try
+            {
+                if (!File.Exists(ConfigFilePath)) return null;
+
+                string json = File.ReadAllText(ConfigFilePath);
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("ConnectionStrings", out var csNode) &&
+                    csNode.TryGetProperty("DefaultConnection", out var connNode))
+                {
+                    var conn = connNode.GetString();
+                    return string.IsNullOrWhiteSpace(conn) ? null : conn;
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to read kitchen user settings (appsettings.user.json)");
+                return null;
+            }
+        }
+
+        // ✅ إنشاء DbContext حسب الإعدادات (بدون كسر المنطق الحالي)
+        private static VinceSweetsDbContext CreateDbContext()
+        {
+            var userConn = TryGetUserConnectionString();
+
+            if (!string.IsNullOrWhiteSpace(userConn))
+            {
+                var optionsBuilder = new DbContextOptionsBuilder<VinceSweetsDbContext>();
+                optionsBuilder.UseSqlServer(userConn);
+                return new VinceSweetsDbContext(optionsBuilder.Options);
+            }
+
+            // fallback: الإعدادات الافتراضية كما كانت
+            return new VinceSweetsDbContext();
         }
 
         private async Task LoadKitchenOrders()
@@ -39,27 +89,20 @@ namespace VinceKitchen
 
             try
             {
-                // نستخدم Task.Run لضمان أن عملية الاتصال بالكامل تتم في الخلفية
-                // ولا تلمس واجهة المستخدم إلا عندما تجهز البيانات تماماً
                 var displayList = await Task.Run(async () =>
                 {
-                    using (var context = new VinceSweetsDbContext())
+                    using (var context = CreateDbContext())
                     {
-                        
                         var tables = await context.RestaurantTables.ToListAsync();
 
-                        // 2. جلب الطلبات (بشكل غير متزامن)
                         var activeOrders = await context.Orders
                             .Include(o => o.OrderDetails)
                             .ThenInclude(d => d.Product)
                             .Where(o => (o.isPaid || o.isSentToKitchen)
-            && o.OrderDetails.Any(d => d.Product.IsKitchenItem == true && !d.IsServed && !d.isDeleted))
-
+                                && o.OrderDetails.Any(d => d.Product.IsKitchenItem == true && !d.IsServed && !d.isDeleted))
                             .OrderBy(o => o.OrderDate)
                             .ToListAsync();
 
-                        // 3. تجهيز القائمة في الذاكرة (RAM)
-                        // هذه العملية سريعة جداً ولا تحتاج اتصال
                         var list = new List<KitchenOrderViewModel>();
 
                         foreach (var order in activeOrders)
@@ -75,12 +118,11 @@ namespace VinceKitchen
 
                             if (pendingItems.Any())
                             {
-                                // البحث عن اسم الطاولة من القائمة المحملة مسبقاً (في الذاكرة)
-                                // بدلاً من الاتصال بالداتا بيس (Find)
                                 var tableObj = tables.FirstOrDefault(t => t.Id == order.TableId);
                                 string tableName = tableObj != null ? $"طاولة {tableObj.TableNumber}" : "📦 سفري";
                                 if (order.ParentOrderId != null)
                                     tableName += " - ملحق";
+
                                 list.Add(new KitchenOrderViewModel
                                 {
                                     OrderId = order.Id,
@@ -90,11 +132,11 @@ namespace VinceKitchen
                                 });
                             }
                         }
+
                         return list;
                     }
                 });
 
-                // 4. الآن فقط نعود للواجهة الرئيسية لتحديث الشاشة
                 OrdersList.ItemsSource = displayList;
 
                 if (StatusBorder != null) StatusBorder.Background = Brushes.LimeGreen;
@@ -105,7 +147,6 @@ namespace VinceKitchen
                 if (StatusBorder != null)
                 {
                     StatusBorder.Background = Brushes.Red;
-                    
                 }
             }
             finally
@@ -122,30 +163,13 @@ namespace VinceKitchen
                 MessageBoxButton.OKCancel,
                 MessageBoxImage.Information) == MessageBoxResult.OK)
             {
-                // وضعنا زر "جاهز" أيضاً داخل Task.Run لنضمن عدم تجميد الشاشة أثناء الحفظ
-                await Task.Run(async () =>
-                {
-                    try
-                    {
-                        if (sender is Button btn || (sender is FrameworkElement fe && fe.Tag is int))
-                        {
-                            // التقاط الـ ID يحتاج لتمرير آمن، لكن بما أن sender عنصر UI
-                            // علينا الحذر. الأفضل تمرير الـ ID للدالة، لكن للتبسيط سنقوم بالعملية داخل الـ Dispatcher للجزء الخاص بالـ UI
-                            // ثم الحفظ في الخلفية.
-                        }
-                    }
-                    catch { /* تجاهل */ }
-                });
-
-                // الطريقة الأبسط والأكثر أماناً لزر "جاهز" (بدون تعقيد Task.Run الزائد للعناصر UI):
-                // نستخدم المنطق السابق مع التأكد من الـ Async
                 try
                 {
                     if (sender is Button btn && btn.Tag is int orderId)
                     {
                         bool success = await Task.Run(async () =>
                         {
-                            using (var context = new VinceSweetsDbContext())
+                            using (var context = CreateDbContext())
                             {
                                 var order = await context.Orders
                                     .Include(o => o.OrderDetails)
@@ -162,10 +186,12 @@ namespace VinceKitchen
                                     {
                                         item.IsServed = true;
                                     }
+
                                     order.isReady = true;
                                     await context.SaveChangesAsync();
                                     return true;
                                 }
+
                                 return false;
                             }
                         });
@@ -176,13 +202,11 @@ namespace VinceKitchen
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    Log.Error(ex, "OrderDone_Click error");
                     MessageBox.Show("فشل الاتصال بالسيرفر.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    if (StatusBorder != null) { StatusBorder.Background = Brushes.Red;
-                        
-                    }
+                    if (StatusBorder != null) StatusBorder.Background = Brushes.Red;
                 }
             }
         }
@@ -195,12 +219,17 @@ namespace VinceKitchen
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             SettingsWindow settingsWin = new SettingsWindow();
-            settingsWin.Owner = this; // لجعل النافذة تابعة للشاشة الرئيسية
-            settingsWin.ShowDialog(); // يفتحها كـ Modal (يمنع استخدام الخلفية حتى تغلق هذه)
+            settingsWin.Owner = this;
+            settingsWin.ShowDialog();
+        }
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/KitchenUpdate.xml");
         }
     }
 
-    // ViewModels (كما هي)
     public class KitchenOrderViewModel
     {
         public int OrderId { get; set; }

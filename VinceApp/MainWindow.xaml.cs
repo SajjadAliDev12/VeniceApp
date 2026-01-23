@@ -75,16 +75,20 @@ namespace VinceApp
         public MainWindow(int orderId, int? tableId, string? TableName, int? _ParentOrderId = null)
 
         {
-            string soundFile = FIlePathFinder.GetPath("Windows Navigation Start.wav");
+            
             InitializeComponent();
-            if (System.IO.File.Exists(soundFile))
+            if (Application.Current.Properties["DisableSounds"] as bool? != true)
             {
-                using (var player = new System.Media.SoundPlayer(soundFile))
+                string soundFile = FIlePathFinder.GetPath("Windows Navigation Start.wav");
+                if (System.IO.File.Exists(soundFile))
                 {
-                    player.Play();
+                    using (var player = new System.Media.SoundPlayer(soundFile))
+                    {
+                        player.Play();
+                    }
                 }
             }
-            _currentOrderId = orderId;
+                _currentOrderId = orderId;
 
             _currentTableId = tableId;
 

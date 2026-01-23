@@ -27,24 +27,26 @@ namespace VinceApp
         {
             
             string soundFile = "";
-
-            switch (type)
+            if (Application.Current.Properties["DisableSounds"] as bool? != true)
             {
-                case NotificationType.Success:
-                    // صوت لطيف للنجاح (موجود في أغلب نسخ ويندوز)
-                    soundFile = FIlePathFinder.GetPath("Windows Notify.wav");
-                    break;
-                case NotificationType.Error:
-                    // صوت خطأ قوي
-                    soundFile = FIlePathFinder.GetPath("Windows Pop-up Blocked.wav");
-                    break;
-                case NotificationType.Warning:
-                    // صوت تنبيه
-                    soundFile = FIlePathFinder.GetPath("Windows Unlock.wav");
-                    break;
-                default:
-                    soundFile = FIlePathFinder.GetPath("Windows Notify.wav"); 
-                    break;
+                switch (type)
+                {
+                    case NotificationType.Success:
+                        // صوت لطيف للنجاح (موجود في أغلب نسخ ويندوز)
+                        soundFile = FIlePathFinder.GetPath("Windows Notify.wav");
+                        break;
+                    case NotificationType.Error:
+                        // صوت خطأ قوي
+                        soundFile = FIlePathFinder.GetPath("Windows Pop-up Blocked.wav");
+                        break;
+                    case NotificationType.Warning:
+                        // صوت تنبيه
+                        soundFile = FIlePathFinder.GetPath("Windows Unlock.wav");
+                        break;
+                    default:
+                        soundFile = FIlePathFinder.GetPath("Windows Notify.wav");
+                        break;
+                }
             }
 
             // تشغيل الصوت في الخلفية (Async) حتى لا يجمد الشاشة

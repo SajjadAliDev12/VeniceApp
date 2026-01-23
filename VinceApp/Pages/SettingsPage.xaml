@@ -25,8 +25,8 @@
                     <StackPanel Margin="10">
                         <GroupBox Header="إدارة البيانات والنسخ الاحتياطي" Margin="0,0,0,15" Padding="10">
                             <StackPanel>
-                                <TextBlock Text="تحذير: استعادة نسخة سابقة سيقوم بمسح كافة البيانات الحالية واستبدالها." 
-                   Foreground="Red" FontSize="11" Margin="0,0,0,10"/>
+                                <TextBlock Text="تحذير: استعادة نسخة سابقة سيقوم بمسح كافة البيانات الحالية واستبدالها."
+                                           Foreground="Red" FontSize="11" Margin="0,0,0,10"/>
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -34,12 +34,13 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Button Content="📥 إنشاء نسخة احتياطية (Backup)" 
-                    Background="#009688" Foreground="White" Height="40" Margin="0,0,5,0" 
-                    Click="Backup_Click"/>
+                                    <Button Content="📥 إنشاء نسخة احتياطية (Backup)"
+                                            Background="#009688" Foreground="White" Height="40" Margin="0,0,5,0"
+                                            Click="Backup_Click"/>
 
-                                    <Button Grid.Column="1" Content="📤 استعادة نسخة سابقة (Restore)" 
-                    Background="#F44336" Foreground="White" Height="40" Margin="5,0,0,0" Click="Restore_Click"/>
+                                    <Button Grid.Column="1" Content="📤 استعادة نسخة سابقة (Restore)"
+                                            Background="#F44336" Foreground="White" Height="40" Margin="5,0,0,0"
+                                            Click="Restore_Click"/>
                                 </Grid>
                             </StackPanel>
                         </GroupBox>
@@ -51,10 +52,12 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
+
                                     <StackPanel Margin="0,0,5,0">
                                         <TextBlock Text="خادم البريد (Host):" Foreground="Gray"/>
                                         <TextBox x:Name="txtSmtpServer" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
                                     </StackPanel>
+
                                     <StackPanel Grid.Column="1" Margin="5,0,0,0">
                                         <TextBlock Text="البورت (Port):" Foreground="Gray"/>
                                         <TextBox x:Name="txtPort" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
@@ -67,7 +70,8 @@
                                 <TextBlock Text="رمز التطبيق (App Password):" Foreground="Gray"/>
                                 <PasswordBox x:Name="txtSenderPass" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
 
-                                <Button Content="حفظ إعدادات البريد" Background="#2196F3" Foreground="White" Height="35" Click="SaveMail_Click"/>
+                                <Button Content="حفظ إعدادات البريد" Background="#2196F3" Foreground="White" Height="35"
+                                        Click="SaveMail_Click"/>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
@@ -93,14 +97,52 @@
                             </StackPanel>
                         </GroupBox>
 
+                        <!-- ✅ تحديثات النظام (بحث عن تحديث) -->
+                        <GroupBox Header="التحديثات" Padding="10" Margin="0,0,0,15">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel>
+                                        <TextBlock Text="الإصدار الحالي:" Foreground="Gray"/>
+                                        <TextBlock x:Name="txtCurrentVersion"
+                                                   Text="1.0.0"
+                                                   FontWeight="Bold"
+                                                   Margin="0,5,0,0"
+                                                   FlowDirection="LeftToRight"/>
+
+                                        <TextBlock x:Name="txtUpdateStatus"
+                                                   Text=" "
+                                                   Foreground="Gray"
+                                                   FontSize="11"
+                                                   Margin="0,8,0,0"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1"
+                                            Content="🔎 التحقق من تحديث"
+                                            Background="#FF9800"
+                                            Foreground="White"
+                                            Height="38"
+                                            Padding="15,0"
+                                            Margin="10,0,0,0"
+                                            Click="CheckUpdate_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
                         <GroupBox Header="إعدادات الطباعة" Padding="10">
                             <StackPanel>
                                 <TextBlock Text="الطابعة الافتراضية للفواتير:" Foreground="Gray"/>
                                 <ComboBox x:Name="cmbPrinters" Height="35" Margin="0,5,0,10"/>
 
                                 <CheckBox x:Name="chkAutoPrint" Content="طباعة الفاتورة تلقائياً بعد الحفظ" Margin="0,5"/>
-
-                                <Button Content="حفظ إعدادات المتجر" Background="#4CAF50" Foreground="White" Height="35" Margin="0,15,0,0" Click="SaveStore_Click"/>
+                                <CheckBox x:Name="chkdisableSounds" Content="الغاء تفعيل الاصوات" Margin="0,5"/>
+                                
+                                <Button Content="حفظ إعدادات المتجر" Background="#4CAF50" Foreground="White" Height="35"
+                                        Margin="0,15,0,0" Click="SaveStore_Click"/>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>

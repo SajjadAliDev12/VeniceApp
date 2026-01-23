@@ -1,9 +1,10 @@
-﻿using System;
+﻿using AutoUpdaterDotNET;
+using Serilog;
+using System;
+using System.Data.SqlClient;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
-using System.Data.SqlClient;
-using Serilog;
 
 namespace VinceKitchen
 {
@@ -72,7 +73,11 @@ namespace VinceKitchen
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
+        private void update_Click(object sender, EventArgs e)
+        {
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/KitchenUpdate.xml");
+        }
         private void LoadSettings()
         {
             try

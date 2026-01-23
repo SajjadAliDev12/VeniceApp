@@ -29,7 +29,7 @@ namespace VinceApp.Data.Models
 
         [MaxLength(500)]
         public string ReceiptFooter { get; set; } = "شكراً لزيارتكم"; // تذييل الفاتورة
-
+        public bool DisableSounds { get; set; } = false;
         public string PrinterName { get; set; } = "Default";// اسم الطابعة الافتراضية
 
         public bool PrintReceiptAfterSave { get; set; } = true;

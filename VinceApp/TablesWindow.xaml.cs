@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoUpdaterDotNET;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -516,6 +517,8 @@ namespace VinceApp
             if (_initialized) return;
             _initialized = true;
 
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/update.xml");
             try
             {
                 ShowLoading(true, "جاري تحميل الطاولات...");
