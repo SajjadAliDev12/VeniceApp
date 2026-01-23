@@ -5,3 +5,4 @@
 *.suo
 appsettings.json
 !appsettings.Development.json
+desktop.ini
