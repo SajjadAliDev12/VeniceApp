@@ -1,0 +1,6 @@
+<item>
+    <version>1.0.1.0</version> <url>https://github.com/SajjadAliDev12/VeniceApp/releases/download/v1.0.1/KitchenSetup.exe</url>
+    <changelog>https://github.com/SajjadAliDev12/VeniceApp/releases/tag/v1.0.1</changelog>
+    <mandatory>false</mandatory>
+    <installerArgs>/SILENT /SP-</installerArgs>
+</item>
