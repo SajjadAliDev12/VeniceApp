@@ -7,33 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>gondola.ico</ApplicationIcon>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <Version>1.0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="appsettings.json" />
-    <None Remove="Images\Brownie.jpeg" />
-    <None Remove="Images\CakeMix.jpeg" />
-    <None Remove="Images\Classic.webp" />
-    <None Remove="Images\default.jpg" />
-    <None Remove="Images\Espresso.jpg" />
-    <None Remove="Images\Esspresso.jpg" />
-    <None Remove="Images\FotshC.jpg" />
-    <None Remove="Images\icecream.jpg" />
-    <None Remove="Images\IceCreamChoclate.jpeg" />
-    <None Remove="Images\IceCreamMango.jpg" />
-    <None Remove="Images\IceCreamNuts.jpg" />
-    <None Remove="Images\Kinder.png" />
-    <None Remove="Images\Lutes.webp" />
-    <None Remove="Images\LutesC.webp" />
-    <None Remove="Images\MiniCake.jpg" />
-    <None Remove="Images\Mixed.jpg" />
-    <None Remove="Images\Nutella.jpg" />
-    <None Remove="Images\NutellaC.png" />
-    <None Remove="Images\Orange.jpg" />
-    <None Remove="Images\pista.webp" />
-    <None Remove="Images\Roll.png" />
-    <None Remove="Images\turkish.jpg" />
-    <None Remove="Images\Water.jpg" />
     <None Remove="Sounds\notify.wav" />
     <None Remove="Sounds\Windows Navigation Start.wav" />
     <None Remove="Sounds\Windows Notify.wav" />
@@ -55,72 +35,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="gondola.ico" />
-    <Content Include="Images\Brownie.jpeg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\CakeMix.jpeg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Classic.webp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\default.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Espresso.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\FotshC.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\icecream.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\IceCreamChoclate.jpeg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\IceCreamMango.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\IceCreamNuts.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Kinder.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Lutes.webp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\LutesC.webp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\MiniCake.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Mixed.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Nutella.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\NutellaC.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Orange.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\pista.webp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Roll.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\turkish.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Images\Water.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>

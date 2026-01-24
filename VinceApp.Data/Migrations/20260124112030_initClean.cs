@@ -25,6 +25,7 @@ namespace VinceApp.Data.Migrations
                     StorePhone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     StoreAddress = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     ReceiptFooter = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    DisableSounds = table.Column<bool>(type: "bit", nullable: false),
                     PrinterName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PrintReceiptAfterSave = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -202,8 +203,8 @@ namespace VinceApp.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppSettings",
-                columns: new[] { "Id", "Port", "PrintReceiptAfterSave", "PrinterName", "ReceiptFooter", "SenderEmail", "SenderPassword", "SmtpServer", "StoreAddress", "StoreName", "StorePhone" },
-                values: new object[] { 1, 587, true, "Default", "شكراً لزيارتكم", "", "", "smtp.gmail.com", "Address", "Vince Sweets", "0780000000" });
+                columns: new[] { "Id", "DisableSounds", "Port", "PrintReceiptAfterSave", "PrinterName", "ReceiptFooter", "SenderEmail", "SenderPassword", "SmtpServer", "StoreAddress", "StoreName", "StorePhone" },
+                values: new object[] { 1, false, 587, true, "Default", "شكراً لزيارتكم", "", "", "smtp.gmail.com", "Address", "Vince Sweets", "0780000000" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderDetails_OrderId",

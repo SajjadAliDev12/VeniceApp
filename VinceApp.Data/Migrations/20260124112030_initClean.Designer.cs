@@ -12,8 +12,8 @@ using VinceApp.Data;
 namespace VinceApp.Data.Migrations
 {
     [DbContext(typeof(VinceSweetsDbContext))]
-    [Migration("20260123164154_UpdateSounds")]
-    partial class UpdateSounds
+    [Migration("20260124112030_initClean")]
+    partial class initClean
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
