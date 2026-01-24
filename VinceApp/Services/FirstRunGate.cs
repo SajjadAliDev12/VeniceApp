@@ -10,20 +10,7 @@ namespace VinceApp.Services
         public static bool IsReady()
         {
             // 1) لازم التفعيل يكون true
-            if (!AppConfigService.GetActivatedFlag())
-                return false;
-
-            // 2) لازم نقدر نتصل بالقاعدة
-            try
-            {
-                using var ctx = new VinceSweetsDbContext();
-                return ctx.Database.CanConnect();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "FirstRunGate: DB connection failed");
-                return false;
-            }
+            return AppConfigService.GetActivatedFlag();
         }
 
         public static bool RunWizardIfNeeded()
