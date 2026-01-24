@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using VinceApp.Data;
@@ -10,6 +13,15 @@ namespace VinceApp
 {
     public partial class App : Application
     {
+        // ✅ Single Instance
+        private static Mutex? _singleInstanceMutex;
+
+        // ✅ اسم فريد للتطبيق (غيّره إذا تريد)
+        // Global: يمنع تعدد النسخ حتى لو تعددت Sessions على نفس الجهاز
+        // Local : يمنع تعدد النسخ لنفس المستخدم فقط
+        private const string MutexNameGlobal = @"Global\VenicePOS_SingleInstance_213C405F-29A4-469B-B7BA-0E3F07D6622A";
+        private const string MutexNameLocal = @"Local\VenicePOS_SingleInstance_213C405F-29A4-469B-B7BA-0E3F07D6622A";
+
         public App()
         {
             // إعداد نظام اللوج (Serilog)
@@ -23,6 +35,13 @@ namespace VinceApp
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            // ✅ 1) امنع فتح نسخة ثانية (قبل أي نافذة أو DB أو Wizard)
+            if (!EnsureSingleInstance())
+            {
+                Shutdown();
+                return;
+            }
+
             base.OnStartup(e);
 
             // معالجة الأخطاء العامة (Global Exception Handlers)
@@ -31,12 +50,15 @@ namespace VinceApp
 
             // عدم الإغلاق التلقائي حتى نحدد النافذة الرئيسية
             this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             if (!VinceApp.Services.FirstRunGate.RunWizardIfNeeded())
             {
                 Shutdown();
                 return;
             }
+
             InitializeDatabase();
+
             // 1. فتح نافذة تسجيل الدخول
             var loginWindow = new LoginWindow();
             bool? result = loginWindow.ShowDialog();
@@ -59,25 +81,93 @@ namespace VinceApp
                 Shutdown();
             }
         }
+
+        /// <summary>
+        /// ✅ يمنع تشغيل أكثر من نسخة
+        /// </summary>
+        private bool EnsureSingleInstance()
+        {
+            try
+            {
+                bool createdNew;
+                _singleInstanceMutex = new Mutex(true, MutexNameGlobal, out createdNew);
+
+                if (!createdNew)
+                {
+                    ActivateExistingInstance();
+                    return false;
+                }
+
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // أحياناً Global يحتاج صلاحيات على بعض الأجهزة/الإعدادات
+                // ✅ نعمل fallback إلى Local
+                bool createdNew;
+                _singleInstanceMutex = new Mutex(true, MutexNameLocal, out createdNew);
+
+                if (!createdNew)
+                {
+                    ActivateExistingInstance();
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to create Single Instance Mutex.");
+                // لو صار شيء غير متوقع، خلي التطبيق يكمل بدل ما يمنع التشغيل.
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// ✅ يجلب النسخة الأولى للأمام إذا حاول المستخدم فتح نسخة ثانية
+        /// </summary>
+        private void ActivateExistingInstance()
+        {
+            try
+            {
+                var current = Process.GetCurrentProcess();
+
+                var existing = Process.GetProcessesByName(current.ProcessName)
+                    .FirstOrDefault(p => p.Id != current.Id);
+
+                if (existing == null) return;
+
+                IntPtr hWnd = existing.MainWindowHandle;
+                if (hWnd == IntPtr.Zero) return;
+
+                // إذا كانت minimized رجعها
+                ShowWindow(hWnd, SW_RESTORE);
+
+                // اجعلها فوق
+                SetForegroundWindow(hWnd);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to activate existing instance.");
+            }
+        }
+
         private void InitializeDatabase()
         {
             try
             {
                 using var context = new VinceSweetsDbContext();
                 context.Database.Migrate(); // النسخة المتزامنة
-
-                // يمكنك استدعاء CleanupTablesAsync بشكل منفصل إذا أردت
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to migrate DB on startup");
-                MessageBox.Show("لا يمكن تشغيل البرنامج لعدم توفر قاعدة بيانات فعالة\nقد تكون قاعدة البيانات متوقفه مؤقتاً او غير فعالة حالياً","Error",MessageBoxButton.OK,MessageBoxImage.Warning);
+                MessageBox.Show("لا يمكن تشغيل البرنامج لعدم توفر قاعدة بيانات فعالة\nقد تكون قاعدة البيانات متوقفه مؤقتاً او غير فعالة حالياً",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 Shutdown();
             }
         }
-        /// <summary>
-        /// دالة غير متزامنة لتهيئة الداتا بيس وتنظيف الطاولات دون التأثير على الواجهة
-        /// </summary>
+
         private async Task InitializeDatabaseInBackgroundAsync()
         {
             try
@@ -85,11 +175,7 @@ namespace VinceApp
                 await Task.Run(async () =>
                 {
                     using var context = new VinceSweetsDbContext();
-
-                    // تطبيق التحديثات على قاعدة البيانات (Migration)
                     await context.Database.MigrateAsync();
-
-                    // تنظيف الطاولات والطلبات المعلقة
                     await CleanupTablesAsync(context);
                 });
             }
@@ -97,7 +183,6 @@ namespace VinceApp
             {
                 Log.Error(ex, "فشل في تهيئة قاعدة البيانات في الخلفية (Migrate/Cleanup)");
 
-                // تنبيه المستخدم (يجب استخدام Dispatcher لأننا في خيط خلفي)
                 Dispatcher.Invoke(() =>
                 {
                     MessageBox.Show(
@@ -110,14 +195,10 @@ namespace VinceApp
             }
         }
 
-        /// <summary>
-        /// تنظيف الطلبات القديمة وتصحيح حالات الطاولات العالقة
-        /// </summary>
         private async Task CleanupTablesAsync(VinceSweetsDbContext context)
         {
             try
             {
-                // 1. إغلاق الطلبات القديمة (من أيام سابقة) ولم تدفع
                 var oldOrders = await context.Orders
                     .Where(o => !o.isPaid && o.OrderDate.Value.Date < DateTime.Now.Date)
                     .ToListAsync();
@@ -126,35 +207,30 @@ namespace VinceApp
                 {
                     foreach (var order in oldOrders)
                     {
-                        order.isServed = true; // نعتبرها مُسلمة لإغلاقها منطقياً
+                        order.isServed = true;
 
                         if (order.TableId.HasValue)
                         {
                             var tableToFree = await context.RestaurantTables.FindAsync(order.TableId.Value);
                             if (tableToFree != null)
-                                tableToFree.Status = 0; // تحرير الطاولة
+                                tableToFree.Status = 0;
                         }
                     }
                 }
 
-                // 2. تصحيح حالات الطاولات "الوهمية" (التي تظهر مشغولة ولا يوجد طلب عليها اليوم)
                 var tables = await context.RestaurantTables.ToListAsync();
 
                 foreach (var table in tables)
                 {
-                    if (table.Status == 1) // إذا كانت مشغولة
+                    if (table.Status == 1)
                     {
-                        // نتأكد هل يوجد طلب حقيقي فعال لها اليوم؟
                         bool hasActiveOrder = await context.Orders.AnyAsync(o =>
                             o.TableId == table.Id &&
                             !o.isPaid &&
                             o.OrderDate.Value.Date == DateTime.Now.Date);
 
-                        // إذا لم يوجد طلب، نعيدها فارغة
                         if (!hasActiveOrder)
-                        {
                             table.Status = 0;
-                        }
                     }
                 }
 
@@ -162,7 +238,6 @@ namespace VinceApp
             }
             catch (Exception ex)
             {
-                // نسجل الخطأ ونعيد رميه ليتم التقاطه في الدالة الرئيسية
                 Log.Error(ex, "خطأ أثناء تنظيف الطاولات (CleanupTablesAsync)");
                 throw;
             }
@@ -173,7 +248,7 @@ namespace VinceApp
         private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             Log.Error(e.Exception, "Uncaught UI Exception");
-            e.Handled = true; // منع إغلاق البرنامج
+            e.Handled = true;
             MessageBox.Show("حدث خطأ غير متوقع، تم تسجيله في السجلات.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
@@ -185,8 +260,26 @@ namespace VinceApp
 
         protected override void OnExit(ExitEventArgs e)
         {
+            // ✅ حرّر الميوتكس
+            try
+            {
+                _singleInstanceMutex?.ReleaseMutex();
+                _singleInstanceMutex?.Dispose();
+            }
+            catch { /* ignore */ }
+
             Log.CloseAndFlush();
             base.OnExit(e);
         }
+
+        // ================= WinAPI =================
+
+        private const int SW_RESTORE = 9;
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
     }
 }
