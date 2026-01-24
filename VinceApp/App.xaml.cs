@@ -71,7 +71,7 @@ namespace VinceApp
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to migrate DB on startup");
-                MessageBox.Show("فشل في الاتصال بقاعدة البيانات.");
+                MessageBox.Show("لا يمكن تشغيل البرنامج لعدم توفر قاعدة بيانات فعالة\nقد تكون قاعدة البيانات متوقفه مؤقتاً او غير فعالة حالياً","Error",MessageBoxButton.OK,MessageBoxImage.Warning);
                 Shutdown();
             }
         }
