@@ -3,93 +3,302 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="إدارة المستخدمين" FlowDirection="RightToLeft" Background="White">
 
-    <Grid Margin="20">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="350"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <Page.Resources>
 
-        <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="10" Padding="15" Margin="0,0,20,0">
-            <StackPanel>
-                <TextBlock Text="بيانات المستخدم" FontSize="18" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
+        <!-- Shadow -->
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
 
-                <TextBlock Text="اسم المستخدم (يستخدم لتسجيل الدخول للنظام):" Foreground="Gray"/>
-                <TextBox x:Name="txtUsername" Height="35" FontSize="14" Padding="5" Margin="0,0,0,10"/>
-                <TextBlock Text="الاسم الكامل (كما سيظهر في الفاتورة):" Foreground="Gray"/>
-                <TextBox x:Name="txtFullName" Height="35" FontSize="14" Padding="5" Margin="0,0,0,10"/>
-                <TextBlock Text="نوع الصلاحية:" Foreground="Gray"/>
-                <ComboBox x:Name="cmbRole" Height="35" FontSize="14" Margin="0,0,0,10">
-                </ComboBox>
+        <!-- Theme -->
+        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#2E2A27"/>
 
-                <Separator Margin="0,10"/>
+        <!-- Section title -->
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#7A726C"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
 
-                <TextBlock Text="كلمة المرور:" Foreground="Gray"/>
-                <PasswordBox x:Name="txtPassword" Height="35" FontSize="14" Padding="5" Margin="0,0,0,5"/>
-                <TextBlock Text="* اتركها فارغة عند التعديل للإبقاء على القديمة" FontSize="10" Foreground="Red" Margin="0,0,0,10"/>
+        <!-- Input TextBox -->
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                <Separator Margin="0,10"/>
+        <!-- PasswordBox -->
+        <Style x:Key="InputPasswordStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                <TextBlock Text="عنوان البريد الالكتروني :" Foreground="Gray"/>
-                <TextBox x:Name="txtEmail" Height="35" FontSize="14" Padding="5" Margin="0,0,0,10"/>
+        <!-- ComboBox -->
+        <Style x:Key="InputComboStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
 
-                
+        <!-- Touch button -->
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="18,8"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                            </Border.Effect>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Content="💾 حفظ" Width="100" Height="40" Background="#4CAF50" Foreground="White" FontWeight="Bold" Margin="5" Click="Save_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                    <Button Content="إلغاء" Width="100" Height="40" Background="#E0E0E0" Foreground="#333" Margin="5" Click="Button_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Small grid action buttons -->
+        <Style x:Key="GridActionButtonStyle" TargetType="Button" BasedOn="{StaticResource TouchButtonStyle}">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Width" Value="92"/>
+        </Style>
+
+        <!-- DataGrid -->
+        <Style x:Key="BaseDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="RowHeight" Value="46"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAF8F6"/>
+        </Style>
+
+        <Style x:Key="BaseHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#2F2B29"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style x:Key="BaseRowStyle" TargetType="DataGridRow">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFF3E0"/>
+                    <Setter Property="Foreground" Value="#2E2A27"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Page.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="22">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left form card -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="16"
+                    Margin="0,0,14,0"
+                    Effect="{StaticResource CardShadow}">
+
+                <StackPanel>
+                    <TextBlock Text="بيانات المستخدم"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextDark}"
+                               Margin="0,0,0,14"/>
+
+                    <TextBlock Text="اسم المستخدم (يستخدم لتسجيل الدخول للنظام):" Style="{StaticResource SectionTitleStyle}"/>
+                    <TextBox x:Name="txtUsername" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="الاسم الكامل (كما سيظهر في الفاتورة):" Style="{StaticResource SectionTitleStyle}"/>
+                    <TextBox x:Name="txtFullName" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12"/>
+
+                    <TextBlock Text="نوع الصلاحية:" Style="{StaticResource SectionTitleStyle}"/>
+                    <ComboBox x:Name="cmbRole" Style="{StaticResource InputComboStyle}" Margin="0,0,0,14"/>
+
+                    <Separator Margin="0,6,0,14" Background="{StaticResource BorderSoft}"/>
+
+                    <TextBlock Text="كلمة المرور:" Style="{StaticResource SectionTitleStyle}"/>
+                    <PasswordBox x:Name="txtPassword" Style="{StaticResource InputPasswordStyle}" Margin="0,0,0,10"/>
+
+                    <!-- softer hint (still red-ish but not screaming) -->
+                    <Border Background="#FFF3E0"
+                            BorderBrush="#FFCC80"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="10"
+                            Margin="0,0,0,14">
+                        <TextBlock Text="* اتركها فارغة عند التعديل للإبقاء على القديمة"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="#E65100"/>
+                    </Border>
+
+                    <Separator Margin="0,6,0,14" Background="{StaticResource BorderSoft}"/>
+
+                    <TextBlock Text="عنوان البريد الالكتروني :" Style="{StaticResource SectionTitleStyle}"/>
+                    <TextBox x:Name="txtEmail" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,16"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="💾 حفظ"
+                                Width="140"
+                                Background="#2E7D32"
+                                Style="{StaticResource TouchButtonStyle}"
+                                Margin="6,0"
+                                Click="Save_Click"/>
+
+                        <Button Content="إلغاء"
+                                Width="140"
+                                Background="#ECE7E2"
+                                Foreground="#4A4440"
+                                Style="{StaticResource TouchButtonStyle}"
+                                Margin="6,0"
+                                Click="Button_Click"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
-        </Border>
+            </Border>
 
-        <DataGrid x:Name="dgUsers" Grid.Column="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column" Background="White" RowHeight="40">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="الرقم" Binding="{Binding Id}" Width="60"/>
-                <DataGridTextColumn Header="اسم المستخدم" Binding="{Binding Username}" Width="*" FontWeight="Bold"/>
-                <DataGridTextColumn Header="الصلاحية" Binding="{Binding Role}" Width="100"/>
+            <!-- Right grid card -->
+            <Border Grid.Column="1"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="10"
+                    Effect="{StaticResource CardShadow}">
 
-                <DataGridTemplateColumn Header="العمليات" Width="160">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Content="✏️ تعديل" Width="70" Height="30" Background="#2196F3" Foreground="White" Margin="2" Click="Edit_Click" Tag="{Binding Id}">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                                <Button Content="🗑️ حذف" Width="70" Height="30" Background="#F44336" Foreground="White" Margin="2" Click="Delete_Click" Tag="{Binding Id}">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                <DataGrid x:Name="dgUsers"
+                          Style="{StaticResource BaseDataGridStyle}"
+                          ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                          RowStyle="{StaticResource BaseRowStyle}">
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="الرقم" Binding="{Binding Id}" Width="90"/>
+                        <DataGridTextColumn Header="اسم المستخدم" Binding="{Binding Username}" Width="*" FontWeight="Bold"/>
+                        <DataGridTextColumn Header="الصلاحية" Binding="{Binding Role}" Width="140"/>
+
+                        <DataGridTemplateColumn Header="العمليات" Width="220">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="✏️ تعديل"
+                                                Background="#1976D2"
+                                                Style="{StaticResource GridActionButtonStyle}"
+                                                Margin="4,0"
+                                                Click="Edit_Click"
+                                                Tag="{Binding Id}"/>
+
+                                        <Button Content="🗑️ حذف"
+                                                Background="#D32F2F"
+                                                Style="{StaticResource GridActionButtonStyle}"
+                                                Margin="4,0"
+                                                Click="Delete_Click"
+                                                Tag="{Binding Id}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+
+                </DataGrid>
+            </Border>
+
+        </Grid>
     </Grid>
 </Page>

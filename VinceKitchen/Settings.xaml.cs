@@ -20,6 +20,8 @@ namespace VinceKitchen
         {
             InitializeComponent();
             LoadSettings();
+            txtCurrentVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
+
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
@@ -73,10 +75,39 @@ namespace VinceKitchen
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        private void update_Click(object sender, EventArgs e)
+        private void update_Click(object sender, RoutedEventArgs e)
         {
             AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.CheckForUpdateEvent -= AutoUpdaterOnCheckForUpdateEvent;
+            AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
+
             AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/KitchenUpdate.xml");
+        }
+
+        private void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
+        {
+            if (args.Error == null)
+            {
+                if (args.IsUpdateAvailable)
+                {
+                    try
+                    {
+                        AutoUpdater.ShowUpdateForm(args);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "خطأ في التحديث", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("أنت تستخدم أحدث إصدار حالياً.", "معلومات", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            else
+            {
+                MessageBox.Show("حدث مشكلة أثناء البحث عن التحديثات، تأكد من الاتصال بالانترنت.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         private void LoadSettings()
         {

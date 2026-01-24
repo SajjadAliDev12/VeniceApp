@@ -3,152 +3,431 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="الإعدادات" FlowDirection="RightToLeft" Background="White">
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Page.Resources>
 
-        <TextBlock Text="⚙️ إعدادات النظام" FontSize="24" FontWeight="Bold" Foreground="#5D4037" Margin="0,0,0,20"/>
+        <!-- Shadow -->
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
 
-        <TabControl Grid.Row="1" BorderThickness="0" Background="Transparent">
-            <TabControl.Resources>
-                <Style TargetType="TabItem">
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="Padding" Value="15,10"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                </Style>
-            </TabControl.Resources>
+        <!-- Theme -->
+        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#2E2A27"/>
 
-            <TabItem Name="tabctrlBackup" Header="النسخ الاحتياطي والأستعادة">
-                <ScrollViewer>
-                    <StackPanel Margin="10">
-                        <GroupBox Header="إدارة البيانات والنسخ الاحتياطي" Margin="0,0,0,15" Padding="10">
-                            <StackPanel>
-                                <TextBlock Text="تحذير: استعادة نسخة سابقة سيقوم بمسح كافة البيانات الحالية واستبدالها."
-                                           Foreground="Red" FontSize="11" Margin="0,0,0,10"/>
+        <!-- Section title -->
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#7A726C"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
 
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+        <!-- Input TextBox -->
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                                    <Button Content="📥 إنشاء نسخة احتياطية (Backup)"
-                                            Background="#009688" Foreground="White" Height="40" Margin="0,0,5,0"
-                                            Click="Backup_Click"/>
+        <!-- PasswordBox -->
+        <Style x:Key="InputPasswordStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                                    <Button Grid.Column="1" Content="📤 استعادة نسخة سابقة (Restore)"
-                                            Background="#F44336" Foreground="White" Height="40" Margin="5,0,0,0"
-                                            Click="Restore_Click"/>
-                                </Grid>
-                            </StackPanel>
-                        </GroupBox>
+        <!-- ComboBox -->
+        <Style x:Key="InputComboStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
 
-                        <GroupBox Header="إعدادات البريد (SMTP)" Padding="10">
-                            <StackPanel>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+        <!-- Touch Button -->
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="18,8"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                            </Border.Effect>
 
-                                    <StackPanel Margin="0,0,5,0">
-                                        <TextBlock Text="خادم البريد (Host):" Foreground="Gray"/>
-                                        <TextBox x:Name="txtSmtpServer" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
-                                    </StackPanel>
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
 
-                                    <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                        <TextBlock Text="البورت (Port):" Foreground="Gray"/>
-                                        <TextBox x:Name="txtPort" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
-                                    </StackPanel>
-                                </Grid>
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
 
-                                <TextBlock Text="بريد المرسل (Email):" Foreground="Gray"/>
-                                <TextBox x:Name="txtSenderEmail" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                                <TextBlock Text="رمز التطبيق (App Password):" Foreground="Gray"/>
-                                <PasswordBox x:Name="txtSenderPass" Height="30" Margin="0,5,0,10" FlowDirection="LeftToRight"/>
+        <!-- Soft Card (instead of GroupBox) -->
+        <Style x:Key="CardGroupStyle" TargetType="GroupBox">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GroupBox">
+                        <Border Background="{StaticResource CardBrush}"
+                                CornerRadius="16"
+                                BorderBrush="{StaticResource BorderSoft}"
+                                BorderThickness="1"
+                                Padding="16"
+                                Margin="0,0,0,14"
+                                Effect="{StaticResource CardShadow}">
+                            <DockPanel>
+                                <!-- Header -->
+                                <TextBlock DockPanel.Dock="Top"
+                                           Text="{TemplateBinding Header}"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource TextDark}"
+                                           Margin="0,0,0,12"/>
+                                <!-- Content -->
+                                <ContentPresenter/>
+                            </DockPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                                <Button Content="حفظ إعدادات البريد" Background="#2196F3" Foreground="White" Height="35"
-                                        Click="SaveMail_Click"/>
-                            </StackPanel>
-                        </GroupBox>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
+        <!-- Tabs -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="{x:Null}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
 
-            <TabItem Name="TabctrlStore" Header="إعدادات المتجر والفواتير">
-                <ScrollViewer>
-                    <StackPanel Margin="10">
-                        <GroupBox x:Name="grbxInfo" Header="بيانات المتجر (تظهر في الفاتورة)" Padding="10" Margin="0,0,0,15">
-                            <StackPanel>
-                                <TextBlock Text="اسم المتجر:" Foreground="Gray"/>
-                                <TextBox x:Name="txtStoreName" Height="30" Margin="0,5,0,10"/>
+        <Style TargetType="TabItem">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#6F6761"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Grid>
+                            <Border x:Name="tabBorder"
+                                    Background="#FFFFFF"
+                                    BorderBrush="{StaticResource BorderSoft}"
+                                    BorderThickness="1"
+                                    CornerRadius="14"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
 
-                                <TextBlock Text="رقم الهاتف:" Foreground="Gray"/>
-                                <TextBox x:Name="txtStorePhone" Height="30" Margin="0,5,0,10"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="tabBorder" Property="Background" Value="#2F2B29"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="#2F2B29"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="tabBorder" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#BCAAA4"/>
+                                <Setter TargetName="tabBorder" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                                <TextBlock Text="العنوان:" Foreground="Gray"/>
-                                <TextBox x:Name="txtStoreAddress" Height="30" Margin="0,5,0,10"/>
+    </Page.Resources>
 
-                                <TextBlock Text="تذييل الفاتورة (Footer):" Foreground="Gray"/>
-                                <TextBox x:Name="txtReceiptFooter" Height="30" Margin="0,5,0,10"/>
-                            </StackPanel>
-                        </GroupBox>
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                        <!-- ✅ تحديثات النظام (بحث عن تحديث) -->
-                        <GroupBox Header="التحديثات" Padding="10" Margin="0,0,0,15">
-                            <StackPanel>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="16"
+                    Margin="0,0,0,14"
+                    Effect="{StaticResource CardShadow}">
+                <StackPanel>
+                    <TextBlock Text="⚙️ إعدادات النظام"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="#5D4037"/>
+                    <TextBlock Text="إدارة النسخ الاحتياطي، البريد، بيانات المتجر، التحديثات والطباعة"
+                               Foreground="#7A726C"
+                               FontSize="13"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
 
-                                    <StackPanel>
-                                        <TextBlock Text="الإصدار الحالي:" Foreground="Gray"/>
-                                        <TextBlock x:Name="txtCurrentVersion"
-                                                   Text="1.0.0"
-                                                   FontWeight="Bold"
-                                                   Margin="0,5,0,0"
-                                                   FlowDirection="LeftToRight"/>
+            <!-- Tabs -->
+            <TabControl Grid.Row="1">
+                <TabItem Name="tabctrlBackup" Header="النسخ الاحتياطي والأستعادة">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,10,0,0">
 
-                                        <TextBlock x:Name="txtUpdateStatus"
-                                                   Text=" "
-                                                   Foreground="Gray"
-                                                   FontSize="11"
-                                                   Margin="0,8,0,0"/>
-                                    </StackPanel>
+                            <GroupBox Header="إدارة البيانات والنسخ الاحتياطي" Style="{StaticResource CardGroupStyle}">
+                                <StackPanel>
+                                    <Border Background="#FFF3E0"
+                                            BorderBrush="#FFCC80"
+                                            BorderThickness="1"
+                                            CornerRadius="12"
+                                            Padding="10"
+                                            Margin="0,0,0,12">
+                                        <TextBlock Text="تحذير: استعادة نسخة سابقة سيقوم بمسح كافة البيانات الحالية واستبدالها."
+                                                   Foreground="#E65100"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
 
-                                    <Button Grid.Column="1"
-                                            Content="🔎 التحقق من تحديث"
-                                            Background="#FF9800"
-                                            Foreground="White"
-                                            Height="38"
-                                            Padding="15,0"
-                                            Margin="10,0,0,0"
-                                            Click="CheckUpdate_Click"/>
-                                </Grid>
-                            </StackPanel>
-                        </GroupBox>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                        <GroupBox Header="إعدادات الطباعة" Padding="10">
-                            <StackPanel>
-                                <TextBlock Text="الطابعة الافتراضية للفواتير:" Foreground="Gray"/>
-                                <ComboBox x:Name="cmbPrinters" Height="35" Margin="0,5,0,10"/>
+                                        <Button Content="📥 إنشاء نسخة احتياطية (Backup)"
+                                                Background="#009688"
+                                                Style="{StaticResource TouchButtonStyle}"
+                                                Click="Backup_Click"/>
 
-                                <CheckBox x:Name="chkAutoPrint" Content="طباعة الفاتورة تلقائياً بعد الحفظ" Margin="0,5"/>
-                                <CheckBox x:Name="chkdisableSounds" Content="الغاء تفعيل الاصوات" Margin="0,5"/>
-                                
-                                <Button Content="حفظ إعدادات المتجر" Background="#4CAF50" Foreground="White" Height="35"
-                                        Margin="0,15,0,0" Click="SaveStore_Click"/>
-                            </StackPanel>
-                        </GroupBox>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
+                                        <Button Grid.Column="2"
+                                                Content="📤 استعادة نسخة سابقة (Restore)"
+                                                Background="#D32F2F"
+                                                Style="{StaticResource TouchButtonStyle}"
+                                                Click="Restore_Click"/>
+                                    </Grid>
+                                </StackPanel>
+                            </GroupBox>
 
-        </TabControl>
+                            <GroupBox Header="إعدادات البريد (SMTP)" Style="{StaticResource CardGroupStyle}">
+                                <StackPanel>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="14"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="خادم البريد (Host):" Style="{StaticResource SectionTitleStyle}"/>
+                                            <TextBox x:Name="txtSmtpServer"
+                                                     Style="{StaticResource InputTextBoxStyle}"
+                                                     FlowDirection="LeftToRight"
+                                                     Margin="0,0,0,12"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="البورت (Port):" Style="{StaticResource SectionTitleStyle}"/>
+                                            <TextBox x:Name="txtPort"
+                                                     Style="{StaticResource InputTextBoxStyle}"
+                                                     FlowDirection="LeftToRight"
+                                                     Margin="0,0,0,12"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="بريد المرسل (Email):" Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBox x:Name="txtSenderEmail"
+                                             Style="{StaticResource InputTextBoxStyle}"
+                                             FlowDirection="LeftToRight"
+                                             Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="رمز التطبيق (App Password):" Style="{StaticResource SectionTitleStyle}"/>
+                                    <PasswordBox x:Name="txtSenderPass"
+                                                 Style="{StaticResource InputPasswordStyle}"
+                                                 FlowDirection="LeftToRight"
+                                                 Margin="0,0,0,14"/>
+
+                                    <Button Content="حفظ إعدادات البريد"
+                                            Background="#1976D2"
+                                            Style="{StaticResource TouchButtonStyle}"
+                                            Click="SaveMail_Click"/>
+                                </StackPanel>
+                            </GroupBox>
+
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Name="TabctrlStore" Header="إعدادات المتجر والفواتير">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,10,0,0">
+
+                            <GroupBox x:Name="grbxInfo" Header="بيانات المتجر (تظهر في الفاتورة)" Style="{StaticResource CardGroupStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="اسم المتجر:" Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBox x:Name="txtStoreName" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="رقم الهاتف:" Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBox x:Name="txtStorePhone" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="العنوان:" Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBox x:Name="txtStoreAddress" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="تذييل الفاتورة (Footer):" Style="{StaticResource SectionTitleStyle}"/>
+                                    <TextBox x:Name="txtReceiptFooter" Style="{StaticResource InputTextBoxStyle}"/>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <!-- Updates -->
+                            <GroupBox Header="التحديثات" Style="{StaticResource CardGroupStyle}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="الإصدار الحالي:" Style="{StaticResource SectionTitleStyle}"/>
+                                            <TextBlock x:Name="txtCurrentVersion"
+                                                       Text="1.0.0"
+                                                       FontWeight="Bold"
+                                                       Foreground="{StaticResource TextDark}"
+                                                       Margin="0,6,0,0"
+                                                       FlowDirection="LeftToRight"/>
+
+                                            <TextBlock x:Name="txtUpdateStatus"
+                                                       Text=" "
+                                                       Foreground="#7A726C"
+                                                       FontSize="12"
+                                                       Margin="0,10,0,0"/>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="1"
+                                                Content="🔎 التحقق من تحديث"
+                                                Background="#FB8C00"
+                                                Style="{StaticResource TouchButtonStyle}"
+                                                Padding="18,8"
+                                                Margin="10,0,0,0"
+                                                Click="CheckUpdate_Click"/>
+                                    </Grid>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <!-- Printing -->
+                            <GroupBox Header="إعدادات الطباعة" Style="{StaticResource CardGroupStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="الطابعة الافتراضية للفواتير:" Style="{StaticResource SectionTitleStyle}"/>
+                                    <ComboBox x:Name="cmbPrinters" Style="{StaticResource InputComboStyle}" Margin="0,0,0,10"/>
+
+                                    <Border Background="#FAF8F6"
+                                            CornerRadius="12"
+                                            BorderBrush="{StaticResource BorderSoft}"
+                                            BorderThickness="1"
+                                            Padding="10"
+                                            Margin="0,6,0,0">
+                                        <StackPanel>
+                                            <CheckBox x:Name="chkAutoPrint"
+                                                      Content="طباعة الفاتورة تلقائياً بعد الحفظ"
+                                                      FontSize="14"
+                                                      FontWeight="SemiBold"
+                                                      Foreground="#4A4440"
+                                                      Margin="0,2"/>
+                                            <CheckBox x:Name="chkdisableSounds"
+                                                      Content="الغاء تفعيل الاصوات"
+                                                      FontSize="14"
+                                                      FontWeight="SemiBold"
+                                                      Foreground="#4A4440"
+                                                      Margin="0,6,0,2"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Button Content="حفظ إعدادات المتجر"
+                                            Background="#2E7D32"
+                                            Style="{StaticResource TouchButtonStyle}"
+                                            Margin="0,14,0,0"
+                                            Click="SaveStore_Click"/>
+                                </StackPanel>
+                            </GroupBox>
+
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+            </TabControl>
+        </Grid>
     </Grid>
 </Page>

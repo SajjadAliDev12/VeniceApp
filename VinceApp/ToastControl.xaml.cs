@@ -5,7 +5,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using VinceApp.Pages;
 using System.IO;
 using VinceApp.Services;
 
@@ -14,6 +13,12 @@ namespace VinceApp
     public partial class ToastControl : UserControl
     {
         private DispatcherTimer _timer;
+
+        // ✅ مدة التوست (ثواني) — خليها ثابتة هنا وتتحكم بها من مكان واحد
+        private const int ToastDurationSeconds = 10;
+
+        // ✅ مرجع لستوري بورد الشريط حتى نوقفه/نعيد تشغيله
+        private Storyboard _lifeBarStoryboard;
 
         public enum NotificationType
         {
@@ -25,22 +30,18 @@ namespace VinceApp
 
         public static void Show(string title, string message, NotificationType type)
         {
-            
             string soundFile = "";
             if (Application.Current.Properties["DisableSounds"] as bool? != true)
             {
                 switch (type)
                 {
                     case NotificationType.Success:
-                        // صوت لطيف للنجاح (موجود في أغلب نسخ ويندوز)
                         soundFile = FIlePathFinder.GetPath("Windows Notify.wav");
                         break;
                     case NotificationType.Error:
-                        // صوت خطأ قوي
                         soundFile = FIlePathFinder.GetPath("Windows Pop-up Blocked.wav");
                         break;
                     case NotificationType.Warning:
-                        // صوت تنبيه
                         soundFile = FIlePathFinder.GetPath("Windows Unlock.wav");
                         break;
                     default:
@@ -49,41 +50,35 @@ namespace VinceApp
                 }
             }
 
-            // تشغيل الصوت في الخلفية (Async) حتى لا يجمد الشاشة
-            if (System.IO.File.Exists(soundFile))
+            if (File.Exists(soundFile))
             {
                 using (var player = new System.Media.SoundPlayer(soundFile))
                 {
                     player.Play();
                 }
             }
+
             Application.Current.Dispatcher.Invoke(() =>
             {
-                // ✅ استهدف النافذة النشطة (أي شاشة مفتوحة الآن)
                 Window targetWindow =
                     Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
                     ?? Application.Current.MainWindow;
 
                 if (targetWindow == null) return;
+
                 var container = targetWindow.FindName("NotificationArea") as Panel;
 
-                // 3. اللحظة الحاسمة: إذا لم نجد المنطقة (مثل حالة الإعدادات)، نبدل الهدف إلى النافذة الرئيسية
                 if (container == null)
                 {
                     targetWindow = Application.Current.MainWindow;
-                    // نبحث مرة أخرى في النافذة الرئيسية
                     container = targetWindow?.FindName("NotificationArea") as Panel;
                 }
 
-                // إذا ظل فارغاً حتى بعد المحاولة في الرئيسية، نخرج
                 if (container == null) return;
 
                 var toast = new ToastControl(title, message, type);
 
-                // يظهر بالأحدث فوق (اختياري)
                 container.Children.Insert(0, toast);
-                // أو تحت:
-                //container.Children.Add(toast);
             });
         }
 
@@ -123,26 +118,26 @@ namespace VinceApp
 
             Loaded += (s, e) =>
             {
-                var anim = (Storyboard)Resources["FadeIn"];
-                anim.Begin(this); // ✅ يبدأ على هذا التوست فقط
+                // ✅ Fade In
+                ((Storyboard)Resources["FadeIn"]).Begin(this);
+
+                // ✅ شغّل شريط المدة بنفس مدة التوست
+                StartLifeBar();
+
+                // ✅ شغّل التايمر
                 StartTimer();
             };
 
             Unloaded += (s, e) =>
             {
-                // ✅ حماية من تسريب التايمر
-                if (_timer != null)
-                {
-                    _timer.Stop();
-                    _timer.Tick -= Timer_Tick;
-                    _timer = null;
-                }
+                CleanupTimer();
+                StopLifeBar();
             };
         }
 
         private void StartTimer()
         {
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(ToastDurationSeconds) };
             _timer.Tick += Timer_Tick;
             _timer.Start();
         }
@@ -155,8 +150,12 @@ namespace VinceApp
 
         private void CloseNotification()
         {
+            // ✅ عند الإغلاق، أوقف التايمر والشريط
+            CleanupTimer();
+            StopLifeBar();
+
             var anim = (Storyboard)Resources["FadeOut"];
-            anim.Begin(this); // ✅ يبدأ على هذا التوست فقط
+            anim.Begin(this);
         }
 
         private void FadeOut_Completed(object sender, EventArgs e)
@@ -167,8 +166,48 @@ namespace VinceApp
 
         private void UserControl_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            _timer?.Stop();
             CloseNotification();
+        }
+
+        // ===========================
+        // ✅ LifeBar التحكم بالشريط
+        // ===========================
+
+        private void StartLifeBar()
+        {
+            // ✅ لو موجود قديم، وقفه
+            StopLifeBar();
+
+            _lifeBarStoryboard = (Storyboard)Resources["LifeBar"];
+
+            // ✅ اضبط Duration ديناميكياً (لو غيرت مدة التوست لاحقاً ما تحتاج تعدل XAML)
+            foreach (var tl in _lifeBarStoryboard.Children.OfType<DoubleAnimation>())
+            {
+                tl.Duration = TimeSpan.FromSeconds(ToastDurationSeconds);
+            }
+
+            // ✅ ابدأ (يبدأ من 1 إلى 0)
+            _lifeBarStoryboard.Begin(this, true);
+        }
+
+        private void StopLifeBar()
+        {
+            if (_lifeBarStoryboard != null)
+            {
+                // Stop(this) يوقفه فوراً
+                _lifeBarStoryboard.Stop(this);
+                _lifeBarStoryboard = null;
+            }
+        }
+
+        private void CleanupTimer()
+        {
+            if (_timer != null)
+            {
+                _timer.Stop();
+                _timer.Tick -= Timer_Tick;
+                _timer = null;
+            }
         }
     }
 }

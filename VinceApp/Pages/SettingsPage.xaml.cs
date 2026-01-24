@@ -2,6 +2,7 @@
 using Microsoft.Win32; // للتعامل مع SaveFileDialog
 using Serilog;
 using System;
+using System.Windows.Media;
 using System.Drawing.Printing; // لجلب الطابعات
 using System.IO;
 using System.Linq;
@@ -223,26 +224,53 @@ namespace VinceApp.Pages
         private void CheckUpdate_Click(object sender, RoutedEventArgs e)
         {
             AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.CheckForUpdateEvent -= AutoUpdaterOnCheckForUpdateEvent;
+            AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
             AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/update.xml");
             try
             {
                 if (txtUpdateStatus != null)
+                {
                     txtUpdateStatus.Text = "جاري التحقق من وجود تحديثات...";
+                    txtUpdateStatus.Foreground = Brushes.DodgerBlue;
+                }
 
-                // هنا اربط نظام التحديث عندك
-                // مثال: AutoUpdater.Start("https://.../update.xml");
-
-                if (txtUpdateStatus != null)
-                    txtUpdateStatus.Text = "تم بدء التحقق من التحديث.";
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "error with update check");
-                if (txtUpdateStatus != null)
                     txtUpdateStatus.Text = "فشل التحقق من التحديث.";
+                txtUpdateStatus.Foreground = Brushes.Firebrick;
             }
         }
-
+        private void AutoUpdaterOnCheckForUpdateEvent(UpdateInfoEventArgs args)
+        {
+            if (args.Error == null)
+            {
+                if (args.IsUpdateAvailable)
+                {
+                    try
+                    {
+                        AutoUpdater.ShowUpdateForm(args);
+                    }
+                    catch (Exception ex)
+                    {
+                        txtUpdateStatus.Text = "حدث خطأ أثناء التحقق من التحديث";
+                        txtUpdateStatus.Foreground = Brushes.Firebrick;
+                        Log.Error(ex, "error with update check");
+                    }
+                }
+                else
+                {
+                    txtUpdateStatus.Text = "أنت تستخدم أحدث نسخة من التطبيق";
+                    txtUpdateStatus.Foreground = Brushes.ForestGreen;
+                }
+            }
+            else
+            {
+                txtUpdateStatus.Text = "حدث خطأ أثناء التحقق من التحديث";
+                txtUpdateStatus.Foreground = Brushes.Firebrick;
+            }
+        }
         // --- زر استعادة النسخة الاحتياطية ---
         private async Task Restore_Click2(object sender, RoutedEventArgs e)
         {

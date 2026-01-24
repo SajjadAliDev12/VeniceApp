@@ -6,9 +6,191 @@
         ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent"
         FlowDirection="RightToLeft">
 
+    <Window.Resources>
+
+        <!-- ✅ Unified input style (touch-friendly + consistent) -->
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="b"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="b" Property="Background" Value="#FAFAFA"/>
+                                <Setter TargetName="b" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="#5D4037"/>
+                                <Setter TargetName="b" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="InputPasswordStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="b"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="b" Property="Background" Value="#FAFAFA"/>
+                                <Setter TargetName="b" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="#5D4037"/>
+                                <Setter TargetName="b" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="InputComboStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#DDD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="b"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="10"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <ContentPresenter Margin="10,0,42,0"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Right"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                      RecognizesAccessKey="True"/>
+                                    <TextBlock Text="▾" FontSize="16" Foreground="#777"
+                                               HorizontalAlignment="Left" Margin="14,0,14,0"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True"
+                                   PopupAnimation="Fade">
+                                <Border Background="White" CornerRadius="12" BorderBrush="#E6E6E6" BorderThickness="1" Padding="6">
+                                    <ScrollViewer MaxHeight="260">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="b" Property="Background" Value="#FAFAFA"/>
+                                <Setter TargetName="b" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="#5D4037"/>
+                                <Setter TargetName="b" Property="BorderThickness" Value="1.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ✅ Buttons unified -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="46"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="18,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="12">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="b" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="b" Property="Opacity" Value="1"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="b" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LinkButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#777"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="10" Padding="8,0" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
     <Border Background="White" CornerRadius="20" BorderBrush="#5D4037" BorderThickness="2">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.4"/>
+            <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.35"/>
         </Border.Effect>
 
         <Grid>
@@ -19,101 +201,94 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="⚙️ إعدادات السيرفر" FontSize="24" FontWeight="Bold" Foreground="#5D4037" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                <TextBlock Text="⚙️ إعدادات السيرفر"
+                           FontSize="24" FontWeight="Bold"
+                           Foreground="#5D4037"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,18"/>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" Margin="0,0,0,10">
+                <!-- ✅ Scrollbar Auto for touch -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
                     <StackPanel>
 
-                        <TextBlock Text="اسم السيرفر (Server IP):" FontSize="14" Foreground="Gray" Margin="0,0,0,5"/>
-                        <TextBox x:Name="txtServer" Height="40" FontSize="14" Padding="5" Margin="0,0,0,10" FlowDirection="LeftToRight" VerticalContentAlignment="Center" BorderBrush="#DDD">
-                            <TextBox.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="8"/>
-                                </Style>
-                            </TextBox.Resources>
-                        </TextBox>
+                        <TextBlock Text="اسم السيرفر (Server IP):" FontSize="14" Foreground="Gray" Margin="0,0,0,6"/>
+                        <TextBox x:Name="txtServer" Style="{StaticResource InputTextBoxStyle}"
+                                 Margin="0,0,0,12" FlowDirection="LeftToRight"/>
 
-                        <TextBlock Text="اسم قاعدة البيانات (Database):" FontSize="14" Foreground="Gray" Margin="0,0,0,5"/>
-                        <TextBox x:Name="txtDatabase" Height="40" FontSize="14" Padding="5" Margin="0,0,0,10" FlowDirection="LeftToRight" VerticalContentAlignment="Center" BorderBrush="#DDD">
-                            <TextBox.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="8"/>
-                                </Style>
-                            </TextBox.Resources>
-                        </TextBox>
+                        <TextBlock Text="اسم قاعدة البيانات (Database):" FontSize="14" Foreground="Gray" Margin="0,0,0,6"/>
+                        <TextBox x:Name="txtDatabase" Style="{StaticResource InputTextBoxStyle}"
+                                 Margin="0,0,0,12" FlowDirection="LeftToRight"/>
 
-                        <TextBlock Text="نوع المصادقة (Authentication):" FontSize="14" Foreground="Gray" Margin="0,0,0,5"/>
-                        <ComboBox x:Name="cmbAuthType" Height="40" FontSize="14" Margin="0,0,0,15" Padding="5" SelectionChanged="cmbAuthType_SelectionChanged" VerticalContentAlignment="Center" BorderBrush="#DDD">
+                        <TextBlock Text="نوع المصادقة (Authentication):" FontSize="14" Foreground="Gray" Margin="0,0,0,6"/>
+                        <ComboBox x:Name="cmbAuthType" Style="{StaticResource InputComboStyle}"
+                                  Margin="0,0,0,14"
+                                  SelectionChanged="cmbAuthType_SelectionChanged">
                             <ComboBoxItem Content="Windows Authentication (Trusted)" Tag="Win"/>
                             <ComboBoxItem Content="SQL Server Authentication (User/Pass)" Tag="Sql"/>
-                            <ComboBox.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="8"/>
-                                </Style>
-                            </ComboBox.Resources>
                         </ComboBox>
 
-                        <Border BorderBrush="#EEE" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,5,0,10" Background="#FAFAFA">
+                        <Border BorderBrush="#EEE" BorderThickness="1" CornerRadius="14"
+                                Padding="15" Margin="0,6,0,10" Background="#FAFAFA">
                             <StackPanel>
-                                <TextBlock Text="بيانات المستخدم (SQL User)" FontWeight="Bold" Foreground="#5D4037" Margin="0,0,0,10"/>
+                                <TextBlock Text="بيانات المستخدم (SQL User)"
+                                           FontWeight="Bold"
+                                           Foreground="#5D4037"
+                                           Margin="0,0,0,12"/>
 
                                 <TextBlock Text="اسم المستخدم (User ID):" FontSize="13" Foreground="Gray"/>
-                                <TextBox x:Name="txtUser" Height="35" FontSize="14" Padding="5" Margin="0,2,0,10" FlowDirection="LeftToRight" IsEnabled="False" VerticalContentAlignment="Center" BorderBrush="#DDD">
-                                    <TextBox.Resources>
-                                        <Style TargetType="Border">
-                                            <Setter Property="CornerRadius" Value="5"/>
-                                        </Style>
-                                    </TextBox.Resources>
-                                </TextBox>
+                                <TextBox x:Name="txtUser" Style="{StaticResource InputTextBoxStyle}"
+                                         Height="40"
+                                         Margin="0,4,0,12"
+                                         FlowDirection="LeftToRight"
+                                         IsEnabled="False"/>
 
                                 <TextBlock Text="كلمة المرور (Password):" FontSize="13" Foreground="Gray"/>
-                                <PasswordBox x:Name="txtPass" Height="35" FontSize="14" Padding="5" Margin="0,2,0,5" FlowDirection="LeftToRight" IsEnabled="False" VerticalContentAlignment="Center" BorderBrush="#DDD">
-                                    <PasswordBox.Resources>
-                                        <Style TargetType="Border">
-                                            <Setter Property="CornerRadius" Value="5"/>
-                                        </Style>
-                                    </PasswordBox.Resources>
-                                </PasswordBox>
+                                <PasswordBox x:Name="txtPass" Style="{StaticResource InputPasswordStyle}"
+                                             Height="40"
+                                             Margin="0,4,0,0"
+                                             FlowDirection="LeftToRight"
+                                             IsEnabled="False"/>
                             </StackPanel>
                         </Border>
+
                     </StackPanel>
                 </ScrollViewer>
 
                 <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                        <Button Content="حفظ وتطبيق" Height="45" Width="120" Margin="5,0"
-                                Background="#4CAF50" Foreground="White" FontSize="15" FontWeight="Bold"
-                                Click="BtnSave_Click" Cursor="Hand">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="10"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
 
-                        <Button Content="تجربة الاتصال" Height="45" Width="120" Margin="5,0"
-                                Background="#2196F3" Foreground="White" FontSize="15" FontWeight="Bold"
-                                Click="BtnTest_Click" Cursor="Hand">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="10"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                        <Button Content="حفظ وتطبيق"
+                                Width="140" Margin="6,0"
+                                Background="#4CAF50"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Click="BtnSave_Click"/>
+
+                        <Button Content="تجربة الاتصال"
+                                Width="140" Margin="6,0"
+                                Background="#2196F3"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Click="BtnTest_Click"/>
                     </StackPanel>
 
-                    <Button Content="إلغاء وخروج" Height="40" Margin="0,5,0,0" 
-                            Background="Transparent" Foreground="#777" BorderThickness="0" IsCancel="True"
-                            Cursor="Hand">
-                    </Button>
+                    <!-- ✅ Cancel button wired + consistent -->
+                    <Button Content="إلغاء وخروج"
+                            Style="{StaticResource LinkButtonStyle}"
+                            IsCancel="True"
+                            Click="Close_Click"/>
                 </StackPanel>
             </Grid>
 
+            <!-- ✅ Loading overlay consistent -->
             <Grid x:Name="LoadingOverlay" Visibility="Collapsed" Background="#80000000">
-                <Border Background="White" CornerRadius="10" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{DynamicResource {x:Static SystemParameters.DropShadow}}">
+                <Border Background="White" CornerRadius="14" Padding="20"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" ShadowDepth="0" Opacity="0.35"/>
+                    </Border.Effect>
                     <StackPanel HorizontalAlignment="Center">
-                        <ProgressBar IsIndeterminate="True" Width="150" Height="10" Margin="0,0,0,10" BorderThickness="0"/>
-                        <TextBlock x:Name="txtLoadingMsg" Text="جاري محاولة الاتصال..." HorizontalAlignment="Center" FontWeight="Bold" Foreground="#333"/>
+                        <ProgressBar IsIndeterminate="True" Width="170" Height="10" Margin="0,0,0,10" BorderThickness="0"/>
+                        <TextBlock x:Name="txtLoadingMsg" Text="جاري محاولة الاتصال..."
+                                   HorizontalAlignment="Center" FontWeight="Bold" Foreground="#333"/>
                     </StackPanel>
                 </Border>
             </Grid>

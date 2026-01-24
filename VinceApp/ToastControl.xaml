@@ -6,7 +6,8 @@
              mc:Ignorable="d"
              Height="70" Width="350" Margin="0,5,10,5"
              FontFamily="Segoe UI" FlowDirection="RightToLeft"
-             Cursor="Hand" MouseLeftButtonUp="UserControl_MouseLeftButtonUp"
+             Cursor="Hand"
+             MouseLeftButtonUp="UserControl_MouseLeftButtonUp"
              Opacity="0">
 
     <!-- ✅ هذا يمنع اهتزاز الواجهة لأن الحركة تصبح Visual فقط -->
@@ -15,6 +16,7 @@
     </UserControl.RenderTransform>
 
     <UserControl.Resources>
+
         <Storyboard x:Key="FadeIn">
             <DoubleAnimation Storyboard.TargetProperty="Opacity"
                              From="0" To="1" Duration="0:0:0.25"/>
@@ -31,33 +33,80 @@
                              Storyboard.TargetProperty="Y"
                              From="0" To="-20" Duration="0:0:0.25"/>
         </Storyboard>
+
+        <!-- ✅ شريط المدة (10 ثواني مثل التايمر الحالي عندك)
+             راح نخلي الكود لاحقاً يضبط الـ Duration تلقائياً لو تغيّر وقت التوست -->
+        <Storyboard x:Key="LifeBar">
+            <DoubleAnimation Storyboard.TargetName="LifeScale"
+                             Storyboard.TargetProperty="ScaleX"
+                             From="1" To="0"
+                             Duration="0:0:10"
+                             FillBehavior="HoldEnd"/>
+        </Storyboard>
+
     </UserControl.Resources>
 
-    <Border x:Name="MainBorder" CornerRadius="8" Background="#333333" BorderThickness="0,0,5,0">
+    <Border x:Name="MainBorder"
+            CornerRadius="8"
+            Background="#333333"
+            BorderThickness="0,0,5,0">
+
         <Border.Effect>
             <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3" Color="Black"/>
         </Border.Effect>
 
+        <!-- ✅ نفس المحتوى الأصلي + شريط مدة أسفل -->
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="50"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="30"/>
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="4"/>
+            </Grid.RowDefinitions>
 
-            <TextBlock x:Name="IconText" Grid.Column="0" Text="✓"
-                       FontSize="24" FontWeight="Bold"
-                       VerticalAlignment="Center" HorizontalAlignment="Center"
-                       Foreground="White"/>
+            <!-- المحتوى الأصلي (لم يتغير) -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="30"/>
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="5,0">
-                <TextBlock x:Name="TxtTitle" Text="تمت العملية" FontWeight="Bold" Foreground="White" FontSize="14"/>
-                <TextBlock x:Name="TxtMessage" Text="تم حفظ الطلب بنجاح" Foreground="#DDDDDD" FontSize="12" TextWrapping="Wrap"/>
-            </StackPanel>
+                <TextBlock x:Name="IconText" Grid.Column="0" Text="✓"
+                           FontSize="24" FontWeight="Bold"
+                           VerticalAlignment="Center" HorizontalAlignment="Center"
+                           Foreground="White"/>
 
-            <TextBlock Grid.Column="2" Text="✕" Foreground="#AAAAAA"
-                       VerticalAlignment="Top" HorizontalAlignment="Right"
-                       Margin="5" FontSize="10"/>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="5,0">
+                    <TextBlock x:Name="TxtTitle" Text="تمت العملية"
+                               FontWeight="Bold" Foreground="White" FontSize="14"/>
+                    <TextBlock x:Name="TxtMessage" Text="تم حفظ الطلب بنجاح"
+                               Foreground="#DDDDDD" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="2" Text="✕" Foreground="#AAAAAA"
+                           VerticalAlignment="Top" HorizontalAlignment="Right"
+                           Margin="5" FontSize="10"/>
+            </Grid>
+
+            <!-- ✅ شريط المدة -->
+            <Border Grid.Row="1"
+                    Background="#1F1F1F"
+                    CornerRadius="0,0,8,8"
+                    ClipToBounds="True">
+
+                <!-- الشريط الملون (يلتقط لون الحالة من BorderBrush) -->
+                <Border x:Name="LifeBarFill"
+                        Background="{Binding BorderBrush, ElementName=MainBorder}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        RenderTransformOrigin="1,0.5">
+                    <Border.RenderTransform>
+                        <ScaleTransform x:Name="LifeScale" ScaleX="1" ScaleY="1"/>
+                    </Border.RenderTransform>
+                </Border>
+
+            </Border>
+
         </Grid>
     </Border>
+
 </UserControl>

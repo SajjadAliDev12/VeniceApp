@@ -3,7 +3,58 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:VinceKitchen" x:Class="VinceKitchen.MainWindow"
         Title="شاشة المطبخ" Height="800" Width="1200" WindowStyle="None"
-        WindowState="Maximized" Background="#212121" FlowDirection="RightToLeft">
+        WindowState="Maximized" Background="#212121" FlowDirection="RightToLeft"
+        SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
+
+    <Window.Resources>
+
+        <!-- زر عام للمطبخ: hover/press واضح -->
+        <Style x:Key="KitchenButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="btnBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="1"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- كرت الطلب: ظل افتراضي -->
+        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.45" BlurRadius="12" ShadowDepth="2"/>
+
+        <!-- كرت الطلب المتأخر -->
+        <DropShadowEffect x:Key="LateShadow" Color="Black" Opacity="0.75" BlurRadius="18" ShadowDepth="3"/>
+
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -11,6 +62,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- Header -->
         <Border Grid.Row="0" Background="#333" BorderBrush="#444" BorderThickness="0,0,0,1">
             <Grid Margin="15,0">
                 <Grid.ColumnDefinitions>
@@ -19,71 +71,71 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="0" Width="45" Height="45" Background="#D32F2F" BorderThickness="0" Click="ExitButton_Click" Margin="0,0,15,0">
-                    <Button.Template>
-                        <ControlTemplate TargetType="{x:Type Button}">
-                            <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="8">
-                                <TextBlock Text="X" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22" FontWeight="Bold"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="btnBorder" Property="Background" Value="#B71C1C"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="btnBorder" Property="Background" Value="#FF5252"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
+                <!-- Exit -->
+                <Button Grid.Column="0"
+                        Width="48" Height="48"
+                        Background="#D32F2F"
+                        Click="ExitButton_Click"
+                        Margin="0,0,15,0"
+                        Style="{StaticResource KitchenButtonStyle}">
+                    <TextBlock Text="X" Foreground="White" FontSize="22" FontWeight="Bold"/>
                 </Button>
 
+                <!-- Title -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock Text="👨‍🍳" FontSize="28" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="شاشة تحضير الطلبات" 
-                               FontSize="28" FontWeight="Bold" Foreground="#EEE" 
+                    <TextBlock Text="شاشة تحضير الطلبات"
+                               FontSize="28" FontWeight="Bold" Foreground="#EEE"
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
+                <!-- Right Area -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 
-                    <Button Background="#424242" BorderThickness="0" Click="SettingsButton_Click" Margin="0,0,15,0" Padding="15,5">
-                        <Button.Template>
-                            <ControlTemplate TargetType="{x:Type Button}">
-                                <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="8">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0">
-                                        <Path Data="M19.43,12.98C19.47,12.66 19.5,12.34 19.5,12C19.5,11.66 19.47,11.34 19.43,11.02L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.02C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.66 4.57,12.98L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.98M12,15.5C10.07,15.5 8.5,13.93 8.5,12C8.5,10.07 10.07,8.5 12,8.5C13.93,8.5 15.5,10.07 15.5,12C15.5,13.93 13.93,15.5 12,15.5Z" 
-                                              Fill="White" Stretch="Uniform" Width="20" Height="20" VerticalAlignment="Center"/>
-
-                                        <TextBlock Text="الإعدادات" Foreground="White" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold"/>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="#616161"/>
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="#212121"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
+                    <!-- Settings -->
+                    <Button Background="#424242"
+                            Click="SettingsButton_Click"
+                            Margin="0,0,15,0"
+                            Padding="15,6"
+                            Style="{StaticResource KitchenButtonStyle}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0">
+                            <Path Data="M19.43,12.98C19.47,12.66 19.5,12.34 19.5,12C19.5,11.66 19.47,11.34 19.43,11.02L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.02C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.66 4.57,12.98L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.98M12,15.5C10.07,15.5 8.5,13.93 8.5,12C8.5,10.07 10.07,8.5 12,8.5C13.93,8.5 15.5,10.07 15.5,12C15.5,13.93 13.93,15.5 12,15.5Z"
+                                  Fill="White" Stretch="Uniform" Width="20" Height="20" VerticalAlignment="Center"/>
+                            <TextBlock Text="الإعدادات" Foreground="White" Margin="10,0,0,0"
+                                       VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold"/>
+                        </StackPanel>
                     </Button>
-                    <Border x:Name="StatusBorder" Width="15" Height="15" CornerRadius="10" 
-                            Background="LimeGreen" Margin="0,0,15,0" VerticalAlignment="Center">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#00E676" BlurRadius="8" ShadowDepth="0"/>
-                        </Border.Effect>
-                        <Border.ToolTip>
-                            <ToolTip  Content="حالة الاتصال بالسيرفر"/>
-                        </Border.ToolTip>
-                    </Border>
 
-                    <local:DigitalClock> </local:DigitalClock>
+                    <!-- Connection Status (bigger + text) -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,15,0">
+                        <Border x:Name="StatusBorder"
+                                Width="20" Height="20"
+                                CornerRadius="12"
+                                Background="LimeGreen"
+                                VerticalAlignment="Center">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00E676" BlurRadius="10" ShadowDepth="0" Opacity="0.9"/>
+                            </Border.Effect>
+                            <Border.ToolTip>
+                                <ToolTip Content="حالة الاتصال بالسيرفر"/>
+                            </Border.ToolTip>
+                        </Border>
 
+                        <TextBlock x:Name="txtConnectionStatus"
+                                   Text="متصل"
+                                   Foreground="#E0E0E0"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,0,0"/>
+                    </StackPanel>
+
+                    <local:DigitalClock/>
                 </StackPanel>
             </Grid>
         </Border>
 
+        <!-- Body -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
             <ItemsControl x:Name="OrdersList">
                 <ItemsControl.ItemsPanel>
@@ -94,54 +146,169 @@
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="300" Margin="10" Background="#424242" CornerRadius="8">
+                        <Border Width="300"
+                                Margin="10"
+                                Background="#424242"
+                                CornerRadius="10"
+                                BorderBrush="#2B2B2B"
+                                BorderThickness="1">
                             <Border.Effect>
-                                <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="10"/>
+                                <StaticResource ResourceKey="CardShadow"/>
                             </Border.Effect>
+
+                            <!-- ✅ Highlight late orders -->
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsLate}" Value="True">
+                                            <Setter Property="BorderBrush" Value="#D32F2F"/>
+                                            <Setter Property="BorderThickness" Value="2"/>
+                                            <Setter Property="Effect" Value="{StaticResource LateShadow}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
 
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
-                                    <RowDefinition Height="60"/>
+                                    <RowDefinition Height="70"/>
                                 </Grid.RowDefinitions>
 
-                                <Border Background="#FF9800" CornerRadius="8,8,0,0" Padding="10">
-                                    <TextBlock Text="{Binding TableNumberDisplay}" 
-                                               FontSize="24" FontWeight="Bold" Foreground="White" 
-                                               HorizontalAlignment="Center"/>
+                                <!-- Header orange -->
+                                <Border Background="#FF9800" CornerRadius="10,10,0,0" Padding="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Elapsed badge (left visually because RTL) -->
+                                        <Border Grid.Column="0"
+                                                Background="#212121"
+                                                CornerRadius="8"
+                                                Padding="8,4"
+                                                VerticalAlignment="Center"
+                                                BorderBrush="#000000"
+                                                BorderThickness="0.5"
+                                                Opacity="0.95">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="⏱" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding ElapsedDisplay}"
+                                                           Foreground="White"
+                                                           FontWeight="Bold"
+                                                           FontSize="14"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Table number -->
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding TableNumberDisplay}"
+                                                   FontSize="24"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+
+                                        <!-- Late badge -->
+                                        <Border Grid.Column="2"
+                                                CornerRadius="8"
+                                                Padding="8,4"
+                                                VerticalAlignment="Center"
+                                                Background="#D32F2F"
+                                                Opacity="0.95">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsLate}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="متأخر"
+                                                       Foreground="White"
+                                                       FontWeight="Bold"
+                                                       FontSize="13"/>
+                                        </Border>
+                                    </Grid>
                                 </Border>
 
-                                <TextBlock Grid.Row="1" Text="{Binding TimeDisplay}" 
-                                           Foreground="#BBB" HorizontalAlignment="Center" Margin="0,5"/>
+                                <!-- Time -->
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding TimeDisplay}"
+                                           Foreground="#E0E0E0"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,6"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"/>
 
+                                <!-- Items -->
                                 <ItemsControl Grid.Row="2" ItemsSource="{Binding KitchenItems}" Margin="10">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border BorderBrush="#555" BorderThickness="0,0,0,1" Padding="5">
+                                            <Border BorderBrush="#666" BorderThickness="0,0,0,1" Padding="6">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding ProductName}" FontSize="20" Foreground="White" FontWeight="SemiBold"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat=x\{0\}}" FontSize="20" Foreground="#FFC107" FontWeight="Bold"/>
+
+                                                    <TextBlock Text="{Binding ProductName}"
+                                                               FontSize="20"
+                                                               Foreground="White"
+                                                               FontWeight="SemiBold"/>
+
+                                                    <Border Grid.Column="1"
+                                                            Background="#2B2B2B"
+                                                            CornerRadius="10"
+                                                            Padding="10,4"
+                                                            Margin="10,0,0,0"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Quantity, StringFormat=x\{0\}}"
+                                                                   FontSize="22"
+                                                                   Foreground="#FFC107"
+                                                                   FontWeight="ExtraBold"/>
+                                                    </Border>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <Button Grid.Row="3" Content="✅ جاهز" 
-                                        Background="#4CAF50" Foreground="White"
-                                        FontSize="22" FontWeight="Bold"
-                                        Tag="{Binding OrderId}" Click="OrderDone_Click">
+                                <!-- Done button -->
+                                <Button Grid.Row="3"
+                                        Content="✅ جاهز"
+                                        Background="#4CAF50"
+                                        Foreground="White"
+                                        FontSize="22"
+                                        FontWeight="Bold"
+                                        Tag="{Binding OrderId}"
+                                        Click="OrderDone_Click"
+                                        Style="{StaticResource KitchenButtonStyle}">
                                     <Button.Template>
                                         <ControlTemplate TargetType="{x:Type Button}">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="0,0,8,8">
+                                            <Border x:Name="btnBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="0,0,10,10">
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#43A047"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="btnBorder" Property="Background" Value="#2E7D32"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="btnBorder" Property="Opacity" Value="0.65"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>

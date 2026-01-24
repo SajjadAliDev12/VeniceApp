@@ -96,6 +96,12 @@ namespace VinceApp.Pages
             {
                 using (var context = new VinceSweetsDbContext())
                 {
+                    bool exists = context.Products.Any(p => p.Name == name && p.Id != _selectedId);
+                    if (exists)
+                    {
+                        ToastControl.Show("تنبيه", "اسم المنتج موجود مسبقاً", ToastControl.NotificationType.Warning);
+                        return; // إيقاف الحفظ
+                    }
                     // معالجة الصورة
                     string finalImageName = _currentDbImageName; // افتراضياً نبقي القديمة
 

@@ -3,110 +3,334 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="AuditLogPage" FlowDirection="RightToLeft" Background="White">
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <Page.Resources>
 
-        <Border Grid.Row="0" Background="#F5F5F5" Padding="15" CornerRadius="8" Margin="0,0,0,15" BorderBrush="#E0E0E0" BorderThickness="1">
-            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <!-- Shadow -->
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
 
-                <StackPanel Margin="0,0,15,0">
-                    <TextBlock Text="المستخدم:" Foreground="#5D4037" FontWeight="Bold" Margin="0,0,0,5"/>
-                    <TextBox x:Name="txtUserSearch" Width="150" Height="30" Padding="5" VerticalContentAlignment="Center"/>
+        <!-- Theme brushes -->
+        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
+        <SolidColorBrush x:Key="TitleBrush" Color="#2E2A27"/>
+
+        <!-- Inputs (touch-friendly) -->
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="InputComboStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style x:Key="InputDatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <!-- General touch button -->
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                            </Border.Effect>
+
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+
+                            <!-- Press feedback -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Light pagination buttons -->
+        <Style x:Key="PagerButtonStyle" TargetType="Button" BasedOn="{StaticResource TouchButtonStyle}">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Width" Value="120"/>
+            <Setter Property="Background" Value="#ECE7E2"/>
+            <Setter Property="Foreground" Value="#4A4440"/>
+        </Style>
+
+        <!-- DataGrid styling -->
+        <Style x:Key="AuditDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="RowHeight" Value="44"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAF8F6"/>
+        </Style>
+
+        <Style x:Key="AuditHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#2F2B29"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style x:Key="AuditRowStyle" TargetType="DataGridRow">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFF3E0"/>
+                    <Setter Property="Foreground" Value="#2E2A27"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Page.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Filters Card -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource CardBrush}"
+                    Padding="16"
+                    CornerRadius="16"
+                    Margin="0,0,0,14"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Effect="{StaticResource CardShadow}">
+
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" ItemHeight="72">
+
+                    <StackPanel Margin="0,0,14,0">
+                        <TextBlock Text="المستخدم:"
+                                   Foreground="#5D4037"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,6"/>
+                        <TextBox x:Name="txtUserSearch"
+                                 Width="180"
+                                 Style="{StaticResource InputTextBoxStyle}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,14,0">
+                        <TextBlock Text="من تاريخ:"
+                                   Foreground="#5D4037"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,6"/>
+                        <DatePicker x:Name="dpFrom"
+                                    Width="160"
+                                    Style="{StaticResource InputDatePickerStyle}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,14,0">
+                        <TextBlock Text="إلى تاريخ:"
+                                   Foreground="#5D4037"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,6"/>
+                        <DatePicker x:Name="dpTo"
+                                    Width="160"
+                                    Style="{StaticResource InputDatePickerStyle}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,14,0">
+                        <TextBlock Text="الحدث:"
+                                   Foreground="#5D4037"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,6"/>
+                        <ComboBox x:Name="cmbAction"
+                                  Width="160"
+                                  Style="{StaticResource InputComboStyle}">
+                            <ComboBoxItem Content="الكل" IsSelected="True"/>
+                            <ComboBoxItem Content="Insert"/>
+                            <ComboBoxItem Content="Update"/>
+                            <ComboBoxItem Content="SoftDelete"/>
+                            <ComboBoxItem Content="HardDelete"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,2">
+                        <Button Content="🔍 بحث"
+                                Click="BtnSearch_Click"
+                                Width="110"
+                                Background="#2F2B29"
+                                Style="{StaticResource TouchButtonStyle}"
+                                Margin="6,0"/>
+
+                        <Button Content="🔄 إعادة ضبط"
+                                Click="BtnReset_Click"
+                                Width="130"
+                                Background="#6D4C41"
+                                Style="{StaticResource TouchButtonStyle}"/>
+                    </StackPanel>
+
+                </WrapPanel>
+            </Border>
+
+            <!-- Grid Card -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="10"
+                    Effect="{StaticResource CardShadow}">
+
+                <DataGrid x:Name="dgLogs"
+                          Style="{StaticResource AuditDataGridStyle}"
+                          ColumnHeaderStyle="{StaticResource AuditHeaderStyle}"
+                          RowStyle="{StaticResource AuditRowStyle}">
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="70"/>
+
+                        <DataGridTextColumn Header="وقت الحركة"
+                                            Binding="{Binding Timestamp, StringFormat='yyyy/MM/dd hh:mm tt'}"
+                                            Width="190"/>
+
+                        <DataGridTextColumn Header="الموظف"
+                                            Binding="{Binding UserFullName}"
+                                            Width="170"/>
+
+                        <DataGridTextColumn Header="الحدث"
+                                            Binding="{Binding Action}"
+                                            Width="120"/>
+
+                        <DataGridTextColumn Header="الجدول المتأثر"
+                                            Binding="{Binding TableName}"
+                                            Width="150"/>
+
+                        <DataGridTextColumn Header="رقم السجل"
+                                            Binding="{Binding RecordId}"
+                                            Width="120"/>
+
+                        <DataGridTemplateColumn Header="تفاصيل التغيير" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="📄 عرض التغييرات"
+                                            Click="BtnViewDetails_Click"
+                                            Tag="{Binding Changes}"
+                                            Width="140"
+                                            Height="36"
+                                            Background="#FB8C00"
+                                            FontSize="13"
+                                            Style="{StaticResource TouchButtonStyle}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Pagination -->
+            <Border Grid.Row="2"
+                    Background="{x:Null}"
+                    Margin="0,14,0,0">
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button x:Name="btnPrev"
+                            Content="السابق"
+                            Click="BtnPrev_Click"
+                            Style="{StaticResource PagerButtonStyle}"/>
+
+                    <Border Background="#FFFFFF"
+                            CornerRadius="12"
+                            BorderBrush="{StaticResource BorderSoft}"
+                            BorderThickness="1"
+                            Padding="16,10"
+                            Margin="14,0"
+                            Effect="{StaticResource CardShadow}">
+                        <TextBlock x:Name="txtPageInfo"
+                                   Text="صفحة 1"
+                                   FontSize="14"
+                                   FontWeight="Bold"
+                                   Foreground="#4A4440"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+
+                    <Button x:Name="btnNext"
+                            Content="التالي"
+                            Click="BtnNext_Click"
+                            Style="{StaticResource PagerButtonStyle}"/>
                 </StackPanel>
+            </Border>
 
-                <StackPanel Margin="0,0,15,0">
-                    <TextBlock Text="من تاريخ:" Foreground="#5D4037" FontWeight="Bold" Margin="0,0,0,5"/>
-                    <DatePicker x:Name="dpFrom" Width="120" Height="30"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,15,0">
-                    <TextBlock Text="إلى تاريخ:" Foreground="#5D4037" FontWeight="Bold" Margin="0,0,0,5"/>
-                    <DatePicker x:Name="dpTo" Width="120" Height="30"/>
-                </StackPanel>
-
-                <StackPanel Margin="0,0,15,0">
-                    <TextBlock Text="الحدث:" Foreground="#5D4037" FontWeight="Bold" Margin="0,0,0,5"/>
-                    <ComboBox x:Name="cmbAction" Width="120" Height="30" VerticalContentAlignment="Center">
-                        <ComboBoxItem Content="الكل" IsSelected="True"/>
-                        <ComboBoxItem Content="Insert"/>
-                        <ComboBoxItem Content="Update"/>
-                        <ComboBoxItem Content="SoftDelete"/>
-                        <ComboBoxItem Content="HardDelete"/>
-                    </ComboBox>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,2">
-                    <Button Content="🔍 بحث" Click="BtnSearch_Click" Width="80" Height="30" Background="#3E2723" Foreground="White" Margin="5,0">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-
-                    <Button Content="🔄 إعادة ضبط" Click="BtnReset_Click" Width="90" Height="30" Background="#8D6E63" Foreground="White">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                </StackPanel>
-            </WrapPanel>
-        </Border>
-
-        <DataGrid x:Name="dgLogs" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" 
-                  HeadersVisibility="Column" Background="White" RowHeight="40" BorderThickness="1" BorderBrush="#E0E0E0">
-
-            <DataGrid.ColumnHeaderStyle>
-                <Style TargetType="DataGridColumnHeader">
-                    <Setter Property="Background" Value="#3E2723"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="Padding" Value="10"/>
-                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                </Style>
-            </DataGrid.ColumnHeaderStyle>
-
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="60"/>
-                <DataGridTextColumn Header="وقت الحركة" Binding="{Binding Timestamp, StringFormat='yyyy/MM/dd hh:mm tt'}" Width="160"/>
-                <DataGridTextColumn Header="الموظف" Binding="{Binding UserFullName}" Width="150" FontWeight="Bold"/>
-                <DataGridTextColumn Header="الحدث" Binding="{Binding Action}" Width="100"/>
-                <DataGridTextColumn Header="الجدول المتأثر" Binding="{Binding TableName}" Width="120"/>
-                <DataGridTextColumn Header="رقم السجل" Binding="{Binding RecordId}" Width="100"/>
-
-                <DataGridTemplateColumn Header="تفاصيل التغيير" Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="📄 عرض التغييرات" Click="BtnViewDetails_Click" Tag="{Binding Changes}" 
-                                    Width="120" Height="28" Background="#FF7043" Foreground="White" FontSize="12">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
-
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
-            <Button x:Name="btnPrev" Content="السابق" Click="BtnPrev_Click" Width="100" Height="35" Background="#E0E0E0"/>
-            <TextBlock x:Name="txtPageInfo" Text="صفحة 1" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" Margin="20,0"/>
-            <Button x:Name="btnNext" Content="التالي" Click="BtnNext_Click" Width="100" Height="35" Background="#E0E0E0"/>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Page>

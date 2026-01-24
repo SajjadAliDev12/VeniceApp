@@ -5,95 +5,241 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       Title="DashboardPage" FlowDirection="RightToLeft" Background="White">
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Page.Resources>
 
-        <Grid Grid.Row="0" Margin="0,0,0,20">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="📊 الإحصائيات العامة" FontSize="24" FontWeight="Bold" Foreground="#333" VerticalAlignment="Center"/>
-                <TextBlock Text="ملخص أداء المتجر المالي" FontSize="14" Foreground="Gray" VerticalAlignment="Center" Margin="10,5,0,0"/>
-            </StackPanel>
+        <!-- Shadow -->
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
 
-            <Button Content="تحديث البيانات 🔄" HorizontalAlignment="Right" Padding="15,5" 
-        Foreground="White" BorderThickness="0" Click="Refresh_Click">
-                <Button.Template>
+        <!-- Theme brushes -->
+        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#2E2A27"/>
+
+        <!-- Touch button -->
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="#2196F3" CornerRadius="5">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                            </Border.Effect>
+
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
                         </Border>
 
                         <ControlTemplate.Triggers>
-
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#42A5F5"/>
-                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
                             </Trigger>
 
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#0D47A1"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
 
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
-                </Button.Template>
-            </Button>
-        </Grid>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <UniformGrid Grid.Row="1" Rows="1" Columns="4" Margin="0,0,0,30">
-            <Border Background="#4CAF50" CornerRadius="10" Margin="5" Padding="20" >
-                <StackPanel>
-                    <TextBlock Text="مبيعات اليوم" Foreground="White" Opacity="0.8" FontSize="14"/>
-                    <TextBlock x:Name="txtDailySales" Text="0 د.ع" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
-                </StackPanel>
+        <!-- DataGrid styling -->
+        <Style x:Key="BaseDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="RowHeight" Value="44"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAF8F6"/>
+        </Style>
+
+        <Style x:Key="BaseHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#2F2B29"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style x:Key="BaseRowStyle" TargetType="DataGridRow">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFF3E0"/>
+                    <Setter Property="Foreground" Value="#2E2A27"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Page.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header card -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="16"
+                    Margin="0,0,0,14"
+                    Effect="{StaticResource CardShadow}">
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Column="0">
+                        <TextBlock Text="📊 الإحصائيات العامة"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource TextDark}"
+                                   VerticalAlignment="Center"/>
+
+                        <TextBlock Text="ملخص أداء المتجر المالي"
+                                   FontSize="14"
+                                   Foreground="#7A726C"
+                                   VerticalAlignment="Center"
+                                   Margin="10,6,0,0"/>
+                    </StackPanel>
+
+                    <Button Content="تحديث البيانات 🔄"
+                            Grid.Column="1"
+                            Background="#1976D2"
+                            Style="{StaticResource TouchButtonStyle}"
+                            Click="Refresh_Click"/>
+                </Grid>
             </Border>
 
-            <Border Background="#00BCD4" CornerRadius="10" Margin="5" Padding="20">
-                <StackPanel>
-                    <TextBlock Text="مبيعات آخر 7 أيام" Foreground="White" Opacity="0.8" FontSize="14"/>
-                    <TextBlock x:Name="txtWeeklySales" Text="0 د.ع" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
+            <!-- Stats cards -->
+            <UniformGrid Grid.Row="1" Rows="1" Columns="4" Margin="0,0,0,16">
 
-            <Border Background="#673AB7" CornerRadius="10" Margin="5" Padding="20">
-                <StackPanel>
-                    <TextBlock Text="الشهر الحالي" Foreground="White" Opacity="0.8" FontSize="14"/>
-                    <TextBlock x:Name="txtMonthlySales" Text="0 د.ع" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <Border Background="#FF9800" CornerRadius="10" Margin="5" Padding="20">
-                <StackPanel>
-                    <TextBlock Text="السنة الحالية" Foreground="White" Opacity="0.8" FontSize="14"/>
-                    <TextBlock x:Name="txtYearlySales" Text="0 د.ع" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
-                </StackPanel>
-            </Border>
-        </UniformGrid>
-
-        <Border Grid.Row="2" Background="White" BorderBrush="#EEE" BorderThickness="1" CornerRadius="10" Padding="0">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <Border Background="#FAFAFA" CornerRadius="10,10,0,0" Padding="15">
-                    <TextBlock Text="🔥 المواد الأكثر مبيعاً (Top 10)" FontWeight="Bold" Foreground="#555" FontSize="16"/>
+                <Border Background="#2E7D32" CornerRadius="18" Margin="6" Padding="18" Effect="{StaticResource CardShadow}">
+                    <StackPanel>
+                        <TextBlock Text="مبيعات اليوم" Foreground="White" Opacity="0.85" FontSize="14"/>
+                        <TextBlock x:Name="txtDailySales" Text="0 د.ع" Foreground="White" FontSize="24" FontWeight="Bold" Margin="0,6,0,0"/>
+                    </StackPanel>
                 </Border>
 
-                <DataGrid x:Name="dgBestSellers" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
-                          HeadersVisibility="Column" Background="White" RowHeight="40" BorderThickness="0" 
-                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="اسم المادة" Binding="{Binding ProductName}" Width="*" FontWeight="SemiBold"/>
-                        <DataGridTextColumn Header="العدد المباع" Binding="{Binding TotalQty}" Width="150"/>
-                        <DataGridTextColumn Header="إجمالي العائدات" Binding="{Binding TotalRevenue, StringFormat={}{0:N0} د.ع}" Width="150" Foreground="#4CAF50" FontWeight="Bold"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </Border>
+                <Border Background="#00838F" CornerRadius="18" Margin="6" Padding="18" Effect="{StaticResource CardShadow}">
+                    <StackPanel>
+                        <TextBlock Text="مبيعات آخر 7 أيام" Foreground="White" Opacity="0.85" FontSize="14"/>
+                        <TextBlock x:Name="txtWeeklySales" Text="0 د.ع" Foreground="White" FontSize="24" FontWeight="Bold" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#5E35B1" CornerRadius="18" Margin="6" Padding="18" Effect="{StaticResource CardShadow}">
+                    <StackPanel>
+                        <TextBlock Text="الشهر الحالي" Foreground="White" Opacity="0.85" FontSize="14"/>
+                        <TextBlock x:Name="txtMonthlySales" Text="0 د.ع" Foreground="White" FontSize="24" FontWeight="Bold" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#EF6C00" CornerRadius="18" Margin="6" Padding="18" Effect="{StaticResource CardShadow}">
+                    <StackPanel>
+                        <TextBlock Text="السنة الحالية" Foreground="White" Opacity="0.85" FontSize="14"/>
+                        <TextBlock x:Name="txtYearlySales" Text="0 د.ع" Foreground="White" FontSize="24" FontWeight="Bold" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+            </UniformGrid>
+
+            <!-- Best sellers card -->
+            <Border Grid.Row="2"
+                    Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="0"
+                    Effect="{StaticResource CardShadow}">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Background="#FAF8F6"
+                            CornerRadius="16,16,0,0"
+                            Padding="14"
+                            BorderBrush="{StaticResource BorderSoft}"
+                            BorderThickness="0,0,0,1">
+
+                        <TextBlock Text="🔥 المواد الأكثر مبيعاً (Top 10)"
+                                   FontWeight="Bold"
+                                   Foreground="#4A4440"
+                                   FontSize="16"/>
+                    </Border>
+
+                    <DataGrid x:Name="dgBestSellers"
+                              Grid.Row="1"
+                              Style="{StaticResource BaseDataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                              RowStyle="{StaticResource BaseRowStyle}"
+                              BorderThickness="0">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="اسم المادة"
+                                                Binding="{Binding ProductName}"
+                                                Width="*"/>
+
+                            <DataGridTextColumn Header="العدد المباع"
+                                                Binding="{Binding TotalQty}"
+                                                Width="170"/>
+
+                            <DataGridTextColumn Header="إجمالي العائدات"
+                                                Binding="{Binding TotalRevenue, StringFormat={}{0:N0} د.ع}"
+                                                Width="190"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </Grid>
+            </Border>
+
+        </Grid>
     </Grid>
 </Page>

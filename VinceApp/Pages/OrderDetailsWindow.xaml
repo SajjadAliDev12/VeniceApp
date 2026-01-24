@@ -5,67 +5,207 @@
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         FlowDirection="RightToLeft" Background="#F9F9F9">
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <Window.Resources>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,15">
-            <DockPanel LastChildFill="False">
-                <TextBlock x:Name="txtTitle" Text="فاتورة رقم #0000" FontSize="22" FontWeight="Bold" Foreground="#3E2723"/>
-                <Border x:Name="borderType" CornerRadius="5" Padding="10,2" DockPanel.Dock="Left" Background="#EEE">
-                    <TextBlock x:Name="txtOrderType" Text="نوع الطلب" FontSize="14" FontWeight="SemiBold" Foreground="#555"/>
-                </Border>
-            </DockPanel>
-            <TextBlock x:Name="txtDate" Text="التاريخ: --/--/----" FontSize="14" Foreground="Gray" Margin="0,5,0,0"/>
-        </StackPanel>
+        <!-- Shadow -->
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
 
-        <DataGrid x:Name="dgDetails" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
-                  HeadersVisibility="Column" Background="White" RowHeight="35" BorderThickness="1" BorderBrush="#EEE"
-                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE">
+        <!-- Theme -->
+        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#2E2A27"/>
 
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsTotalRow}" Value="True">
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="FontSize" Value="14"/>
-                            <Setter Property="Background" Value="#F9FBE7"/>
-                            <Setter Property="Foreground" Value="{Binding RowColor}"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.RowStyle>
+        <!-- Touch button -->
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="18,8"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                            </Border.Effect>
 
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="المنتج" Binding="{Binding ProductName}" Width="*"/>
-                <DataGridTextColumn Header="السعر" Binding="{Binding Price, StringFormat={}{0:N0}, TargetNullValue=''}" Width="80"/>
-                <DataGridTextColumn Header="الكمية" Binding="{Binding Quantity, TargetNullValue=''}" Width="60"/>
-                <DataGridTextColumn Header="الإجمالي" Binding="{Binding Total, StringFormat={}{0:N0}}" Width="100"/>
-            </DataGrid.Columns>
-        </DataGrid>
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
 
-        <Button Grid.Row="2" Content="إغلاق" Height="40" Margin="101,15,314,0"
-                Background="#5D4037" Foreground="White" Click="Close_Click">
-            <Button.Template>
-                <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                </ControlTemplate>
-            </Button.Template>
-        </Button>
-        <Button Grid.Row="2" Content="طباعة" Height="40" Margin="323,15,85,0"
-             Background="#5D4037" Foreground="White" Click="Button_Click">
-            <Button.Template>
-                <ControlTemplate TargetType="{x:Type Button}">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                </ControlTemplate>
-            </Button.Template>
-        </Button>
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DataGrid base -->
+        <Style x:Key="BaseDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="RowHeight" Value="42"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAF8F6"/>
+        </Style>
+
+        <Style x:Key="BaseHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#2F2B29"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header card -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="16"
+                    Margin="0,0,0,12"
+                    Effect="{StaticResource CardShadow}">
+
+                <StackPanel>
+                    <DockPanel LastChildFill="False">
+                        <TextBlock x:Name="txtTitle"
+                                   Text="فاتورة رقم #0000"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="#3E2723"
+                                   VerticalAlignment="Center"/>
+
+                        <Border x:Name="borderType"
+                                CornerRadius="12"
+                                Padding="12,4"
+                                DockPanel.Dock="Left"
+                                Background="#FAF8F6"
+                                BorderBrush="{StaticResource BorderSoft}"
+                                BorderThickness="1">
+                            <TextBlock x:Name="txtOrderType"
+                                       Text="نوع الطلب"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="#4A4440"/>
+                        </Border>
+                    </DockPanel>
+
+                    <TextBlock x:Name="txtDate"
+                               Text="التاريخ: --/--/----"
+                               FontSize="14"
+                               Foreground="#7A726C"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Details card -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="10"
+                    Effect="{StaticResource CardShadow}">
+
+                <DataGrid x:Name="dgDetails"
+                          Style="{StaticResource BaseDataGridStyle}"
+                          ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                          BorderThickness="0">
+
+                    <!-- Keep your special total-row behavior -->
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsTotalRow}" Value="True">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="FontSize" Value="14"/>
+                                    <Setter Property="Background" Value="#F9FBE7"/>
+                                    <Setter Property="Foreground" Value="{Binding RowColor}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="المنتج" Binding="{Binding ProductName}" Width="*"/>
+                        <DataGridTextColumn Header="السعر" Binding="{Binding Price, StringFormat={}{0:N0}, TargetNullValue=''}" Width="90"/>
+                        <DataGridTextColumn Header="الكمية" Binding="{Binding Quantity, TargetNullValue=''}" Width="70"/>
+                        <DataGridTextColumn Header="الإجمالي" Binding="{Binding Total, StringFormat={}{0:N0}}" Width="110"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Bottom buttons -->
+            <Grid Grid.Row="2" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Content="طباعة"
+                        Grid.Column="0"
+                        Background="#5D4037"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Click="Button_Click"/>
+
+                <Button Content="إغلاق"
+                        Grid.Column="2"
+                        Background="#455A64"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Click="Close_Click"/>
+            </Grid>
+
+        </Grid>
     </Grid>
 </Window>

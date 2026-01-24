@@ -6,70 +6,298 @@
         ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent"
         FlowDirection="RightToLeft">
 
-    <Border Background="White" CornerRadius="20" BorderBrush="#5D4037" BorderThickness="2">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.4"/>
-        </Border.Effect>
+    <Window.Resources>
 
-        <Grid>
+        <!-- Shadow -->
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="22" ShadowDepth="6" Opacity="0.22" Color="#000000"/>
 
-            <Grid Margin="30">
-                <Button HorizontalAlignment="Left" VerticalAlignment="Top" 
-                        Background="Transparent" BorderThickness="0" Cursor="Hand"
-                        Click="BtnServerSettings_Click" ToolTip="إعدادات السيرفر">
-                    <TextBlock Text="⚙️" FontSize="20" Foreground="#5D4037"/>
-                </Button>
+        <!-- Theme -->
+        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
 
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="🔐 تسجيل الدخول " FontSize="26" FontWeight="Bold" Foreground="#5D4037" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+        <!-- Inputs -->
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                    <TextBlock Text="اسم المستخدم:" FontSize="14" Foreground="Gray" Margin="0,0,0,5"/>
-                    <TextBox x:Name="txtUser" Height="40" FontSize="16" Padding="5" Margin="0,0,0,15"/>
+        <Style x:Key="InputPasswordStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                    <TextBlock Text="كلمة المرور:" FontSize="14" Foreground="Gray" Margin="0,0,0,5"/>
-                    <PasswordBox x:Name="txtPass" Height="40" FontSize="16" Padding="5" Margin="0,0,0,20"/>
+        <!-- Primary button -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="52"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="16"
+                                Padding="18,8">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                            </Border.Effect>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                        <Button Content="دخول" Height="50" Width="120" Margin="5,0" IsDefault="True"
-                                Background="#5D4037" Foreground="White" FontSize="16" FontWeight="Bold" 
-                                Click="Login_Click">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="10"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
 
-                        <Button Content="نسيت كلمة المرور" Height="50" Width="140" Margin="5,0" 
-                                Background="#E0E0E0" Foreground="#333" FontSize="14" FontWeight="Bold" 
-                                Click="ForgotPassword_Click">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="10"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary button -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Foreground" Value="#3B3633"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="16"
+                                BorderBrush="{StaticResource BorderSoft}"
+                                BorderThickness="1"
+                                Padding="18,8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#EAEAEA"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#EFEFEF"/>
+                                <Setter Property="Foreground" Value="#9A9A9A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Link button -->
+        <Style x:Key="LinkButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#6F6761"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="10" Padding="10,4" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#2F2B29"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid>
+        <!-- Dim background -->
+        <Border Background="#66000000"/>
+
+        <!-- Card -->
+        <Border Background="White"
+                CornerRadius="18"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                Effect="{StaticResource CardShadow}"
+                Width="450"
+                Height="500"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+
+            <Grid Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Top bar (settings icon) -->
+                <Grid Grid.Row="0">
+                    <Button HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="BtnServerSettings_Click"
+                            ToolTip="إعدادات السيرفر">
+                        <Border Background="#FAF8F6"
+                                BorderBrush="{StaticResource BorderSoft}"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Padding="10,6">
+                            <TextBlock Text="⚙️" FontSize="18" Foreground="#5D4037"/>
+                        </Border>
+                    </Button>
+
+                    <StackPanel HorizontalAlignment="Center" Margin="0,6,0,0">
+                        <TextBlock Text="🔐 تسجيل الدخول"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#5D4037"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="أدخل بياناتك للمتابعة"
+                                   FontSize="12"
+                                   Foreground="#7A726C"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
+                </Grid>
 
-                    <Button Content="خروج" FontSize="24" Height="40" Margin="0,5,0,0" Background="Transparent" Foreground="#777" BorderThickness="0" IsCancel="True"
+                <!-- Body -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,12,0,0">
+
+                    <TextBlock Text="اسم المستخدم:"
+                               FontSize="13"
+                               FontWeight="Bold"
+                               Foreground="#7A726C"
+                               Margin="0,0,0,6"/>
+                    <TextBox x:Name="txtUser"
+                             Style="{StaticResource InputTextBoxStyle}"
+                             Margin="0,0,0,14"/>
+
+                    <TextBlock Text="كلمة المرور:"
+                               FontSize="13"
+                               FontWeight="Bold"
+                               Foreground="#7A726C"
+                               Margin="0,0,0,6"/>
+                    <PasswordBox x:Name="txtPass"
+                                 Style="{StaticResource InputPasswordStyle}"
+                                 Margin="0,0,0,18"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Content="دخول"
+                                Grid.Column="0"
+                                IsDefault="True"
+                                Background="#5D4037"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Click="Login_Click"/>
+
+                        <Button Content="نسيت كلمة المرور"
+                                Grid.Column="2"
+                                Background="#F2F2F2"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="ForgotPassword_Click"/>
+                    </Grid>
+
+                </StackPanel>
+
+                <!-- Footer -->
+                <StackPanel Grid.Row="2" Margin="0,14,0,0" HorizontalAlignment="Center">
+                    <Button Content="خروج"
+                            FontSize="16"
+                            Style="{StaticResource LinkButtonStyle}"
+                            IsCancel="True"
                             Click="Cancel_Click"/>
                 </StackPanel>
             </Grid>
+        </Border>
 
-            <Grid x:Name="LoadingOverlay" Visibility="Collapsed">
-                <Border Background="#80000000" CornerRadius="20"/>
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" Visibility="Collapsed">
+            <Border Background="#80000000"/>
 
-                <Border Background="White" CornerRadius="10" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="10" Opacity="0.5"/>
-                    </Border.Effect>
-                    <StackPanel HorizontalAlignment="Center">
-                        <ProgressBar IsIndeterminate="True" Width="150" Height="10" Margin="0,0,0,10" BorderThickness="0"/>
-                        <TextBlock x:Name="txtLoadingMsg" Text="جاري محاولة الاتصال..." HorizontalAlignment="Center" FontWeight="Bold" Foreground="#333"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
+            <Border Background="White"
+                    CornerRadius="16"
+                    Padding="22"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Effect="{StaticResource CardShadow}">
+                <StackPanel HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="180" Height="10" Margin="0,0,0,12" BorderThickness="0"/>
+                    <TextBlock x:Name="txtLoadingMsg"
+                               Text="جاري محاولة الاتصال..."
+                               HorizontalAlignment="Center"
+                               FontWeight="Bold"
+                               Foreground="#333"/>
+                </StackPanel>
+            </Border>
         </Grid>
-    </Border>
+
+    </Grid>
 </Window>

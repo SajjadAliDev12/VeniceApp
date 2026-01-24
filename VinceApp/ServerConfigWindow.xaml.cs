@@ -164,7 +164,10 @@ namespace VinceApp
                 MessageBox.Show($"حدث خطأ أثناء الحفظ: {ex.Message}");
             }
         }
-
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
         private void SaveConnectionStringToUserConfig(string connectionString)
         {
             // نقرأ user config الحالي

@@ -477,10 +477,6 @@ namespace VinceApp
                 {
                     Owner = this
                 };
-
-                // نخفي بعد ما نحدد الـ Owner
-                this.Hide();
-
                 cashier.ShowDialog();
                 if (cashier.wasPaid)
                 {

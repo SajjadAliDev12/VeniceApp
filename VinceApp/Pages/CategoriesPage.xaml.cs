@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using Microsoft.EntityFrameworkCore; // مهم جداً
 using Serilog;
 using VinceApp.Data;
@@ -14,7 +15,7 @@ namespace VinceApp.Pages
         // إذا كان 0، يعني نحن نضيف جديداً
         // إذا كان أكبر من 0، يعني نحن نعدل تصنيفاً موجوداً
         private int _selectedId = 0;
-
+        
         public CategoriesPage()
         {
             InitializeComponent();
@@ -43,6 +44,7 @@ namespace VinceApp.Pages
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             string name = txtName.Text.Trim();
+            
             if (string.IsNullOrEmpty(name))
             {
                 ToastControl.Show("الاسم مطلوب", "يرجى كتابة الاسم", ToastControl.NotificationType.Info);
@@ -52,17 +54,26 @@ namespace VinceApp.Pages
 
             try
             {
+                
+                
                 using (var context = new VinceSweetsDbContext())
                 {
+                    bool exists = context.Categories.Any(c => c.Name == name && c.Id != _selectedId);
+
+                    if (exists)
+                    {
+                        ToastControl.Show("تنبيه", "هذا الاسم موجود مسبقاً", ToastControl.NotificationType.Warning);
+                        return; 
+                    }
                     if (_selectedId == 0)
                     {
-                        // === إضافة جديد ===
+                        
                         var newCat = new Category { Name = name };
                         context.Categories.Add(newCat);
                     }
                     else
                     {
-                        // === تعديل موجود ===
+                        
                         var cat = context.Categories.Find(_selectedId);
                         if (cat != null)
                         {
@@ -130,7 +141,8 @@ namespace VinceApp.Pages
                                 context.Categories.Remove(cat);
                                 context.SaveChanges();
                                 LoadCategories();
-                                ClearFields(); // في حال كنا نعدله ثم حذفناه
+                                ClearFields();
+                                ToastControl.Show("تم الحذف", "تم حذف التصنيف بنجاح", ToastControl.NotificationType.Success);
                             }
                         }
                     }

@@ -12,7 +12,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using VinceApp.Data;
-using Microsoft.EntityFrameworkCore.Design;
 
 namespace VinceKitchen
 {
@@ -38,6 +37,9 @@ namespace VinceKitchen
             _timer.Start();
 
             _ = LoadKitchenOrders();
+
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/KitchenUpdate.xml");
         }
 
         // ✅ قراءة ConnectionString من appsettings.user.json (إن وجد)
@@ -140,14 +142,17 @@ namespace VinceKitchen
                 OrdersList.ItemsSource = displayList;
 
                 if (StatusBorder != null) StatusBorder.Background = Brushes.LimeGreen;
+
+                // ✅ اختياري: إذا موجود بالتصميم الجديد
+                if (txtConnectionStatus != null) txtConnectionStatus.Text = "متصل";
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Error in kitchen screen LoadOrders()");
-                if (StatusBorder != null)
-                {
-                    StatusBorder.Background = Brushes.Red;
-                }
+                if (StatusBorder != null) StatusBorder.Background = Brushes.Red;
+
+                // ✅ اختياري: إذا موجود بالتصميم الجديد
+                if (txtConnectionStatus != null) txtConnectionStatus.Text = "غير متصل";
             }
             finally
             {
@@ -161,53 +166,49 @@ namespace VinceKitchen
                 "الطلب جاهز\nسوف يتم حذف هذا الطلب من قائمة الانتظار",
                 "تأكيد",
                 MessageBoxButton.OKCancel,
-                MessageBoxImage.Information) == MessageBoxResult.OK)
+                MessageBoxImage.Information) != MessageBoxResult.OK)
+                return;
+
+            try
             {
-                try
+                // ✅ Tag ممكن يجي int أو string أو long .. نخليه آمن
+                if (sender is not Button btn || btn.Tag == null) return;
+
+                if (!int.TryParse(btn.Tag.ToString(), out int orderId)) return;
+
+                bool success = await Task.Run(async () =>
                 {
-                    if (sender is Button btn && btn.Tag is int orderId)
+                    using (var context = CreateDbContext())
                     {
-                        bool success = await Task.Run(async () =>
-                        {
-                            using (var context = CreateDbContext())
-                            {
-                                var order = await context.Orders
-                                    .Include(o => o.OrderDetails)
-                                    .ThenInclude(d => d.Product)
-                                    .FirstOrDefaultAsync(o => o.Id == orderId);
+                        var order = await context.Orders
+                            .Include(o => o.OrderDetails)
+                            .ThenInclude(d => d.Product)
+                            .FirstOrDefaultAsync(o => o.Id == orderId);
 
-                                if (order != null)
-                                {
-                                    var itemsToServe = order.OrderDetails
-                                        .Where(d => d.Product.IsKitchenItem == true && !d.IsServed)
-                                        .ToList();
+                        if (order == null) return false;
 
-                                    foreach (var item in itemsToServe)
-                                    {
-                                        item.IsServed = true;
-                                    }
+                        var itemsToServe = order.OrderDetails
+                            .Where(d => d.Product.IsKitchenItem == true && !d.IsServed && !d.isDeleted)
+                            .ToList();
 
-                                    order.isReady = true;
-                                    await context.SaveChangesAsync();
-                                    return true;
-                                }
+                        foreach (var item in itemsToServe)
+                            item.IsServed = true;
 
-                                return false;
-                            }
-                        });
-
-                        if (success)
-                        {
-                            await LoadKitchenOrders();
-                        }
+                        order.isReady = true;
+                        await context.SaveChangesAsync();
+                        return true;
                     }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "OrderDone_Click error");
-                    MessageBox.Show("فشل الاتصال بالسيرفر.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    if (StatusBorder != null) StatusBorder.Background = Brushes.Red;
-                }
+                });
+
+                if (success)
+                    await LoadKitchenOrders();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "OrderDone_Click error");
+                MessageBox.Show("فشل الاتصال بالسيرفر.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                if (StatusBorder != null) StatusBorder.Background = Brushes.Red;
+                if (txtConnectionStatus != null) txtConnectionStatus.Text = "غير متصل";
             }
         }
 
@@ -222,12 +223,6 @@ namespace VinceKitchen
             settingsWin.Owner = this;
             settingsWin.ShowDialog();
         }
-
-        private void Window_ContentRendered(object sender, EventArgs e)
-        {
-            AutoUpdater.RunUpdateAsAdmin = true;
-            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/KitchenUpdate.xml");
-        }
     }
 
     public class KitchenOrderViewModel
@@ -237,6 +232,7 @@ namespace VinceKitchen
         public DateTime OrderTime { get; set; }
         public List<KitchenItemView> KitchenItems { get; set; }
 
+        // ✅ القديم (خليه إذا XAML القديم/الحالي يستخدمه)
         public string TimeDisplay
         {
             get
@@ -246,6 +242,28 @@ namespace VinceKitchen
                     return $"{diff.Minutes} دقيقة";
                 else
                     return $"{(int)diff.TotalHours} س و {diff.Minutes} د";
+            }
+        }
+
+        // ✅ الجديد للتصميم المقترح (Badge)
+        public string ElapsedDisplay
+        {
+            get
+            {
+                var diff = DateTime.Now - OrderTime;
+                if (diff.TotalHours < 1)
+                    return $"{diff.Minutes:0}د";
+                return $"{(int)diff.TotalHours}س {diff.Minutes:0}د";
+            }
+        }
+
+        // ✅ الجديد: اعتبره متأخر بعد 10 دقائق (غيّر الرقم إذا تريد)
+        public bool IsLate
+        {
+            get
+            {
+                var diff = DateTime.Now - OrderTime;
+                return diff.TotalMinutes >= 20;
             }
         }
     }

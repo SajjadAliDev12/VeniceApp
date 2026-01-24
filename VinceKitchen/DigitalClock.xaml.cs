@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Animation;
 using System.Windows.Threading; // للمؤقت
 
 namespace VinceKitchen
@@ -16,28 +17,30 @@ namespace VinceKitchen
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // إعداد المؤقت مرة واحدة
-            timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(500);
-            timer.Tick += Timer_Tick;
-            timer.Start();
+            UpdateTime();
 
-            // تحديث الوقت فوراً عند التحميل
-            UpdateClock();
+            var blink = (Storyboard)Resources["BlinkColon"];
+            blink.Begin(this);
+
+            var timer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            timer.Tick += (s, args) => UpdateTime();
+            timer.Start();
+        }
+
+        private void UpdateTime()
+        {
+            txtHour.Text = DateTime.Now.ToString("mm");
+            txtMinute.Text = DateTime.Now.ToString("hh");
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            UpdateClock();
+            UpdateTime();
         }
 
-        private void UpdateClock()
-        {
-            DateTime now = DateTime.Now;
-            txtTime.Text = now.ToString("hh:mm tt");
-        }
-
-        // تنظيف الذاكرة عند إغلاق الأداة (اختياري ولكنه جيد)
         public void StopClock()
         {
             if (timer != null) timer.Stop();
