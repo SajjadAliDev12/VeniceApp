@@ -162,104 +162,135 @@
 
             <!-- Left form card -->
             <Border Grid.Column="0"
-                    Background="{StaticResource CardBrush}"
-                    CornerRadius="16"
-                    BorderBrush="{StaticResource BorderSoft}"
-                    BorderThickness="1"
-                    Padding="16"
-                    Margin="0,0,14,0"
-                    Effect="{StaticResource CardShadow}">
+        Background="{StaticResource CardBrush}"
+        CornerRadius="16"
+        BorderBrush="{StaticResource BorderSoft}"
+        BorderThickness="1"
+        Padding="16"
+        Margin="0,0,14,0"
+        Effect="{StaticResource CardShadow}">
 
-                <StackPanel>
-                    <TextBlock Text="بيانات المنتج"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource TextDark}"
-                               Margin="0,0,0,14"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- العنوان -->
+                        <RowDefinition Height="*"/>
+                        <!-- الفورم (Scroll) -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- الأزرار (ثابتة) -->
+                    </Grid.RowDefinitions>
 
-                    <TextBlock Text="اسم المنتج:" Foreground="#7A726C" Margin="0,0,0,6"/>
-                    <TextBox x:Name="txtName"
-                             Style="{StaticResource InputTextBoxStyle}"
-                             Margin="0,0,0,12"/>
+                    <TextBlock Grid.Row="0"
+                   Text="بيانات المنتج"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   Foreground="{StaticResource TextDark}"
+                   Margin="0,0,0,14"/>
 
-                    <TextBlock Text="السعر:" Foreground="#7A726C" Margin="0,0,0,6"/>
-                    <TextBox x:Name="txtPrice"
-                             Style="{StaticResource InputTextBoxStyle}"
-                             Margin="0,0,0,12"
-                             PreviewTextInput="NumberValidationTextBox"/>
+                    <!-- ✅ الفورم قابل للتمرير -->
+                    <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="0,0,8,0">
 
-                    <TextBlock Text="التصنيف:" Foreground="#7A726C" Margin="0,0,0,6"/>
-                    <ComboBox x:Name="cmbCategories"
-                              Style="{StaticResource InputComboStyle}"
-                              Margin="0,0,0,10"
-                              DisplayMemberPath="Name"
-                              SelectedValuePath="Id"/>
+                        <StackPanel>
 
-                    <Border Background="#FAF8F6"
-                            CornerRadius="12"
-                            BorderBrush="{StaticResource BorderSoft}"
-                            BorderThickness="1"
-                            Padding="10"
-                            Margin="0,6,0,14">
-                        <CheckBox x:Name="chkIsAvailable"
-                                  Content="متوفر في المخزون"
-                                  IsChecked="True"
-                                  FontSize="14"
-                                  FontWeight="SemiBold"
-                                  Foreground="#4A4440"
-                                  VerticalContentAlignment="Center"/>
+                            <TextBlock Text="اسم المنتج:" Foreground="#7A726C" Margin="0,0,0,6"/>
+                            <TextBox x:Name="txtName"
+                         Style="{StaticResource InputTextBoxStyle}"
+                         Margin="0,0,0,12"/>
+
+                            <TextBlock Text="السعر:" Foreground="#7A726C" Margin="0,0,0,6"/>
+                            <TextBox x:Name="txtPrice"
+                         Style="{StaticResource InputTextBoxStyle}"
+                         Margin="0,0,0,12"
+                         PreviewTextInput="NumberValidationTextBox"/>
+
+                            <TextBlock Text="التصنيف:" Foreground="#7A726C" Margin="0,0,0,6"/>
+                            <ComboBox x:Name="cmbCategories"
+                          Style="{StaticResource InputComboStyle}"
+                          Margin="0,0,0,10"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"/>
+
+                            <Border Background="#FAF8F6"
+                        CornerRadius="12"
+                        BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="1"
+                        Padding="10"
+                        Margin="0,6,0,14">
+                                <CheckBox x:Name="chkIsAvailable"
+                              Content="متوفر في المخزون"
+                              IsChecked="True"
+                              FontSize="14"
+                              FontWeight="SemiBold"
+                              Foreground="#4A4440"
+                              VerticalContentAlignment="Center"/>
+                            </Border>
+
+                            <TextBlock Text="صورة المنتج:" Foreground="#7A726C" Margin="0,0,0,6"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button Content="📂 اختر صورة"
+                            Width="120"
+                            Background="#607D8B"
+                            Style="{StaticResource TouchButtonStyle}"
+                            Click="BrowseImage_Click"/>
+                                <TextBlock x:Name="txtImageName"
+                               Text="لم يتم اختيار صورة"
+                               VerticalAlignment="Center"
+                               Margin="10,0"
+                               Foreground="#7A726C"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="170"/>
+                            </StackPanel>
+
+                            <Border BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="1"
+                        CornerRadius="16"
+                        Width="170"
+                        Height="170"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,18"
+                        Background="#FFFFFF"
+                        Effect="{StaticResource CardShadow}">
+                                <Border ClipToBounds="True" CornerRadius="16">
+                                    <Image x:Name="imgPreview" Stretch="UniformToFill"/>
+                                </Border>
+                            </Border>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- ✅ الأزرار ثابتة دائماً -->
+                    <Border Grid.Row="2"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="0,1,0,0"
+                Margin="0,12,0,0"
+                Padding="0,12,0,0">
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="💾 حفظ"
+                        Width="130"
+                        Background="#2E7D32"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Margin="6,0"
+                        Click="Save_Click"/>
+
+                            <Button Content="إلغاء / جديد"
+                        Width="130"
+                        Background="#ECE7E2"
+                        Foreground="#4A4440"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Margin="6,0"
+                        Click="Clear_Click"/>
+                        </StackPanel>
                     </Border>
 
-                    <TextBlock Text="صورة المنتج:" Foreground="#7A726C" Margin="0,0,0,6"/>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <Button Content="📂 اختر صورة"
-                                Width="120"
-                                Background="#607D8B"
-                                Style="{StaticResource TouchButtonStyle}"
-                                Click="BrowseImage_Click"/>
-                        <TextBlock x:Name="txtImageName"
-                                   Text="لم يتم اختيار صورة"
-                                   VerticalAlignment="Center"
-                                   Margin="10,0"
-                                   Foreground="#7A726C"
-                                   FontSize="12"
-                                   TextTrimming="CharacterEllipsis"
-                                   MaxWidth="170"/>
-                    </StackPanel>
-
-                    <Border BorderBrush="{StaticResource BorderSoft}"
-                            BorderThickness="1"
-                            CornerRadius="16"
-                            Width="170"
-                            Height="170"
-                            HorizontalAlignment="Center"
-                            Margin="0,0,0,18"
-                            Background="#FFFFFF"
-                            Effect="{StaticResource CardShadow}">
-                        <Border ClipToBounds="True" CornerRadius="16">
-                            <Image x:Name="imgPreview" Stretch="UniformToFill"/>
-                        </Border>
-                    </Border>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Content="💾 حفظ"
-                                Width="130"
-                                Background="#2E7D32"
-                                Style="{StaticResource TouchButtonStyle}"
-                                Margin="6,0"
-                                Click="Save_Click"/>
-
-                        <Button Content="إلغاء / جديد"
-                                Width="130"
-                                Background="#ECE7E2"
-                                Foreground="#4A4440"
-                                Style="{StaticResource TouchButtonStyle}"
-                                Margin="6,0"
-                                Click="Clear_Click"/>
-                    </StackPanel>
-                </StackPanel>
+                </Grid>
             </Border>
+
 
             <!-- Right grid card -->
             <Border Grid.Column="1"
