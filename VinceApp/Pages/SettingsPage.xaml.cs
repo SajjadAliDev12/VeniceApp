@@ -295,7 +295,12 @@ namespace VinceApp.Pages
                 }
             }
         }
-
+        private void ShowLoading(bool show, string? hint = null)
+        {
+            LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            if (!string.IsNullOrWhiteSpace(hint))
+                txtLoadingHint.Text = hint;
+        }
         // --- الاستعادة ---
         private async void Restore_Click(object sender, RoutedEventArgs e)
         {
@@ -316,6 +321,7 @@ namespace VinceApp.Pages
                     try
                     {
                         Mouse.OverrideCursor = Cursors.Wait;
+                        ShowLoading(true, "جاري استعادة قاعدة البيانات يرجى الانتظار");
                         var backupService = new BackupService();
 
                         // يفضل تشغيل الاستعادة في Task منفصلة لتجنب تجميد الواجهة
@@ -323,8 +329,8 @@ namespace VinceApp.Pages
 
                         Mouse.OverrideCursor = null;
                         OnNotificationReqested?.Invoke("تم", "تمت الاستعادة. سيتم إعادة التشغيل.");
-
-                        await Task.Delay(2000);
+                        ShowLoading(false);
+                        await Task.Delay(4000);
 
                         // إعادة تشغيل التطبيق
                         var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -335,8 +341,10 @@ namespace VinceApp.Pages
                     {
                         Mouse.OverrideCursor = null;
                         Log.Error(ex, "Restore Failed");
+                        OnNotificationReqested?.Invoke("خطأ", "فشلت الاستعادة");
                         MessageBox.Show($"فشلت الاستعادة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
+                    finally { Mouse.OverrideCursor = null;ShowLoading(false); }
                 }
             }
         }

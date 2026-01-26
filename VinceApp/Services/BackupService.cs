@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
+using System.Linq;
 using VinceApp.Data;
 
 namespace VinceApp.Services
@@ -15,42 +16,80 @@ namespace VinceApp.Services
                 var connection = context.Database.GetDbConnection();
                 string dbName = connection.Database;
 
-                // ✅ الخطوة 1: تحديد مسار مؤقت آمن (داخل مجلد Temp الخاص بالنظام)
-                // هذا المجلد مفتوح للجميع، لذا SQL Server يستطيع الكتابة فيه دائماً
-                string tempFolderPath = Path.GetTempPath();
-                string tempFileName = $"TempBackup_{Guid.NewGuid()}.bak";
-                string tempFilePath = Path.Combine(tempFolderPath, tempFileName);
+                // ✅ 1. بدلاً من مجلد المستخدم، نطلب من SQL Server مساره الافتراضي الآمن
+                string safeBackupFolder = GetSqlDefaultBackupPath(context);
+
+                // اسم ملف مؤقت
+                string tempFileName = $"Temp_{Guid.NewGuid()}.bak";
+                string tempFilePath = Path.Combine(safeBackupFolder, tempFileName);
 
                 try
                 {
-                    // ✅ الخطوة 2: جعل SQL Server يحفظ النسخة في المجلد المؤقت
-                    var command = $"BACKUP DATABASE [{dbName}] TO DISK = '{tempFilePath}' WITH FORMAT, INIT, NAME = 'Full Backup of {dbName}';";
+                    // ✅ 2. الحفظ في المجلد الآمن الخاص بالسيرفر
+                    // STATS = 10 يعطي معلومات عن التقدم، FORMAT لضمان ملف جديد
+                    var command = $"BACKUP DATABASE [{dbName}] TO DISK = '{tempFilePath}' WITH FORMAT, INIT, NAME = 'Full Backup';";
                     context.Database.ExecuteSqlRaw(command);
 
-                    // ✅ الخطوة 3: برنامجك يقوم بنقل الملف من المؤقت إلى المكان الذي اختاره المستخدم
-                    // (برنامجك يملك صلاحية الوصول لسطح المكتب، لذا النقل سينجح)
+                    // ✅ 3. الآن برنامجنا (الذي يملك صلاحياتك) ينقل الملف لمكانك المختار
                     if (File.Exists(tempFilePath))
                     {
                         File.Copy(tempFilePath, userSelectedPath, true);
                     }
                     else
                     {
-                        throw new Exception("لم يتم العثور على ملف النسخة الاحتياطية في المجلد المؤقت.");
+                        throw new Exception("تم النسخ ولكن لم يتم العثور على الملف في المسار المؤقت.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception($"فشل النسخ الاحتياطي: {ex.Message}");
+                    throw new Exception($"خطأ أثناء النسخ: {ex.Message}");
                 }
                 finally
                 {
-                    // ✅ الخطوة 4: تنظيف (حذف الملف المؤقت)
+                    // ✅ 4. تنظيف الملف المؤقت من مجلد السيرفر
                     try
                     {
                         if (File.Exists(tempFilePath)) File.Delete(tempFilePath);
                     }
                     catch { /* تجاهل أخطاء الحذف */ }
                 }
+            }
+        }
+
+        // دالة مساعدة لجلب المسار الذي يملك SQL Server صلاحية الكتابة فيه
+        private string GetSqlDefaultBackupPath(VinceSweetsDbContext context)
+        {
+            try
+            {
+                // محاولة جلب مسار الباك اب الافتراضي من إعدادات السيرفر
+                string path = string.Empty;
+
+                using (var command = context.Database.GetDbConnection().CreateCommand())
+                {
+                    command.CommandText = "SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(4000))";
+                    context.Database.OpenConnection();
+                    var result = command.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        path = result.ToString();
+                    }
+                }
+
+                // إذا كان المسار موجوداً، نستخدمه
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                {
+                    return path;
+                }
+
+                // خطة بديلة: إذا فشل، نستخدم المجلد العام للبرامج (ProgramData) لأنه مفتوح للخدمات
+                // C:\ProgramData
+                string publicPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                return publicPath;
+            }
+            catch
+            {
+                // أسوأ الاحتمالات: نعود للـ C مباشرة
+                return @"C:\";
             }
         }
 
@@ -73,7 +112,6 @@ namespace VinceApp.Services
 
             if (string.IsNullOrEmpty(targetDbName)) targetDbName = "VinceSweetsDB";
 
-            // التبديل إلى Master لعملية الاستعادة
             builder.InitialCatalog = "master";
 
             using (var connection = new SqlConnection(builder.ConnectionString))
