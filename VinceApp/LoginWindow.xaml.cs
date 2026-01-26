@@ -123,6 +123,13 @@ namespace VinceApp
             ForgotPasswordWindow forgot = new ForgotPasswordWindow();
             forgot.ShowDialog();
         }
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
+        }
         private void ShowLoading(bool show, string msg = "")
         {
             txtLoadingMsg.Text = msg;

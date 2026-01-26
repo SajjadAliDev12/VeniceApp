@@ -2,6 +2,7 @@
 using Serilog;
 using System;
 using System.Windows;
+using System.Windows.Input;
 using VinceApp.Data;
 using VinceApp.Data.Models;
 using VinceApp.Services;
@@ -21,7 +22,13 @@ namespace VinceApp
             var w = new ServerConfigWindow();
             w.ShowDialog();
         }
-
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
+        }
         private void Finish_Click(object sender, RoutedEventArgs e)
         {
             txtStatus.Text = "";

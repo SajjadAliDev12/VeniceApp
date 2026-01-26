@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="تسجيل الدخول " Height="500" Width="450"
         WindowStartupLocation="CenterScreen" WindowStyle="None"
-        ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent"  MouseLeftButtonDown="Window_MouseLeftButtonDown"
         FlowDirection="RightToLeft">
 
     <Window.Resources>
@@ -170,19 +170,14 @@
     </Window.Resources>
 
     <Grid>
-        <!-- Dim background -->
-        <Border Background="#66000000"/>
-
-        <!-- Card -->
         <Border Background="White"
                 CornerRadius="18"
                 BorderBrush="{StaticResource BorderSoft}"
                 BorderThickness="1"
                 Effect="{StaticResource CardShadow}"
-                Width="450"
-                Height="500"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
+                Margin="20" 
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
 
             <Grid Margin="24">
                 <Grid.RowDefinitions>
@@ -191,96 +186,42 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Top bar (settings icon) -->
                 <Grid Grid.Row="0">
-                    <Button HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            Click="BtnServerSettings_Click"
-                            ToolTip="إعدادات السيرفر">
-                        <Border Background="#FAF8F6"
-                                BorderBrush="{StaticResource BorderSoft}"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="10,6">
+                    <Button HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="BtnServerSettings_Click" ToolTip="إعدادات السيرفر">
+                        <Border Background="#FAF8F6" BorderBrush="{StaticResource BorderSoft}" BorderThickness="1" CornerRadius="12" Padding="10,6">
                             <TextBlock Text="⚙️" FontSize="18" Foreground="#5D4037"/>
                         </Border>
                     </Button>
-
                     <StackPanel HorizontalAlignment="Center" Margin="0,6,0,0">
-                        <TextBlock Text="🔐 تسجيل الدخول"
-                                   FontSize="24"
-                                   FontWeight="Bold"
-                                   Foreground="#5D4037"
-                                   HorizontalAlignment="Center"/>
-                        <TextBlock Text="أدخل بياناتك للمتابعة"
-                                   FontSize="12"
-                                   Foreground="#7A726C"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,6,0,0"/>
+                        <TextBlock Text="🔐 تسجيل الدخول" FontSize="24" FontWeight="Bold" Foreground="#5D4037" HorizontalAlignment="Center"/>
+                        <TextBlock Text="أدخل بياناتك للمتابعة" FontSize="12" Foreground="#7A726C" HorizontalAlignment="Center" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
 
-                <!-- Body -->
                 <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,12,0,0">
-
-                    <TextBlock Text="اسم المستخدم:"
-                               FontSize="13"
-                               FontWeight="Bold"
-                               Foreground="#7A726C"
-                               Margin="0,0,0,6"/>
-                    <TextBox x:Name="txtUser"
-                             Style="{StaticResource InputTextBoxStyle}"
-                             Margin="0,0,0,14"/>
-
-                    <TextBlock Text="كلمة المرور:"
-                               FontSize="13"
-                               FontWeight="Bold"
-                               Foreground="#7A726C"
-                               Margin="0,0,0,6"/>
-                    <PasswordBox x:Name="txtPass"
-                                 Style="{StaticResource InputPasswordStyle}"
-                                 Margin="0,0,0,18"/>
-
+                    <TextBlock Text="اسم المستخدم:" FontSize="13" FontWeight="Bold" Foreground="#7A726C" Margin="0,0,0,6"/>
+                    <TextBox x:Name="txtUser" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,14"/>
+                    <TextBlock Text="كلمة المرور:" FontSize="13" FontWeight="Bold" Foreground="#7A726C" Margin="0,0,0,6"/>
+                    <PasswordBox x:Name="txtPass" Style="{StaticResource InputPasswordStyle}" Margin="0,0,0,18"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="12"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-
-                        <Button Content="دخول"
-                                Grid.Column="0"
-                                IsDefault="True"
-                                Background="#5D4037"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Click="Login_Click"/>
-
-                        <Button Content="نسيت كلمة المرور"
-                                Grid.Column="2"
-                                Background="#F2F2F2"
-                                Style="{StaticResource SecondaryButtonStyle}"
-                                Click="ForgotPassword_Click"/>
+                        <Button Content="دخول" Grid.Column="0" IsDefault="True" Background="#5D4037" Style="{StaticResource PrimaryButtonStyle}" Click="Login_Click"/>
+                        <Button Content="نسيت كلمة المرور" Grid.Column="2" Background="#F2F2F2" Style="{StaticResource SecondaryButtonStyle}" Click="ForgotPassword_Click"/>
                     </Grid>
-
                 </StackPanel>
 
-                <!-- Footer -->
                 <StackPanel Grid.Row="2" Margin="0,14,0,0" HorizontalAlignment="Center">
-                    <Button Content="خروج"
-                            FontSize="16"
-                            Style="{StaticResource LinkButtonStyle}"
-                            IsCancel="True"
-                            Click="Cancel_Click"/>
+                    <Button Content="خروج" FontSize="16" Style="{StaticResource LinkButtonStyle}" IsCancel="True" Click="Cancel_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Loading Overlay -->
-        <Grid x:Name="LoadingOverlay" Visibility="Collapsed">
-            <Border Background="#80000000"/>
+        <Grid x:Name="LoadingOverlay" Visibility="Collapsed" Margin="20">
+            <Border Background="#CCFFFFFF" CornerRadius="18"/>
 
             <Border Background="White"
                     CornerRadius="16"
@@ -290,11 +231,7 @@
                     Effect="{StaticResource CardShadow}">
                 <StackPanel HorizontalAlignment="Center">
                     <ProgressBar IsIndeterminate="True" Width="180" Height="10" Margin="0,0,0,12" BorderThickness="0"/>
-                    <TextBlock x:Name="txtLoadingMsg"
-                               Text="جاري محاولة الاتصال..."
-                               HorizontalAlignment="Center"
-                               FontWeight="Bold"
-                               Foreground="#333"/>
+                    <TextBlock x:Name="txtLoadingMsg" Text="جاري محاولة الاتصال..." HorizontalAlignment="Center" FontWeight="Bold" Foreground="#333"/>
                 </StackPanel>
             </Border>
         </Grid>

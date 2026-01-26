@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Input;
 
 namespace VinceKitchen
 {
@@ -107,6 +108,13 @@ namespace VinceKitchen
             else
             {
                 MessageBox.Show("حدث مشكلة أثناء البحث عن التحديثات، تأكد من الاتصال بالانترنت.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
             }
         }
         private void LoadSettings()

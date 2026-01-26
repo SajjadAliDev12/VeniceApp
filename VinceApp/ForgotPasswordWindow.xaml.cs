@@ -175,6 +175,13 @@ namespace VinceApp
                 ShowLoading(false);
             }
         }
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
+        }
         private void txtEmail_LostFocus(object sender, RoutedEventArgs e)
         {
             var textBox = sender as TextBox;

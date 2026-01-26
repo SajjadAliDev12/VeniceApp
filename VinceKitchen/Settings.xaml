@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="إعدادات الاتصال" Height="560" Width="520"
         WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
-        Background="#212121" FlowDirection="RightToLeft"
+        Background="#212121" FlowDirection="RightToLeft" MouseLeftButtonDown="Window_MouseLeftButtonDown"
         SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality">
 
     <Window.Resources>

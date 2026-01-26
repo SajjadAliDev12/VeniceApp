@@ -6,7 +6,7 @@
         MinHeight="520" MinWidth="560"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
-        FlowDirection="RightToLeft"
+        FlowDirection="RightToLeft" MouseLeftButtonDown="Window_MouseLeftButtonDown"
         Background="#F6F4F1">
 
     <Window.Resources>

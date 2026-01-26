@@ -118,14 +118,11 @@ namespace VinceApp
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to create Single Instance Mutex.");
-                // لو صار شيء غير متوقع، خلي التطبيق يكمل بدل ما يمنع التشغيل.
+                
                 return true;
             }
         }
 
-        /// <summary>
-        /// ✅ يجلب النسخة الأولى للأمام إذا حاول المستخدم فتح نسخة ثانية
-        /// </summary>
         private void ActivateExistingInstance()
         {
             try
@@ -154,17 +151,55 @@ namespace VinceApp
 
         private void InitializeDatabase()
         {
-            try
+            while (true)
             {
-                using var context = new VinceSweetsDbContext();
-                context.Database.Migrate(); // النسخة المتزامنة
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to migrate DB on startup");
-                MessageBox.Show("لا يمكن تشغيل البرنامج لعدم توفر قاعدة بيانات فعالة\nقد تكون قاعدة البيانات متوقفه مؤقتاً او غير فعالة حالياً",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                Shutdown();
+                try
+                {
+                    using var context = new VinceSweetsDbContext();
+                    context.Database.Migrate();
+
+                   
+                    break; 
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Startup Database Connection Failed");
+                    string msg = $"فشل الاتصال بقاعدة البيانات!\n\n" +
+                                 $"السبب المحتمل: السيرفر متوقف أو بيانات الاتصال خاطئة.\n\n" +
+                                 $"التفاصيل: {ex.Message}\n\n" +
+                                 $"• اضغط (نعم) للمحاولة مرة أخرى.\n" +
+                                 $"• اضغط (لا) لتعديل إعدادات السيرفر.\n" +
+                                 $"• اضغط (إلغاء الأمر) للخروج.";
+
+                    var result = MessageBox.Show(msg, "خطأ حرج في الاتصال",
+                        MessageBoxButton.YesNoCancel,
+                        MessageBoxImage.Error);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        continue;
+                    }
+                    else if (result == MessageBoxResult.No)
+                    {
+                        // فتح نافذة الإعدادات
+                        var configWindow = new ServerConfigWindow();
+                        if (configWindow.ShowDialog() == true)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            // المستخدم فتح الإعدادات وأغلقها بدون حفظ.. نعتبرها محاولة خروج
+                            Shutdown();
+                            return;
+                        }
+                    }
+                    else // Cancel
+                    {
+                        Shutdown();
+                        return;
+                    }
+                }
             }
         }
 

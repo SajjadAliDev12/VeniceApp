@@ -38,7 +38,7 @@ namespace VinceApp.Data
             {
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    .AddJsonFile("appsettings.user.json", optional: true, reloadOnChange: true);
 
                 // ملف المستخدم داخل AppData (يطغى على الأساسي)
                 builder.AddJsonFile(VinceApp.Services.AppConfigService.UserConfigPath, optional: true, reloadOnChange: true);

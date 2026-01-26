@@ -2,6 +2,7 @@
 using System.Drawing.Printing;
 using System.Linq;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using VinceApp.Data;
 using VinceApp.Services;
@@ -112,7 +113,13 @@ namespace VinceApp
                 }
             }
         }
-
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
+        }
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
         private void Button_Click(object sender, RoutedEventArgs e)

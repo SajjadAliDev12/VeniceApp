@@ -539,26 +539,32 @@ namespace VinceApp
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             var settingPage = new SettingsPage();
-            settingPage.OnNotificationReqested += (title,body) =>
+
+            // ربط حدث التنبيهات
+            settingPage.OnNotificationReqested += (title, body) =>
             {
-                ToastControl.Show(title,body, ToastControl.NotificationType.Info);
+                ToastControl.Show(title, body, ToastControl.NotificationType.Info);
             };
+
             Window window = new Window
             {
                 Title = "الإعدادات",
-                Content = settingPage, // نضع صفحة الإعدادات بداخلها
-                Height = 750, // طول مناسب للتبويبات
+                Content = settingPage,
+                Height = 750,
                 Width = 800,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen, // تظهر في المنتصف
-                ResizeMode = ResizeMode.NoResize, // منع تغيير الحجم (اختياري)
-                FlowDirection = FlowDirection.RightToLeft // لضمان اتجاه النافذة
-                ,Owner = this
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                FlowDirection = FlowDirection.RightToLeft,
+                Owner = this,
+
+                // ✅ الإضافات الضرورية لتصميم عصري (بدون شريط عنوان ويندوز)
+                WindowStyle = WindowStyle.None,       // إخفاء شريط العنوان القياسي
+                AllowsTransparency = true,            // السماح بالشفافية (للزوايا الدائرية)
+                Background = Brushes.Transparent      // جعل خلفية النافذة شفافة ليظهر تصميم الصفحة
             };
 
-            // 3. عرض النافذة بشكل Dialog (يمنع النقر على الخلفية حتى يتم إغلاق الإعدادات)
             window.ShowDialog();
         }
 
-        
+
     }
 }
