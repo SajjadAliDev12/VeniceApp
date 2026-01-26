@@ -56,7 +56,7 @@ namespace VinceApp
                     }
 
                     // التحقق من حالة الحساب
-                    if (user.Role == (UserRole)UserRole.Disabled)
+                    if (user.Role == UserRole.Disabled)
                     {
                         MessageBox.Show("هذا الحساب معطل، يرجى مراجعة الإدارة.", "محظور", MessageBoxButton.OK, MessageBoxImage.Stop);
                         return;

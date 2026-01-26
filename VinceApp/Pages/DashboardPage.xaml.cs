@@ -61,17 +61,33 @@ namespace VinceApp.Pages
 
                     // --- 2. حساب الأكثر مبيعاً (Top Sellers) ---
                     // نذهب لجدول التفاصيل، نجمع حسب اسم المنتج، ونرتب تنازلياً حسب الكمية
-                    var bestSellers = context.OrderDetails
-                        .GroupBy(d => d.ProductName)
-                        .Select(g => new
+                    // --- 2. حساب الأكثر مبيعاً (Top Sellers) ---
+                    var bestSellers = (
+                        from od in context.OrderDetails
+                        join o in context.Orders on od.OrderId equals o.Id
+                        // تأكد من أن السعر (Price) موجود في جدول التفاصيل
+                        // إذا كان الحقل اسمه مختلف (مثلاً UnitPrice) يرجى تعديله هنا
+                        where !od.isDeleted && !o.isDeleted
+                        select new
                         {
-                            ProductName = g.Key,
-                            TotalQty = g.Sum(x => x.Quantity),
-                            TotalRevenue = g.Sum(x => x.Price * x.Quantity) // السعر * الكمية
-                        })
-                        .OrderByDescending(x => x.TotalQty) // الترتيب حسب الأكثر عدداً
-                        .Take(10) // نأخذ أفضل 10 فقط
-                        .ToList();
+                            od.ProductName,
+                            od.Quantity,
+                            // نحسب اجمالي السطر الواحد هنا (الكمية * السعر)
+                            RowTotal = od.Quantity * od.Price
+                        }
+                    )
+                    .GroupBy(x => x.ProductName)
+                    .Select(g => new
+                    {
+                        ProductName = g.Key,
+                        // جمع الكميات
+                        Quantity = g.Sum(x => x.Quantity),
+                        // جمع المبالغ
+                        TotalAmount = g.Sum(x => x.RowTotal)
+                    })
+                    .OrderByDescending(x => x.Quantity)
+                    .Take(5)
+                    .ToList();
 
                     dgBestSellers.ItemsSource = bestSellers;
                 }

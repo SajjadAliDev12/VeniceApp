@@ -37,6 +37,7 @@ namespace VinceApp.Pages
                     {
                         query = query.Where(o => o.isDeleted == true);
                         txtPageTitle.Text = "أرشيف الفواتير الملغاة";
+                        
                     }
                     else
                     {
@@ -60,6 +61,7 @@ namespace VinceApp.Pages
                         o.OrderNumber,
                         o.OrderDate,
                         o.StatusText,
+                        o.isDeleted,
 
                         // تم إزالة (?? 0) من الخصم لأنه لا يقبل Null
                         OriginalTotal = o.TotalAmount ?? 0,
@@ -115,8 +117,18 @@ namespace VinceApp.Pages
                     // عند البحث برقم الفاتورة، نبحث في الكل (المحذوف والفعال)
                     // لأنك قد تبحث عن فاتورة قديمة للتأكد منها
                     var result = context.Orders
-                        .Where(o => o.OrderNumber == orderNum) // أو Id حسب ما تستخدم
-                        .ToList();
+    .Where(o => o.OrderNumber == orderNum && o.isPaid == true)
+    .Select(o => new
+    {
+        o.Id,
+        o.OrderNumber,
+        o.OrderDate,
+        o.TotalAmount,
+        o.DiscountAmount,
+        o.isDeleted,
+        FinalTotal = (o.TotalAmount ?? 0) - o.DiscountAmount
+    })
+    .ToList();
 
                     dgOrders.ItemsSource = result;
                     txtPageInfo.Text = result.Count > 0 ? "نتائج البحث" : "لا توجد نتائج";

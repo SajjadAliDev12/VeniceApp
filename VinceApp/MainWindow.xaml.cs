@@ -342,7 +342,7 @@ namespace VinceApp
 
             {
 
-                ToastControl.Show("تم الحفظ", "تم حفظ الطلب بنجاح", ToastControl.NotificationType.Success);
+                ToastControl.Show("المنتج غير متوفر", "لا يمكن اضافة المنتج الى الطلب حالياً", ToastControl.NotificationType.Success);
 
 
                 return;

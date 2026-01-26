@@ -250,6 +250,17 @@ namespace VinceApp.Pages
                         var prod = context.Products.Find(id);
                         if (prod != null)
                         {
+                            // قبل Remove
+                            bool used = context.OrderDetails.AsNoTracking().Any(od => od.ProductId == id);
+
+                            if (used)
+                            {
+                                ToastControl.Show("لا يمكن الحذف",
+                                    "هذا الصنف مستخدم في فواتير/طلبات سابقة. يمكنك تعطيله بدلاً من حذفه.",
+                                    ToastControl.NotificationType.Warning);
+                                return;
+                            }
+
                             // ✅ احتفظ باسم الصورة قبل الحذف
                             string imageNameToDelete = prod.ImagePath;
 

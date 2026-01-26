@@ -22,7 +22,6 @@ namespace VinceKitchen
             InitializeComponent();
             LoadSettings();
             txtCurrentVersion.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
-
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
@@ -55,6 +54,11 @@ namespace VinceKitchen
                     ConnectionStrings = new ConnectionStringsWrapper
                     {
                         DefaultConnection = builder.ConnectionString
+                    },
+                    App = new AppSection
+                    {
+                        // ✅ هذا هو الـ "role" الذي يميز نسخة المطبخ
+                        Client = "KITCHEN"
                     }
                 };
 
@@ -76,6 +80,7 @@ namespace VinceKitchen
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         private void update_Click(object sender, RoutedEventArgs e)
         {
             AutoUpdater.RunUpdateAsAdmin = true;
@@ -110,6 +115,7 @@ namespace VinceKitchen
                 MessageBox.Show("حدث مشكلة أثناء البحث عن التحديثات، تأكد من الاتصال بالانترنت.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed)
@@ -117,6 +123,7 @@ namespace VinceKitchen
                 this.DragMove();
             }
         }
+
         private void LoadSettings()
         {
             try
@@ -125,6 +132,14 @@ namespace VinceKitchen
 
                 string jsonString = File.ReadAllText(ConfigFilePath);
                 var config = JsonSerializer.Deserialize<AppConfig>(jsonString);
+
+                // ✅ تأكد دائماً أن Client مضبوط على KITCHEN حتى لو الملف قديم
+                if (config != null)
+                {
+                    config.App ??= new AppSection();
+                    if (string.IsNullOrWhiteSpace(config.App.Client))
+                        config.App.Client = "KITCHEN";
+                }
 
                 var cs = config?.ConnectionStrings?.DefaultConnection;
                 if (string.IsNullOrWhiteSpace(cs)) return;
@@ -159,10 +174,19 @@ namespace VinceKitchen
     public class AppConfig
     {
         public ConnectionStringsWrapper ConnectionStrings { get; set; } = new ConnectionStringsWrapper();
+
+        // ✅ قسم App لإضافة role/client
+        public AppSection App { get; set; } = new AppSection();
     }
 
     public class ConnectionStringsWrapper
     {
         public string DefaultConnection { get; set; } = "";
+    }
+
+    public class AppSection
+    {
+        // سمِّها Client (أفضل) أو Role إذا تحب، لكن لازم تتفق مع DbContext
+        public string Client { get; set; } = "KITCHEN";
     }
 }

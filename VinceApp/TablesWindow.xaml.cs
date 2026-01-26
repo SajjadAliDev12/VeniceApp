@@ -19,6 +19,7 @@ namespace VinceApp
 {
     public partial class TablesWindow : Window
     {
+        private bool _isLoading = false;
         private const int TABLE_FREE = 0;
         private const int TABLE_BUSY = 1;
         private const int TABLE_PAID = 2;
@@ -34,6 +35,9 @@ namespace VinceApp
         }
         private async Task LoadTables()
         {
+            if (_isLoading) return;
+            _isLoading = true;
+
             TablesPanel.Children.Clear();
             if (TakeawayPanel != null) TakeawayPanel.Children.Clear();
 
@@ -147,49 +151,94 @@ namespace VinceApp
 
                             btnTakeaway.Click += async (s, e) =>
                             {
-                                if (s is Button b && b.Tag is int orderId)
+                                if (s is not Button b || b.Tag == null) return;
+
+                                if (!int.TryParse(b.Tag.ToString(), out int orderId))
+                                    return;
+
+                                try
                                 {
+                                    // ✅ اقرأ الحالة الحقيقية وقت الضغط (حتى لا نعتمد على isPaid/isReady القديمة)
+                                    bool isPaidNow = false;
+                                    bool isReadyNow = false;
 
-                                    if (!isPaid)
+                                    using (var ctx = new VinceSweetsDbContext())
                                     {
-                                        OpenCashierWindow(orderId, null, null, null);
+                                        var current = await ctx.Orders
+                                            .AsNoTracking()
+                                            .Where(o => o.Id == orderId)
+                                            .Select(o => new { o.isPaid, o.isReady, o.isServed })
+                                            .FirstOrDefaultAsync();
+
+                                        if (current == null)
+                                        {
+                                            ToastControl.Show("تنبيه", "لم يتم العثور على الطلب", ToastControl.NotificationType.Warning);
+                                            await LoadTables();
+                                            return;
+                                        }
+
+                                        // إذا تسلّم سابقاً، اخفيه من القائمة
+                                        if (current.isServed)
+                                        {
+                                            await LoadTables();
+                                            return;
+                                        }
+
+                                        isPaidNow = current.isPaid;
+                                        isReadyNow = current.isReady;
                                     }
-                                    
-                                    else
-                                    {
-                                        var dialog = new TakeawayOptionsWindow();
-                                        dialog.ShowDialog();
 
-                                        if (dialog.UserChoice == "Serve")
+                                    // ✅ إذا غير مدفوع: افتح الكاشير مباشرة
+                                    if (!isPaidNow)
+                                    {
+                                        await OpenCashierWindow(orderId, null, null, null);
+                                        return;
+                                    }
+
+                                    // ✅ مدفوع: خيارات (Serve / View / Add)
+                                    var dialog = new TakeawayOptionsWindow();
+                                    dialog.ShowDialog();
+
+                                    if (dialog.UserChoice == "Serve")
+                                    {
+                                        await CompleteOrderAsync(orderId);
+                                        return;
+                                    }
+
+                                    if (dialog.UserChoice == "View")
+                                    {
+                                        await OpenCashierWindow(orderId, null, null, null);
+                                        return;
+                                    }
+
+                                    if (dialog.UserChoice == "Add")
+                                    {
+                                        using (var ctx = new VinceSweetsDbContext())
                                         {
-                                            await CompleteOrderAsync(orderId);
-                                        }
-                                        else if (dialog.UserChoice == "View")
-                                        {
-                                            OpenCashierWindow(orderId, null, null, null);
-                                        }
-                                        else if (dialog.UserChoice == "Add")
-                                        {
-                                            using (var ctx = new VinceSweetsDbContext())
+                                            var childOrder = new Order
                                             {
-                                                var childOrder = new Order
-                                                {
-                                                    OrderNumber = await GenerateDailyOrderNumber(ctx),
-                                                    TableId = null,
-                                                    isPaid = false,
-                                                    isSentToKitchen = false,
-                                                    isReady = false,
-                                                    isServed = false,
-                                                    OrderDate = DateTime.Now,
-                                                    TotalAmount = 0,
-                                                    ParentOrderId = orderId
-                                                };
-                                                ctx.Orders.Add(childOrder);
-                                                await ctx.SaveChangesAsync();
-                                                OpenCashierWindow(childOrder.Id, null, null, orderId);
-                                            }
+                                                OrderNumber = await GenerateDailyOrderNumber(ctx),
+                                                TableId = null,
+                                                isPaid = false,
+                                                isSentToKitchen = false,
+                                                isReady = false,
+                                                isServed = false,
+                                                OrderDate = DateTime.Now,
+                                                TotalAmount = 0,
+                                                ParentOrderId = orderId
+                                            };
+
+                                            ctx.Orders.Add(childOrder);
+                                            await ctx.SaveChangesAsync();
+
+                                            await OpenCashierWindow(childOrder.Id, null, null, orderId);
                                         }
                                     }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log.Error(ex, "Takeaway click error in TablesWindow");
+                                    ToastControl.Show("خطأ", "حدث خطأ أثناء فتح الطلب", ToastControl.NotificationType.Error);
                                 }
                             };
 
@@ -203,6 +252,7 @@ namespace VinceApp
                 Log.Error(ex, "error with LoadTable() in tableswindow");
                 ToastControl.Show("خطأ", "حدث خطأ في البرنامج", ToastControl.NotificationType.Error);
             }
+            finally { _isLoading = false; }
         }
         public void ApplyPermissions()
         {
@@ -317,7 +367,18 @@ namespace VinceApp
                         var ParentOrder = await context.Orders
                                 .OrderByDescending(o => o.OrderDate)
                                 .FirstOrDefaultAsync(o => o.TableId == table.Id && (o.isPaid));
+
                         _ParentOrderID = ParentOrder?.Id;
+
+                        // ✅ حدّث حالة الطاولة في قاعدة البيانات فعلاً (مو بس local)
+                        var dbTable = await context.RestaurantTables.FindAsync(table.Id);
+                        if (dbTable != null)
+                        {
+                            dbTable.Status = TABLE_FREE;
+                            await context.SaveChangesAsync();
+                        }
+
+                        // ✅ خليه FREE محلياً أيضاً حتى يكمل المنطق الحالي بنفس الدالة
                         table.Status = TABLE_FREE;
                     }
                 }
@@ -439,9 +500,9 @@ namespace VinceApp
             }
         }
 
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        private async void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = LoadTables();
+            await LoadTables();
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)

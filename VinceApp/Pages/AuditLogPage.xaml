@@ -285,7 +285,7 @@
                                 <DataTemplate>
                                     <Button Content="📄 عرض التغييرات"
                                             Click="BtnViewDetails_Click"
-                                            Tag="{Binding Changes}"
+                                            Tag="{Binding Id}"
                                             Width="140"
                                             Height="36"
                                             Background="#FB8C00"

@@ -250,18 +250,30 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Button Content="👁️ تفاصيل"
-                                                Margin="4,0"
-                                                Background="#FB8C00"
-                                                Style="{StaticResource GridActionButtonStyle}"
-                                                Click="ViewDetails_Click"
-                                                Tag="{Binding Id}"/>
+                        Margin="4,0"
+                        Background="#FB8C00"
+                        Style="{StaticResource GridActionButtonStyle}"
+                        Click="ViewDetails_Click"
+                        Tag="{Binding Id}"/>
 
                                         <Button Content="🚫 إلغاء"
-                                                Margin="4,0"
-                                                Background="#D32F2F"
-                                                Style="{StaticResource GridActionButtonStyle}"
-                                                Click="DeleteOrder_Click"
-                                                Tag="{Binding Id}"/>
+                        Margin="4,0"
+                        Background="#D32F2F"
+                        Click="DeleteOrder_Click"
+                        Tag="{Binding Id}">
+
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource GridActionButtonStyle}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding isDeleted}" Value="True">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                            <Setter Property="Opacity" Value="0.3"/>
+                                                            <Setter Property="Content" Value="مؤرشف"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

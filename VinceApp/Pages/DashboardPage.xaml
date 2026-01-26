@@ -228,11 +228,11 @@
                                                 Width="*"/>
 
                             <DataGridTextColumn Header="العدد المباع"
-                                                Binding="{Binding TotalQty}"
+                                                Binding="{Binding Quantity}"
                                                 Width="170"/>
 
                             <DataGridTextColumn Header="إجمالي العائدات"
-                                                Binding="{Binding TotalRevenue, StringFormat={}{0:N0} د.ع}"
+                                                Binding="{Binding TotalAmount, StringFormat={}{0:N0} د.ع}"
                                                 Width="190"/>
                         </DataGrid.Columns>
                     </DataGrid>

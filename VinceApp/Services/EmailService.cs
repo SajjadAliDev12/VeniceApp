@@ -3,25 +3,23 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Threading.Tasks;// ضروري للـ Task
+using System.Threading.Tasks;
 using VinceApp.Data;
 using VinceApp.Data.Models;
 namespace VinceApp.Services
 {
     public class EmailService
     {
-        // 1. تغيير التوقيع إلى async Task<bool>
-        // قمنا بتغيير الاسم إلى SendEmailAsync كعرف برمجي
+       
         public async Task<bool> SendEmailAsync(string toEmail, string subject, string body)
         {
             try
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    // يفضل استخدام FirstOrDefaultAsync لعدم تجميد الواجهة أثناء جلب البيانات
-                    // إذا لم يكن متاحاً لديك، يمكنك إبقاؤه FirstOrDefault كما كان
+                    
                     var settings = await context.AppSettings.FirstOrDefaultAsync();
-                    // إذا واجهت خطأ في السطر أعلاه ولم تجد المكتبة، أعده إلى: context.AppSettings.FirstOrDefault();
+                    
 
                     if (settings == null)
                     {
@@ -48,8 +46,7 @@ namespace VinceApp.Services
 
                         mailMessage.To.Add(toEmail);
 
-                        // 2. استخدام دالة الإرسال غير المتزامنة مع await
-                        // هذا هو السطر المسؤول عن عدم تجميد الواجهة
+                        
                         await smtpClient.SendMailAsync(mailMessage);
 
                         return true;
@@ -58,9 +55,10 @@ namespace VinceApp.Services
             }
             catch (Exception ex)
             {
-                // رمي الخطأ للواجهة ليتم عرضه
-                throw ex;
+                
+                throw ;
             }
+            
         }
     }
 }

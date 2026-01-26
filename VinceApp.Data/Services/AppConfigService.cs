@@ -65,5 +65,21 @@ namespace VinceApp.Services
             root["ConnectionStrings"]!["DefaultConnection"] = connStr;
             WriteUserConfig(root);
         }
+        public static string GetClient()
+        {
+            var root = ReadUserConfig();
+            return root?["App"]?["Client"]?.GetValue<string>() ?? "POS";
+        }
+
+        public static void SetClient(string client)
+        {
+            client = string.IsNullOrWhiteSpace(client) ? "POS" : client.Trim().ToUpperInvariant();
+
+            var root = ReadUserConfig();
+            root["App"] ??= new JsonObject();
+            root["App"]!["Client"] = client;
+            WriteUserConfig(root);
+        }
+
     }
 }
