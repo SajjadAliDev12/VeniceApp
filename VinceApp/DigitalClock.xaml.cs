@@ -40,8 +40,8 @@ namespace VinceApp
 
         private void UpdateTime()
         {
-            txtHour.Text = DateTime.Now.ToString("hh"); // hh للساعات
-            txtMinute.Text = DateTime.Now.ToString("mm"); // mm للدقائق
+            txtHour.Text = DateTime.Now.ToString("mm"); // hh للساعات
+            txtMinute.Text = DateTime.Now.ToString("hh"); // mm للدقائق
         }
 
         private void UserControl_Unloaded(object sender, RoutedEventArgs e)
