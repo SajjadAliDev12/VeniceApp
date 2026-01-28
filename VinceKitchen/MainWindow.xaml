@@ -49,10 +49,10 @@
         </Style>
 
         <!-- كرت الطلب: ظل افتراضي -->
-        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.45" BlurRadius="12" ShadowDepth="2"/>
+        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.45" BlurRadius="8" ShadowDepth="2"/>
 
         <!-- كرت الطلب المتأخر -->
-        <DropShadowEffect x:Key="LateShadow" Color="Black" Opacity="0.75" BlurRadius="18" ShadowDepth="3"/>
+        <DropShadowEffect x:Key="LateShadow" Color="Black" Opacity="0.75" BlurRadius="8" ShadowDepth="3"/>
 
     </Window.Resources>
 
@@ -114,7 +114,7 @@
                                 Background="LimeGreen"
                                 VerticalAlignment="Center">
                             <Border.Effect>
-                                <DropShadowEffect Color="#00E676" BlurRadius="10" ShadowDepth="0" Opacity="0.9"/>
+                                <DropShadowEffect Color="#00E676" BlurRadius="8" ShadowDepth="0" Opacity="0.9"/>
                             </Border.Effect>
                             <Border.ToolTip>
                                 <ToolTip Content="حالة الاتصال بالسيرفر"/>

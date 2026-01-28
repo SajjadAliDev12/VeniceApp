@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using VinceApp.Data;
+using VinceApp.Data.Models;
 
 namespace VinceKitchen
 {
@@ -245,7 +245,7 @@ namespace VinceKitchen
             }
         }
 
-        // ✅ الجديد للتصميم المقترح (Badge)
+       
         public string ElapsedDisplay
         {
             get
@@ -257,7 +257,7 @@ namespace VinceKitchen
             }
         }
 
-        // ✅ الجديد: اعتبره متأخر بعد 10 دقائق (غيّر الرقم إذا تريد)
+        
         public bool IsLate
         {
             get

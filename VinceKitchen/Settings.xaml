@@ -9,7 +9,7 @@
     <Window.Resources>
 
         <!-- ظل عام للكروت -->
-        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.45" BlurRadius="14" ShadowDepth="2"/>
+        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.45" BlurRadius="8" ShadowDepth="2"/>
 
         <!-- زر عام بنفس أسلوب المطبخ -->
         <Style x:Key="KitchenButtonStyle" TargetType="{x:Type Button}">
@@ -122,7 +122,7 @@
 
     <Border CornerRadius="18" Background="#212121" BorderBrush="#3A3A3A" BorderThickness="1">
         <Border.Effect>
-            <DropShadowEffect Color="Black" Opacity="0.55" BlurRadius="22" ShadowDepth="0"/>
+            <DropShadowEffect Color="Black" Opacity="0.55" BlurRadius="8" ShadowDepth="0"/>
         </Border.Effect>
 
         <Grid>

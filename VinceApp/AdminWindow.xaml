@@ -4,29 +4,23 @@
         Title="لوحة التحكم" Height="700" Width="1000"
         WindowState="Maximized" WindowStyle="None"
         WindowStartupLocation="CenterScreen"
-        FlowDirection="RightToLeft" Background="#F5F5F5">
-
+        FlowDirection="RightToLeft" Background="#F2F5F8">
     <Window.Resources>
 
-        <!-- Soft shadow -->
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="12" ShadowDepth="3" Opacity="0.08" Color="#000000"/>
 
-        <!-- Brushes -->
-        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="BorderBrushSoft" Color="#E7E2DC"/>
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#ECEFF1"/>
 
-        <!-- Sidebar tones -->
-        <SolidColorBrush x:Key="SideBg" Color="#2F2B29"/>
-        <SolidColorBrush x:Key="SideItemHover" Color="#3A3431"/>
-        <SolidColorBrush x:Key="SideItemActive" Color="#5D4037"/>
-
-        <!-- Touch-friendly menu button -->
+        <SolidColorBrush x:Key="SideBg" Color="#263238"/>
+        <SolidColorBrush x:Key="SideItemHover" Color="#37474F"/>
+        <SolidColorBrush x:Key="SideItemActive" Color="#7E57C2"/>
         <Style x:Key="MenuButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="56"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="Foreground" Value="#CFD8DC"/>
+            <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -39,11 +33,11 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="14"
-                                Padding="14,10"
+                                CornerRadius="12"
+                                Padding="{TemplateBinding Padding}"
                                 Margin="10,4"
                                 BorderBrush="#00FFFFFF"
-                                BorderThickness="2"
+                                BorderThickness="1"
                                 SnapsToDevicePixels="True">
 
                             <Border.RenderTransform>
@@ -54,13 +48,11 @@
                         </Border>
 
                         <ControlTemplate.Triggers>
-
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource SideItemHover}"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#22FFFFFF"/>
+                                <Setter Property="Foreground" Value="White"/>
                             </Trigger>
 
-                            <!-- Press feedback (important for touch) -->
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="RenderTransform">
                                     <Setter.Value>
@@ -68,12 +60,12 @@
                                     </Setter.Value>
                                 </Setter>
                                 <Setter TargetName="border" Property="Background" Value="{StaticResource SideItemActive}"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#33FFFFFF"/>
+                                <Setter Property="Foreground" Value="White"/>
                             </Trigger>
 
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Foreground" Value="#BCAAA4"/>
-                                <Setter TargetName="border" Property="Opacity" Value="0.45"/>
+                                <Setter Property="Foreground" Value="#546E7A"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
                             </Trigger>
 
                         </ControlTemplate.Triggers>
@@ -87,36 +79,34 @@
     <Grid Background="{StaticResource BgBrush}">
         <Grid Margin="18">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="270"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar -->
             <Border Grid.Column="0"
                     Background="{StaticResource SideBg}"
                     CornerRadius="18"
-                    BorderBrush="#3A3532"
+                    BorderBrush="#37474F"
                     BorderThickness="1"
                     Padding="12"
                     Effect="{StaticResource CardShadow}">
 
                 <StackPanel>
 
-                    <!-- Title card -->
-                    <Border Background="#3A3431"
-                            CornerRadius="16"
-                            BorderBrush="#4A4440"
-                            BorderThickness="1"
+                    <Border Background="#37474F"
+                            CornerRadius="14"
                             Padding="14"
                             Margin="6,10,6,14">
-                        <TextBlock Text="لوحة الإدارة ⚙️"
-                                   Foreground="White"
-                                   FontSize="24"
-                                   FontWeight="Bold"
-                                   HorizontalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="⚙️" FontSize="20" Margin="0,0,10,0"/>
+                            <TextBlock Text="لوحة الإدارة"
+                                       Foreground="White"
+                                       FontSize="20"
+                                       FontWeight="Bold"/>
+                        </StackPanel>
                     </Border>
 
-                    <Separator Background="#5D4037" Margin="14,0,14,10" Opacity="0.7"/>
+                    <Separator Background="#546E7A" Margin="14,0,14,10" Opacity="0.4"/>
 
                     <Button Content="📊 الرئيسية (الإحصائيات)" Style="{StaticResource MenuButtonStyle}" Click="Nav_Dashboard_Click"/>
                     <Button Content="🍔 إدارة المنتجات" Style="{StaticResource MenuButtonStyle}" Click="Nav_Products_Click"/>
@@ -126,48 +116,55 @@
                     <Button Content="🧾 تقارير المبيعات" Style="{StaticResource MenuButtonStyle}" Click="Nav_Reports_Click" Name="BtnSales"/>
                     <Button Content="🛡️ سجل النظام" Style="{StaticResource MenuButtonStyle}" Click="Nav_Audit_Click" Name="BtnAudit"/>
 
-                    <Separator Background="#5D4037" Margin="14,16,14,10" Opacity="0.7"/>
+                    <Separator Background="#546E7A" Margin="14,16,14,10" Opacity="0.4"/>
 
-                    <!-- Back button (slightly different emphasis, but same style) -->
                     <Button Content="🚪 رجوع "
-                            Style="{StaticResource MenuButtonStyle}"
-                            Foreground="#FFCDD2"
-                            Background="#2B2624"
-                            Click="Logout_Click"/>
+                            Style="{StaticResource MenuButtonStyle}" IsCancel="True"
+                            Foreground="#E57373"
+                            Click="Logout_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#3E2723"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
                 </StackPanel>
             </Border>
 
-            <!-- Content area -->
-            <Grid Grid.Column="1" Margin="14,0,0,0">
+            <Grid Grid.Column="1" Margin="16,0,0,0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="64"/>
+                    <RowDefinition Height="70"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Top bar -->
                 <Border Grid.Row="0"
                         Background="{StaticResource CardBrush}"
-                        CornerRadius="18"
+                        CornerRadius="16"
                         BorderBrush="{StaticResource BorderBrushSoft}"
                         BorderThickness="1"
-                        Padding="16"
+                        Padding="20,0"
                         Effect="{StaticResource CardShadow}">
 
                     <Grid>
-                        <TextBlock x:Name="PageTitle"
-                                   Text="الرئيسية"
-                                   FontSize="20"
-                                   FontWeight="Bold"
-                                   Foreground="#4A4440"
-                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="PageTitle"
+                                       Text="الرئيسية"
+                                       FontSize="22"
+                                       FontWeight="Bold"
+                                       Foreground="#37474F"/>
+                        </StackPanel>
+
                     </Grid>
                 </Border>
 
-                <!-- Main frame container as a card -->
                 <Border Grid.Row="1"
-                        Margin="0,14,0,0"
+                        Margin="0,16,0,0"
                         Background="{StaticResource CardBrush}"
-                        CornerRadius="18"
+                        CornerRadius="16"
                         BorderBrush="{StaticResource BorderBrushSoft}"
                         BorderThickness="1"
                         Effect="{StaticResource CardShadow}">
@@ -179,7 +176,6 @@
 
         </Grid>
 
-        <!-- Toast overlay stays as-is -->
         <Grid x:Name="ToastOverlay" IsHitTestVisible="True" Panel.ZIndex="9999" Background="{x:Null}">
             <StackPanel x:Name="NotificationArea"
                         HorizontalAlignment="Left"

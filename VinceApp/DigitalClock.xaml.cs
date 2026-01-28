@@ -2,27 +2,35 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
-using System.Windows.Threading; // للمؤقت
+using System.Windows.Threading;
 
 namespace VinceApp
 {
     public partial class DigitalClock : UserControl
     {
-        private DispatcherTimer timer;
+        private DispatcherTimer timer; // المتغير العام للكلاس
 
         public DigitalClock()
         {
             InitializeComponent();
+
+            // يجب ربط حدث الخروج هنا لضمان توقف الساعة عند إغلاق النافذة
+            this.Unloaded += UserControl_Unloaded;
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            // تحديث الوقت فوراً
             UpdateTime();
 
-            var blink = (Storyboard)Resources["BlinkColon"];
-            blink.Begin(this);
+            // تشغيل الأنيميشن (تأكد أن BlinkColon موجود في الـ Resources)
+            if (Resources["BlinkColon"] is Storyboard blink)
+            {
+                blink.Begin(this);
+            }
 
-            var timer = new DispatcherTimer
+            // التصحيح هنا: حذفنا var لنستخدم المتغير العام
+            timer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromSeconds(1)
             };
@@ -32,18 +40,22 @@ namespace VinceApp
 
         private void UpdateTime()
         {
-            txtHour.Text = DateTime.Now.ToString("mm");
-            txtMinute.Text = DateTime.Now.ToString("hh");
+            txtHour.Text = DateTime.Now.ToString("hh"); // hh للساعات
+            txtMinute.Text = DateTime.Now.ToString("mm"); // mm للدقائق
         }
 
-        private void Timer_Tick(object sender, EventArgs e)
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
         {
-            UpdateTime();
+            StopClock();
         }
 
         public void StopClock()
         {
-            if (timer != null) timer.Stop();
+            if (timer != null)
+            {
+                timer.Stop();
+                timer = null; // تفريغ المتغير للسماح للـ Garbage Collector بحذفه
+            }
         }
     }
 }

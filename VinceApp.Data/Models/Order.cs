@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace VinceApp.Data;
+namespace VinceApp.Data.Models;
 
 public partial class Order
 {
@@ -19,6 +19,7 @@ public partial class Order
     public int? TableId { get; set; }
     public bool isReady { get; set; }
     public bool isServed { get; set; }
+    public bool isDone { get; set; }
     public bool isSentToKitchen { get; set; }
     public bool isPaid { get; set; }
     [Required]
@@ -34,6 +35,8 @@ public partial class Order
         get
         {
             if (isServed) return "تم التسليم";
+            if (isDone) return "طلب تام";
+            if (isDeleted) return "مؤرشف";
             if (isReady) return "جاهز للاستلام"; 
             if (isPaid) return "مدفوع";
             if (isSentToKitchen) return "قيد التحضير";

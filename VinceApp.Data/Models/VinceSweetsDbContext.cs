@@ -1,14 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using VinceApp.Data.Models;
 
-namespace VinceApp.Data
+
+namespace VinceApp.Data.Models
 {
     public partial class VinceSweetsDbContext : DbContext
     {
@@ -40,12 +35,150 @@ namespace VinceApp.Data
                 optionsBuilder.UseSqlServer(connectionString);
             }
         }
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            // كل decimal في المشروع = decimal(18,2)
+            configurationBuilder
+                .Properties<decimal>()
+                .HavePrecision(18, 2);
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // ... (نفس كودك الحالي بدون تغيير)
+            // =======================
+            // Orders
+            // =======================
+            modelBuilder.Entity<Order>(e =>
+            {
+                e.Property(x => x.OrderDate).HasColumnType("datetime2");
+
+                e.Property(x => x.TotalAmount).HasPrecision(18, 2);
+                e.Property(x => x.DiscountAmount).HasPrecision(18, 2);
+
+                e.Property(x => x.isPaid).HasDefaultValue(false);
+                e.Property(x => x.isReady).HasDefaultValue(false);
+                e.Property(x => x.isServed).HasDefaultValue(false);
+                e.Property(x => x.isSentToKitchen).HasDefaultValue(false);
+                e.Property(x => x.isDeleted).HasDefaultValue(false);
+
+                
+                e.Property(x => x.isDone).HasDefaultValue(false);
+
+                e.HasOne(x => x.Table)
+                    .WithMany()
+                    .HasForeignKey(x => x.TableId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // =======================
+            // OrderDetails
+            // =======================
+            modelBuilder.Entity<OrderDetail>(e =>
+            {
+                e.Property(x => x.ProductName).HasMaxLength(200);
+                e.Property(x => x.Quantity).HasDefaultValue(1);
+                e.Property(x => x.Price).HasPrecision(18, 2);
+
+                // ✅ Order ← OrderId
+                e.HasOne(x => x.Order)
+                    .WithMany(o => o.OrderDetails)
+                    .HasForeignKey(x => x.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // ✅ Product ← ProductId
+                e.HasOne(x => x.Product)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(x => x.ProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+
+            // =======================
+            // Products
+            // =======================
+            modelBuilder.Entity<Product>(e =>
+            {
+                e.Property(x => x.Name).HasMaxLength(150).IsRequired();
+                e.Property(x => x.Price).HasPrecision(18, 2);
+
+                
+                e.Property(x => x.IsKitchenItem).HasDefaultValue(false);
+
+                e.HasOne(x => x.Category)
+                    .WithMany(c => c.Products)
+                    .HasForeignKey(x => x.CategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // =======================
+            // Categories
+            // =======================
+            modelBuilder.Entity<Category>(e =>
+            {
+                e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            });
+
+            // =======================
+            // RestaurantTables
+            // =======================
+            modelBuilder.Entity<RestaurantTable>(e =>
+            {
+                e.Property(x => x.TableName).HasMaxLength(100);
+                e.Property(x => x.Status).HasDefaultValue(0);
+
+                e.HasIndex(x => x.TableNumber).IsUnique();
+            });
+
+            // =======================
+            // Users
+            // =======================
+            modelBuilder.Entity<User>(e =>
+            {
+                e.Property(x => x.Username).HasMaxLength(50).IsRequired();
+                e.Property(x => x.EmailAddress).HasMaxLength(150);
+
+                e.Property(x => x.IsEmailConfirmed).HasDefaultValue(false);
+
+                e.HasIndex(x => x.Username).IsUnique();
+                e.HasIndex(x => x.EmailAddress).IsUnique();
+            });
+
+            // =======================
+            // UserTokens
+            // =======================
+            modelBuilder.Entity<UserToken>(e =>
+            {
+                // عدّل الاسم حسب موديلك لو الحقل اسمه غير Token
+                e.Property(x => x.Token).HasMaxLength(500).IsRequired();
+            });
+
+            // =======================
+            // AuditLogs
+            // =======================
+            modelBuilder.Entity<AuditLog>(e =>
+            {
+                e.Property(x => x.TableName).HasMaxLength(100);
+                e.Property(x => x.UserFullName).HasMaxLength(150);
+                e.Property(x => x.Action).HasMaxLength(50);
+                e.Property(x => x.RecordId).HasMaxLength(50);
+            });
+
+            // =======================
+            // AppSettings
+            // =======================
+            modelBuilder.Entity<AppSetting>(e =>
+            {
+                e.Property(x => x.StoreName).HasMaxLength(150);
+                e.Property(x => x.StorePhone).HasMaxLength(50);
+                e.Property(x => x.PrinterName).HasMaxLength(150);
+                e.Property(x => x.SmtpServer).HasMaxLength(150);
+                e.Property(x => x.SenderEmail).HasMaxLength(150);
+            });
+
             OnModelCreatingPartial(modelBuilder);
         }
+
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 

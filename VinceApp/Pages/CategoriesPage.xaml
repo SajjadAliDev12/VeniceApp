@@ -1,47 +1,57 @@
 ﻿<Page x:Class="VinceApp.Pages.CategoriesPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Title="إدارة التصنيفات" FlowDirection="RightToLeft" Background="White">
-
+      Title="إدارة التصنيفات" FlowDirection="RightToLeft" Background="#F2F5F8">
     <Page.Resources>
 
-        <!-- Shadow -->
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="12" ShadowDepth="3" Opacity="0.08" Color="#000000"/>
 
-        <!-- Theme brushes -->
-        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
-        <SolidColorBrush x:Key="TextDark" Color="#2E2A27"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#CFD8DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#37474F"/>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#7E57C2"/>
 
-        <!-- Input -->
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#546E7A"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
         <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="42"/>
+            <Setter Property="Height" Value="44"/>
             <Setter Property="Padding" Value="10,6"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#FAFAFA"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}"
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="12">
                             <ScrollViewer x:Name="PART_ContentHost"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryColor}"/>
+                                <Setter TargetName="border" Property="Background" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <!-- Touch button -->
         <Style x:Key="TouchButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="42"/>
+            <Setter Property="Height" Value="48"/>
             <Setter Property="Padding" Value="14,8"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -55,38 +65,27 @@
                                 CornerRadius="14"
                                 Padding="{TemplateBinding Padding}">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
                             </Border.Effect>
-
                             <Border.RenderTransform>
                                 <ScaleTransform ScaleX="1" ScaleY="1"/>
                             </Border.RenderTransform>
-
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
                             </Trigger>
-
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="RenderTransform">
                                     <Setter.Value>
                                         <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
                                     </Setter.Value>
                                 </Setter>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
-                                    </Setter.Value>
-                                </Setter>
                             </Trigger>
-
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
-                                <Setter Property="Foreground" Value="#777"/>
+                                <Setter TargetName="border" Property="Background" Value="#CFD8DC"/>
+                                <Setter Property="Foreground" Value="#90A4AE"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -94,36 +93,36 @@
             </Setter>
         </Style>
 
-        <!-- Small action buttons inside grid -->
         <Style x:Key="GridActionButtonStyle" TargetType="Button" BasedOn="{StaticResource TouchButtonStyle}">
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Height" Value="34"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="Width" Value="88"/>
+            <Setter Property="Width" Value="90"/>
         </Style>
 
-        <!-- DataGrid styling -->
         <Style x:Key="BaseDataGridStyle" TargetType="DataGrid">
             <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
             <Setter Property="IsReadOnly" Value="True"/>
             <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="RowHeight" Value="44"/>
-            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="RowHeight" Value="48"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#F5F5F5"/>
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="RowBackground" Value="White"/>
-            <Setter Property="AlternatingRowBackground" Value="#FAF8F6"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
         </Style>
 
         <Style x:Key="BaseHeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#2F2B29"/>
+            <Setter Property="Background" Value="#37474F"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="12,12"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Setter Property="BorderBrush" Value="#455A64"/>
         </Style>
 
         <Style x:Key="BaseRowStyle" TargetType="DataGridRow">
@@ -131,8 +130,11 @@
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#FFF3E0"/>
-                    <Setter Property="Foreground" Value="#2E2A27"/>
+                    <Setter Property="Background" Value="#EDE7F6"/>
+                    <Setter Property="Foreground" Value="#4527A0"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F5F5F5"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -141,92 +143,92 @@
 
     <Grid Background="{StaticResource BgBrush}">
         <Grid Margin="22">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <!-- Top form card -->
-            <Border Grid.Row="0"
+            <Border Grid.Column="0"
                     Background="{StaticResource CardBrush}"
-                    Padding="16"
                     CornerRadius="16"
-                    Margin="0,0,0,14"
                     BorderBrush="{StaticResource BorderSoft}"
                     BorderThickness="1"
+                    Padding="20"
+                    VerticalAlignment="Top"
+                    Margin="0,0,16,0"
                     Effect="{StaticResource CardShadow}">
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="اسم التصنيف:"
-                               VerticalAlignment="Center"
-                               FontSize="16"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource TextDark}"
-                               Margin="0,0,12,0"/>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="📂" FontSize="20" Margin="0,0,10,0"/>
+                        <TextBlock Text="إدارة التصنيفات"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource TextDark}"/>
+                    </StackPanel>
 
-                    <TextBox x:Name="txtName"
-                             Width="320"
-                             Style="{StaticResource InputTextBoxStyle}"/>
+                    <TextBlock Text="اسم التصنيف:" Style="{StaticResource SectionTitleStyle}"/>
+                    <TextBox x:Name="txtName" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,20"/>
 
-                    <Button Content="💾 حفظ"
-                            Width="120"
-                            Margin="12,0"
-                            Background="#2E7D32"
-                            Style="{StaticResource TouchButtonStyle}"
-                            Click="Save_Click"/>
+                    <StackPanel Orientation="Vertical">
+                        <Button Content="💾 حفظ" IsDefault="True"
+                                Background="{StaticResource PrimaryColor}"
+                                Style="{StaticResource TouchButtonStyle}"
+                                Margin="0,0,0,10"
+                                Click="Save_Click"/>
 
-                    <Button Content="إلغاء"
-                            Width="110"
-                            Background="#ECE7E2"
-                            Foreground="#4A4440"
-                            Style="{StaticResource TouchButtonStyle}"
-                            Click="Clear_Click"/>
+                        <Button Content="إلغاء" 
+                                Background="#ECEFF1"
+                                Foreground="#455A64"
+                                Style="{StaticResource TouchButtonStyle}"
+                                Click="Clear_Click"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Grid card -->
-            <Border Grid.Row="1"
+            <Border Grid.Column="1"
                     Background="{StaticResource CardBrush}"
                     CornerRadius="16"
                     BorderBrush="{StaticResource BorderSoft}"
                     BorderThickness="1"
-                    Padding="10"
+                    Padding="1"
                     Effect="{StaticResource CardShadow}">
 
-                <DataGrid x:Name="dgCategories"
-                          Style="{StaticResource BaseDataGridStyle}"
-                          ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
-                          RowStyle="{StaticResource BaseRowStyle}">
+                <Border CornerRadius="16" ClipToBounds="True">
+                    <DataGrid x:Name="dgCategories"
+                              Style="{StaticResource BaseDataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                              RowStyle="{StaticResource BaseRowStyle}">
 
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="الرقم" Binding="{Binding Id}" Width="90"/>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="80"/>
 
-                        <DataGridTextColumn Header="اسم التصنيف" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="اسم التصنيف" Binding="{Binding Name}" Width="*" FontWeight="SemiBold"/>
 
-                        <DataGridTemplateColumn Header="العمليات" Width="240">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Button Content="✏️ تعديل"
-                                                Margin="6,0"
-                                                Background="#1976D2"
-                                                Style="{StaticResource GridActionButtonStyle}"
-                                                Click="Edit_Click"
-                                                Tag="{Binding Id}"/>
+                            <DataGridTemplateColumn Header="العمليات" Width="240">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Content="✏️ تعديل"
+                                                    Margin="6,0"
+                                                    Background="#607D8B"
+                                                    Style="{StaticResource GridActionButtonStyle}"
+                                                    Click="Edit_Click"
+                                                    Tag="{Binding Id}"/>
 
-                                        <Button Content="🗑️ حذف"
-                                                Margin="6,0"
-                                                Background="#D32F2F"
-                                                Style="{StaticResource GridActionButtonStyle}"
-                                                Click="Delete_Click"
-                                                Tag="{Binding Id}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
-                    </DataGrid.Columns>
-                </DataGrid>
+                                            <Button Content="🗑️ حذف"
+                                                    Margin="6,0"
+                                                    Background="#E53935"
+                                                    Style="{StaticResource GridActionButtonStyle}"
+                                                    Click="Delete_Click"
+                                                    Tag="{Binding Id}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
             </Border>
 
         </Grid>

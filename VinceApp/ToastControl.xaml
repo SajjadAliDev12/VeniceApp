@@ -52,7 +52,7 @@
             BorderThickness="0,0,5,0">
 
         <Border.Effect>
-            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3" Color="Black"/>
+            <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.3" Color="Black"/>
         </Border.Effect>
 
         <!-- ✅ نفس المحتوى الأصلي + شريط مدة أسفل -->

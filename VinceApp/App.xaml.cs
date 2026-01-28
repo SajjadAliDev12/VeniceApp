@@ -7,24 +7,21 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using VinceApp.Data;
+using VinceApp.Data.Models;
 
 namespace VinceApp
 {
     public partial class App : Application
     {
-        // ✅ Single Instance
+        
         private static Mutex? _singleInstanceMutex;
 
-        // ✅ اسم فريد للتطبيق (غيّره إذا تريد)
-        // Global: يمنع تعدد النسخ حتى لو تعددت Sessions على نفس الجهاز
-        // Local : يمنع تعدد النسخ لنفس المستخدم فقط
         private const string MutexNameGlobal = @"Global\VenicePOS_SingleInstance_213C405F-29A4-469B-B7BA-0E3F07D6622A";
         private const string MutexNameLocal = @"Local\VenicePOS_SingleInstance_213C405F-29A4-469B-B7BA-0E3F07D6622A";
 
         public App()
         {
-            // إعداد نظام اللوج (Serilog)
+            
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Error()
                 .WriteTo.File("Logs/log-.txt",
@@ -35,7 +32,7 @@ namespace VinceApp
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            // ✅ 1) امنع فتح نسخة ثانية (قبل أي نافذة أو DB أو Wizard)
+
             if (!EnsureSingleInstance())
             {
                 Shutdown();
@@ -44,11 +41,10 @@ namespace VinceApp
 
             base.OnStartup(e);
 
-            // معالجة الأخطاء العامة (Global Exception Handlers)
+
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-            // عدم الإغلاق التلقائي حتى نحدد النافذة الرئيسية
             this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             if (!VinceApp.Services.FirstRunGate.RunWizardIfNeeded())
@@ -73,8 +69,6 @@ namespace VinceApp
                 // إعادة وضع الإغلاق ليكون مرتبطاً بالنافذة الرئيسية
                 this.ShutdownMode = ShutdownMode.OnMainWindowClose;
 
-                // 3. تشغيل تهيئة قاعدة البيانات وتنظيفها في الخلفية (Async)
-                _ = InitializeDatabaseInBackgroundAsync();
             }
             else
             {
@@ -82,9 +76,6 @@ namespace VinceApp
             }
         }
 
-        /// <summary>
-        /// ✅ يمنع تشغيل أكثر من نسخة
-        /// </summary>
         private bool EnsureSingleInstance()
         {
             try
@@ -203,80 +194,33 @@ namespace VinceApp
             }
         }
 
-        private async Task InitializeDatabaseInBackgroundAsync()
-        {
-            try
-            {
-                await Task.Run(async () =>
-                {
-                    using var context = new VinceSweetsDbContext();
-                    await context.Database.MigrateAsync();
-                    await CleanupTablesAsync(context);
-                });
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "فشل في تهيئة قاعدة البيانات في الخلفية (Migrate/Cleanup)");
+        //private async Task InitializeDatabaseInBackgroundAsync()
+        //{
+        //    try
+        //    {
+        //        await Task.Run(async () =>
+        //        {
+        //            using var context = new VinceSweetsDbContext();
+        //            await context.Database.MigrateAsync();
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log.Error(ex, "فشل في تهيئة قاعدة البيانات في الخلفية (Migrate/Cleanup)");
 
-                Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show(
-                        "تعذر الاتصال بقاعدة البيانات أو تهيئتها.\nيرجى التأكد من إعدادات الاتصال.",
-                        "تنبيه",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning
-                    );
-                });
-            }
-        }
+        //        Dispatcher.Invoke(() =>
+        //        {
+        //            MessageBox.Show(
+        //                "تعذر الاتصال بقاعدة البيانات أو تهيئتها.\nيرجى التأكد من إعدادات الاتصال.",
+        //                "تنبيه",
+        //                MessageBoxButton.OK,
+        //                MessageBoxImage.Warning
+        //            );
+        //        });
+        //    }
+        //}
 
-        private async Task CleanupTablesAsync(VinceSweetsDbContext context)
-        {
-            try
-            {
-                var oldOrders = await context.Orders
-                    .Where(o => !o.isPaid && o.OrderDate.Value.Date < DateTime.Now.Date)
-                    .ToListAsync();
-
-                if (oldOrders.Any())
-                {
-                    foreach (var order in oldOrders)
-                    {
-                        order.isServed = true;
-
-                        if (order.TableId.HasValue)
-                        {
-                            var tableToFree = await context.RestaurantTables.FindAsync(order.TableId.Value);
-                            if (tableToFree != null)
-                                tableToFree.Status = 0;
-                        }
-                    }
-                }
-
-                var tables = await context.RestaurantTables.ToListAsync();
-
-                foreach (var table in tables)
-                {
-                    if (table.Status == 1)
-                    {
-                        bool hasActiveOrder = await context.Orders.AnyAsync(o =>
-                            o.TableId == table.Id &&
-                            !o.isPaid &&
-                            o.OrderDate.Value.Date == DateTime.Now.Date);
-
-                        if (!hasActiveOrder)
-                            table.Status = 0;
-                    }
-                }
-
-                await context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "خطأ أثناء تنظيف الطاولات (CleanupTablesAsync)");
-                throw;
-            }
-        }
+        
 
         // ================= معالجات الأخطاء =================
 

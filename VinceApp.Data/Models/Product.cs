@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace VinceApp.Data;
+namespace VinceApp.Data.Models;
 
 public partial class Product
 {

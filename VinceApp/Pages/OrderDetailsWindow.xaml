@@ -3,24 +3,21 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="تفاصيل الفاتورة" Height="500" Width="600"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize" MouseLeftButtonDown="Window_MouseLeftButtonDown"
-        FlowDirection="RightToLeft" Background="#F9F9F9">
-
+        FlowDirection="RightToLeft" Background="#F2F5F8">
     <Window.Resources>
 
-        <!-- Shadow -->
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="12" ShadowDepth="3" Opacity="0.08" Color="#000000"/>
 
-        <!-- Theme -->
-        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
-        <SolidColorBrush x:Key="TextDark" Color="#2E2A27"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#CFD8DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#37474F"/>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#7E57C2"/>
 
-        <!-- Touch button -->
         <Style x:Key="TouchButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="44"/>
+            <Setter Property="Height" Value="48"/>
             <Setter Property="Padding" Value="18,8"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -34,38 +31,27 @@
                                 CornerRadius="14"
                                 Padding="{TemplateBinding Padding}">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
                             </Border.Effect>
-
                             <Border.RenderTransform>
                                 <ScaleTransform ScaleX="1" ScaleY="1"/>
                             </Border.RenderTransform>
-
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
                             </Trigger>
-
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="RenderTransform">
                                     <Setter.Value>
                                         <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
                                     </Setter.Value>
                                 </Setter>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
-                                    </Setter.Value>
-                                </Setter>
                             </Trigger>
-
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
-                                <Setter Property="Foreground" Value="#777"/>
+                                <Setter TargetName="border" Property="Background" Value="#CFD8DC"/>
+                                <Setter Property="Foreground" Value="#90A4AE"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -73,135 +59,139 @@
             </Setter>
         </Style>
 
-        <!-- DataGrid base -->
         <Style x:Key="BaseDataGridStyle" TargetType="DataGrid">
             <Setter Property="AutoGenerateColumns" Value="False"/>
             <Setter Property="IsReadOnly" Value="True"/>
             <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="RowHeight" Value="42"/>
-            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="RowHeight" Value="44"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#F5F5F5"/>
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="RowBackground" Value="White"/>
-            <Setter Property="AlternatingRowBackground" Value="#FAF8F6"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
         </Style>
 
         <Style x:Key="BaseHeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#2F2B29"/>
+            <Setter Property="Background" Value="#37474F"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="12,12"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Setter Property="BorderBrush" Value="#455A64"/>
         </Style>
 
     </Window.Resources>
 
     <Grid Background="{StaticResource BgBrush}">
-        <Grid Margin="20">
+        <Grid Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Header card -->
             <Border Grid.Row="0"
                     Background="{StaticResource CardBrush}"
                     CornerRadius="16"
                     BorderBrush="{StaticResource BorderSoft}"
                     BorderThickness="1"
-                    Padding="16"
-                    Margin="0,0,0,12"
+                    Padding="20"
+                    Margin="0,0,0,16"
                     Effect="{StaticResource CardShadow}">
 
                 <StackPanel>
                     <DockPanel LastChildFill="False">
-                        <TextBlock x:Name="txtTitle"
-                                   Text="فاتورة رقم #0000"
-                                   FontSize="22"
-                                   FontWeight="Bold"
-                                   Foreground="#3E2723"
-                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🧾" FontSize="22" Margin="0,0,10,0"/>
+                            <TextBlock x:Name="txtTitle"
+                                       Text="فاتورة رقم #0000"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextDark}"/>
+                        </StackPanel>
 
                         <Border x:Name="borderType"
-                                CornerRadius="12"
-                                Padding="12,4"
+                                CornerRadius="10"
+                                Padding="12,6"
                                 DockPanel.Dock="Left"
-                                Background="#FAF8F6"
-                                BorderBrush="{StaticResource BorderSoft}"
+                                Background="#EDE7F6"
+                                BorderBrush="{StaticResource PrimaryColor}"
                                 BorderThickness="1">
                             <TextBlock x:Name="txtOrderType"
                                        Text="نوع الطلب"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="#4A4440"/>
+                                       FontSize="13"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource PrimaryColor}"/>
                         </Border>
                     </DockPanel>
 
                     <TextBlock x:Name="txtDate"
                                Text="التاريخ: --/--/----"
                                FontSize="14"
-                               Foreground="#7A726C"
-                               Margin="0,8,0,0"/>
+                               Foreground="#78909C"
+                               Margin="34,6,0,0"/>
                 </StackPanel>
             </Border>
 
-            <!-- Details card -->
             <Border Grid.Row="1"
                     Background="{StaticResource CardBrush}"
                     CornerRadius="16"
                     BorderBrush="{StaticResource BorderSoft}"
                     BorderThickness="1"
-                    Padding="10"
+                    Padding="1"
                     Effect="{StaticResource CardShadow}">
 
-                <DataGrid x:Name="dgDetails"
-                          Style="{StaticResource BaseDataGridStyle}"
-                          ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
-                          BorderThickness="0">
+                <Border CornerRadius="16" ClipToBounds="True">
+                    <DataGrid x:Name="dgDetails"
+                              Style="{StaticResource BaseDataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                              BorderThickness="0">
 
-                    <!-- Keep your special total-row behavior -->
-                    <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsTotalRow}" Value="True">
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="FontSize" Value="14"/>
-                                    <Setter Property="Background" Value="#F9FBE7"/>
-                                    <Setter Property="Foreground" Value="{Binding RowColor}"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.RowStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTotalRow}" Value="True">
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="FontSize" Value="15"/>
+                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                        <Setter Property="Foreground" Value="#2E7D32"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
 
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="المنتج" Binding="{Binding ProductName}" Width="*"/>
-                        <DataGridTextColumn Header="السعر" Binding="{Binding Price, StringFormat={}{0:N0}, TargetNullValue=''}" Width="90"/>
-                        <DataGridTextColumn Header="الكمية" Binding="{Binding Quantity, TargetNullValue=''}" Width="70"/>
-                        <DataGridTextColumn Header="الإجمالي" Binding="{Binding Total, StringFormat={}{0:N0}}" Width="110"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="المنتج" Binding="{Binding ProductName}" Width="*"/>
+                            <DataGridTextColumn Header="السعر" Binding="{Binding Price, StringFormat={}{0:N0}, TargetNullValue=''}" Width="100"/>
+                            <DataGridTextColumn Header="الكمية" Binding="{Binding Quantity, TargetNullValue=''}" Width="80"/>
+                            <DataGridTextColumn Header="الإجمالي" Binding="{Binding Total, StringFormat={}{0:N0}}" Width="120" FontWeight="SemiBold"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
             </Border>
 
-            <!-- Bottom buttons -->
-            <Grid Grid.Row="2" Margin="0,14,0,0">
+            <Grid Grid.Row="2" Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="20"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Content="طباعة"
+                <Button Content="🖨️ طباعة"
                         Grid.Column="0"
-                        Background="#5D4037"
+                        Background="{StaticResource PrimaryColor}"
                         Style="{StaticResource TouchButtonStyle}"
                         Click="Button_Click"/>
 
-                <Button Content="إغلاق"
+                <Button Content="إغلاق" IsCancel="True"
                         Grid.Column="2"
-                        Background="#455A64"
+                        Background="#ECEFF1"
+                        Foreground="#455A64"
                         Style="{StaticResource TouchButtonStyle}"
                         Click="Close_Click"/>
             </Grid>

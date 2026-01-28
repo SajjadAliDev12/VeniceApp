@@ -134,7 +134,7 @@
                                         MinWidth="{Binding ActualWidth, ElementName=ToggleButton}"
                                         MaxHeight="200">
                                     <Border.Effect>
-                                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.15"/>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.15"/>
                                     </Border.Effect>
                                     <ScrollViewer>
                                         <ItemsPresenter/>
@@ -207,7 +207,7 @@
 
     <Border Background="White" CornerRadius="20" BorderBrush="#5D4037" BorderThickness="2">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.35"/>
+            <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.35"/>
         </Border.Effect>
 
         <Grid>
@@ -271,7 +271,7 @@
 
                 <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                        <Button Content="حفظ وتطبيق"
+                        <Button Content="حفظ وتطبيق" IsDefault="True"
                                 Width="140" Margin="6,0"
                                 Background="#4CAF50"
                                 Style="{StaticResource PrimaryButtonStyle}"
@@ -284,9 +284,9 @@
                                 Click="BtnTest_Click"/>
                     </StackPanel>
 
-                    <Button Content="إلغاء وخروج"
+                    <Button Content="إلغاء وخروج" IsCancel="True"
                             Style="{StaticResource LinkButtonStyle}"
-                            IsCancel="True"
+                            
                             Click="Close_Click"/>
                 </StackPanel>
             </Grid>

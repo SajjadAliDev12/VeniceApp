@@ -134,27 +134,25 @@ namespace VinceApp.Pages
         {
             try
             {
-                // =========================================================
-                // 1. حفظ الإعدادات "المحلية" في ملف JSON (للكاشير الحالي)
-                // =========================================================
+                
                 if (!isEmailSection)
                 {
                     var config = AppConfigService.ReadUserConfig();
 
-                    // حفظ الطابعة
+                    
                     if (cmbPrinters.SelectedItem != null)
                         config["PrinterName"] = cmbPrinters.SelectedItem.ToString();
                     else
                         config["PrinterName"] = null;
 
-                    // حفظ خيار الصوت
+                    
                     bool disableSounds = chkdisableSounds.IsChecked == true;
                     config["DisableSounds"] = disableSounds;
 
-                    // كتابة الملف
+                    
                     AppConfigService.WriteUserConfig(config);
 
-                    // تطبيق الصوت فوراً
+                    
                     ApplySoundSetting(disableSounds);
                 }
 
@@ -199,7 +197,8 @@ namespace VinceApp.Pages
             catch (Exception ex)
             {
                 Log.Error(ex, "Error saving settings");
-                MessageBox.Show($"حدث خطأ أثناء الحفظ: {ex.Message}");
+                OnNotificationReqested?.Invoke("خطأ", "حصل خطأ عند الحفظ تأكد من ادخال كل البيانات");
+                //MessageBox.Show($"حدث خطأ أثناء الحفظ","Error",MessageBoxButton.OK,MessageBoxImage.Warning);
             }
         }
 
@@ -291,7 +290,8 @@ namespace VinceApp.Pages
                 catch (Exception ex)
                 {
                     Log.Error(ex, "Backup Failed");
-                    MessageBox.Show($"فشل النسخ الاحتياطي.\nتأكد من صلاحيات المجلد.\n\nالخطأ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                    OnNotificationReqested?.Invoke("خطأ", "حصل خطأ تأكد من امتلاك الصلاحيات للكتابة على القرص");
+                    //MessageBox.Show($"فشل النسخ الاحتياطي.\nتأكد من صلاحيات المجلد.\n\nالخطأ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -342,7 +342,7 @@ namespace VinceApp.Pages
                         Mouse.OverrideCursor = null;
                         Log.Error(ex, "Restore Failed");
                         OnNotificationReqested?.Invoke("خطأ", "فشلت الاستعادة");
-                        MessageBox.Show($"فشلت الاستعادة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                       
                     }
                     finally { Mouse.OverrideCursor = null;ShowLoading(false); }
                 }

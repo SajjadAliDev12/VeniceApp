@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using VinceApp.Data;
+using VinceApp.Data.Models;
 using VinceApp.Services;
 
 namespace VinceApp

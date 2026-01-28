@@ -8,7 +8,7 @@
 
     <Window.Resources>
 
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="8" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
 
         <!-- Numpad Button (Touch friendly + ثابت القياس) -->
         <Style x:Key="NumpadButtonStyle" TargetType="Button">
@@ -31,7 +31,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.12" Color="#000000"/>
+                                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.12" Color="#000000"/>
                             </Border.Effect>
 
                             <Border.RenderTransform>
@@ -81,7 +81,7 @@
                                 CornerRadius="16"
                                 Padding="{TemplateBinding Padding}">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.16" Color="#000000"/>
+                                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.16" Color="#000000"/>
                             </Border.Effect>
 
                             <Border.RenderTransform>
@@ -206,14 +206,14 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <Button Content="تأكيد الخصم"
+            <Button Content="تأكيد الخصم" IsDefault="True"
                     Grid.Column="0"
                     Click="Confirm_Click"
                     Background="#2E7D32"
                     Foreground="White"
                     Style="{StaticResource ActionButtonStyle}"/>
 
-            <Button Content="إلغاء"
+            <Button Content="إلغاء" IsCancel="True"
                     Grid.Column="2"
                     Click="Cancel_Click"
                     Width="120"

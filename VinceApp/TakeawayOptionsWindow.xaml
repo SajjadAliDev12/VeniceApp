@@ -52,8 +52,8 @@
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
             <Setter Property="Height" Value="44"/>
             <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Background" Value="#ECEFF1"/>
-            <Setter Property="Foreground" Value="#455A64"/>
+            <Setter Property="Background" Value="#EEF2F5"/>
+            <Setter Property="Foreground" Value="#4E5A63"/>
             <Setter Property="Margin" Value="0"/>
         </Style>
 
@@ -61,7 +61,7 @@
 
     <Border Background="White" CornerRadius="20" BorderBrush="#8D6E63" BorderThickness="2">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="16" ShadowDepth="0" Opacity="0.35"/>
+            <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.35"/>
         </Border.Effect>
 
         <Grid Margin="22">
@@ -87,22 +87,24 @@
             <!-- Actions -->
             <StackPanel Grid.Row="1" VerticalAlignment="Center">
 
+                <Button x:Name="btnView"
+        Content="👁️ عرض محتويات الفاتورة"
+        Background="#3B74B6"
+        Click="BtnView_Click"
+        Style="{StaticResource PrimaryButtonStyle}"/>
                 <Button x:Name="btnServe"
-                        Content="✅ تسليم للزبون (إخفاء)"
-                        Background="#2E7D32"
-                        Click="BtnServe_Click"
+                        Content="➕ أضافة ملحق للطلب"
+                        Click="btnAdd_Click"
+                        Background="#2F7D6B"
+                        
                         Style="{StaticResource PrimaryButtonStyle}"/>
 
-                <Button x:Name="btnView"
-                        Content="👁️ عرض محتويات الفاتورة"
-                        Background="#1976D2"
-                        Click="BtnView_Click"
-                        Style="{StaticResource PrimaryButtonStyle}"/>
+                
 
                 <Button x:Name="btnAdd"
-                        Content="➕ أضافة ملحق للطلب"
-                        Background="#FF9800"
-                        Click="btnAdd_Click"
+                        Content="✅ تسليم للزبون (إخفاء)"
+                        Background="#B55E4A"
+                        Click="BtnServe_Click"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Margin="0,0,0,0"/>
 

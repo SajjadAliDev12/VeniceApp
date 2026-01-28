@@ -9,7 +9,7 @@
     <Window.Resources>
 
         <!-- Shadow -->
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="22" ShadowDepth="6" Opacity="0.22" Color="#000000"/>
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="8" ShadowDepth="6" Opacity="0.22" Color="#000000"/>
 
         <!-- Theme -->
         <SolidColorBrush x:Key="BorderSoft" Color="#E7E2DC"/>
@@ -79,7 +79,7 @@
                                 CornerRadius="14"
                                 Padding="{TemplateBinding Padding}">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
                             </Border.Effect>
 
                             <Border.RenderTransform>

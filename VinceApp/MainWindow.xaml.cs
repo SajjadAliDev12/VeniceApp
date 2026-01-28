@@ -44,7 +44,7 @@ namespace VinceApp
         private bool _isReadOnly = false;
 
         private bool _isDirty = false; // هل تم تعديل السلة دون حفظ؟
-
+        
         private List<int> _deletedDetailsIds = new List<int>(); // لتتبع العناصر المحذوفة من طلب قديم
 
 
@@ -96,9 +96,9 @@ namespace VinceApp
 
             // تحديد العنوان
 
-            if (_currentTableId.HasValue) Title.Text = $"طاولة رقم {_currentTableId} ({TableName})";
+            if (_currentTableId.HasValue) Title = $"طاولة رقم {_currentTableId} ({TableName})";
 
-            else Title.Text = "طلب سفري";
+            else Title = "طلب سفري";
 
             ShowLoading(true, "جاري تحميل الطلبات......");
 
@@ -266,9 +266,9 @@ namespace VinceApp
 
             icCategories.IsEnabled = false;
 
-            lstCart.IsEnabled = false;
+            //lstCart.IsEnabled = true;
 
-
+            
 
             // إخفاء زر الحفظ لأننا لا نستطيع تعديل المحتوى
 
@@ -286,9 +286,9 @@ namespace VinceApp
 
                 {
 
-                    Title.Text += " (للعرض فقط)";
+                    Title += " (للعرض فقط)";
 
-                    Title.Foreground = Brushes.Red;
+                    
 
 
 
@@ -310,15 +310,9 @@ namespace VinceApp
 
                 {
 
-                    Title.Text += " (جاهز - لا يمكن التعديل)";
+                    Title += " (جاهز - لا يمكن التعديل)";
 
-                    Title.Foreground = Brushes.OrangeRed;
-
-
-
-                    // هنا لا نغير زر الدفع، نتركه كما هو لكي يدفع الكاشير
-
-                    // ولكن بما أن _isReadOnly = true، يجب تعديل زر الدفع ليسمح بالدفع
+                    
 
                 }
 
@@ -406,7 +400,7 @@ namespace VinceApp
             CalculateTotal();
 
             _isDirty = true; // تم التعديل
-
+            
         }
 
 
@@ -434,7 +428,7 @@ namespace VinceApp
                     CalculateTotal();
 
                     _isDirty = true;
-
+                    
                 }
 
             }
@@ -492,7 +486,7 @@ namespace VinceApp
                     CalculateTotal();
 
                     _isDirty = true;
-
+                    
                 }
 
             }
@@ -514,37 +508,33 @@ namespace VinceApp
             // 1. حفظ التفاصيل
 
             await SaveChangesToDatabaseAsync();
-
-
-
-            // 2. تحديث حالة الإرسال للمطبخ (مهم جداً)
-
             using (var context = new VinceSweetsDbContext())
-
-            {
-
+            { 
                 var order = await context.Orders.FindAsync(_currentOrderId);
-
-                // نحدث الحالة فقط إذا لم يكن مرسلاً من قبل
-
                 if (order != null)
 
                 {
-
                     order.isSentToKitchen = true;
-
                     await context.SaveChangesAsync();
-
+                }
+                ToastControl.Show("تم الحفظ", " تم حفظ الطلب بنجاح وارساله الى المطبخ", ToastControl.NotificationType.Success);
+                var details = context.OrderDetails.Where(d =>d.OrderId ==  _currentOrderId).Select(d => d.Product.IsKitchenItem).ToList();
+                if (details.Any())
+                {
+                    foreach (var item in details)
+                    {
+                        if (item != false)
+                        {
+                            return;
+                        }
+                    }
+                    order.isReady = true;
+                    details.RemoveRange(0,details.Count);
+                    await context.SaveChangesAsync();
                 }
 
-
             }
-
-
-            ToastControl.Show("تم الحفظ", " تم حفظ الطلب بنجاح وارساله الى المطبخ", ToastControl.NotificationType.Success);
-
-
-
+            
         }
 
 
@@ -558,11 +548,7 @@ namespace VinceApp
             {
                 try
                 {
-                    // ✅ مصدر الحقيقة للحالة الفعلية: السلة بالواجهة
-                    // (لأن العناصر الجديدة لم تُحفظ بعد في DB)
                     bool hasActiveDetails = CartItems.Any();
-
-                    // 1) Soft Delete للعناصر التي تم حذفها من سلة قديمة
                     if (_deletedDetailsIds.Any())
                     {
                         var toDelete = await context.OrderDetails
@@ -572,8 +558,6 @@ namespace VinceApp
                         foreach (var item in toDelete)
                             item.isDeleted = true;
                     }
-
-                    // 2) إضافة/تحديث العناصر الموجودة بالسلة
                     foreach (var item in CartItems)
                     {
                         if (item.OrderDetailId == 0)
@@ -649,6 +633,7 @@ namespace VinceApp
                     await tx.CommitAsync();
 
                     _isDirty = false;
+                    
                     _deletedDetailsIds.Clear();
 
                     await LoadExistingOrderDetailsAsync();
@@ -687,19 +672,19 @@ namespace VinceApp
 
 
 
-            // 1. حساب القيم الأولية
+            
 
             _subTotalAmount = CartItems.Sum(i => i.TotalPrice);
 
-            _discountAmount = 0; // تصفير الخصم عند فتح النافذة
+            _discountAmount = 0; 
 
 
 
-            // 2. تحديث الواجهة
+            
 
             _currentInput = "0";
 
-            UpdatePaymentCalculations(); // دالة جديدة سنكتبها بالأسفل
+            UpdatePaymentCalculations(); 
 
 
 
@@ -713,11 +698,11 @@ namespace VinceApp
 
         {
 
-            // التأكد من المبلغ
+           
 
             decimal.TryParse(_currentInput, out var paid);
 
-            if (paid < _totalAmountToPay) // لاحظ نستخدم المتغير الجديد _totalAmountToPay الذي تم خصم القيمة منه
+            if (paid < _totalAmountToPay) 
 
             {
 
@@ -760,26 +745,11 @@ namespace VinceApp
                         order.isSentToKitchen = true;
 
 
-
-                        // === حفظ الخصم ===
-
                         order.DiscountAmount = _discountAmount;
 
-                        // =================
-
-
-
-                        // تحديث المجموع النهائي في الداتابيز ليكون الصافي (اختياري، حسب سياستك المحاسبية)
-
-                        // الأفضل محاسبياً: ترك TotalAmount هو المجموع الأصلي، وحفظ DiscountAmount منفصلاً
-
-                        // order.TotalAmount = _subTotalAmount; 
 
                     }
 
-
-
-                    // ... (باقي كود تحديث الطاولة والحفظ) ...
 
                     if (_currentTableId.HasValue)
 
@@ -797,7 +767,6 @@ namespace VinceApp
 
 
 
-                // الطباعة
 
                 TicketPrinter Pr = new TicketPrinter();
 
@@ -833,15 +802,9 @@ namespace VinceApp
 
             if (_isDirty)
             {
-                var result = MessageBox.Show(
-                    "توجد تعديلات غير محفوظة، هل تود الخروج وإهمالها؟",
-                    "تنبيه",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.No) return;
+                if(MessageBox.Show("هناك تغييرات لم تقم بحفظها\nهل تود الخروج واهمالها؟\nنعم للخروج\nلا للبقاء في هذه الصفحه","تحذير",MessageBoxButton.YesNo,MessageBoxImage.Information) == MessageBoxResult.No) {return; }
+                
             }
-
             try
             {
                 using (var context = new VinceSweetsDbContext())
@@ -851,7 +814,6 @@ namespace VinceApp
                     // هل يوجد تفاصيل فعّالة (غير محذوفة)؟
                     bool hasDetails = await context.OrderDetails
                         .AnyAsync(d => d.OrderId == _currentOrderId && !d.isDeleted);
-
                     if (currentOrder != null && !hasDetails)
                     {
                         // ✅ تحرير الطاولة إذا كان الطلب لطاولة

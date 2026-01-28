@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace VinceApp.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class initClean : Migration
+    public partial class initCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,16 +17,16 @@ namespace VinceApp.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SmtpServer = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SmtpServer = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     Port = table.Column<int>(type: "int", nullable: false),
-                    SenderEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SenderEmail = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     SenderPassword = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StoreName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    StorePhone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    StoreName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    StorePhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     StoreAddress = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     ReceiptFooter = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     DisableSounds = table.Column<bool>(type: "bit", nullable: false),
-                    PrinterName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PrinterName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     PrintReceiptAfterSave = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -40,11 +40,11 @@ namespace VinceApp.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserFullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    UserFullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Action = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     TableName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    RecordId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    RecordId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Changes = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -62,7 +62,7 @@ namespace VinceApp.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Categori__3214EC07B789A350", x => x.Id);
+                    table.PrimaryKey("PK_Categories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -77,7 +77,7 @@ namespace VinceApp.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Restaura__3214EC0742A7C085", x => x.Id);
+                    table.PrimaryKey("PK_RestaurantTables", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -88,7 +88,7 @@ namespace VinceApp.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmailAddress = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    EmailAddress = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     IsEmailConfirmed = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     Role = table.Column<int>(type: "int", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
@@ -104,8 +104,8 @@ namespace VinceApp.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     ImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsKitchenItem = table.Column<bool>(type: "bit", nullable: true, defaultValue: false),
                     CategoryId = table.Column<int>(type: "int", nullable: true),
@@ -113,12 +113,13 @@ namespace VinceApp.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Products__3214EC07C4D9C222", x => x.Id);
+                    table.PrimaryKey("PK_Products", x => x.Id);
                     table.ForeignKey(
-                        name: "FK__Products__Catego__3E52440B",
+                        name: "FK_Products_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -128,25 +129,33 @@ namespace VinceApp.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderNumber = table.Column<int>(type: "int", nullable: false),
-                    OrderDate = table.Column<DateTime>(type: "datetime", nullable: true, defaultValueSql: "(getdate())"),
-                    TotalAmount = table.Column<decimal>(type: "decimal(18,0)", nullable: true, defaultValue: 0m),
+                    OrderDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     ParentOrderId = table.Column<int>(type: "int", nullable: true),
                     TableId = table.Column<int>(type: "int", nullable: true),
-                    isReady = table.Column<bool>(type: "bit", nullable: false),
-                    isServed = table.Column<bool>(type: "bit", nullable: false),
-                    isSentToKitchen = table.Column<bool>(type: "bit", nullable: false),
-                    isPaid = table.Column<bool>(type: "bit", nullable: false),
-                    isDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    isReady = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    isServed = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    isDone = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    isSentToKitchen = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    isPaid = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    isDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    RestaurantTableId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Orders__3214EC07460B37B2", x => x.Id);
+                    table.PrimaryKey("PK_Orders", x => x.Id);
                     table.ForeignKey(
-                        name: "FK__Orders__TableId__440B1D61",
-                        column: x => x.TableId,
+                        name: "FK_Orders_RestaurantTables_RestaurantTableId",
+                        column: x => x.RestaurantTableId,
                         principalTable: "RestaurantTables",
                         principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Orders_RestaurantTables_TableId",
+                        column: x => x.TableId,
+                        principalTable: "RestaurantTables",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -155,7 +164,7 @@ namespace VinceApp.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     TokenType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false)
@@ -179,32 +188,28 @@ namespace VinceApp.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderId = table.Column<int>(type: "int", nullable: false),
                     ProductId = table.Column<int>(type: "int", nullable: false),
-                    ProductName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ProductName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
-                    Price = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     IsServed = table.Column<bool>(type: "bit", nullable: false),
                     isDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__OrderDet__3214EC07875E3983", x => x.Id);
+                    table.PrimaryKey("PK_OrderDetails", x => x.Id);
                     table.ForeignKey(
-                        name: "FK__OrderDeta__Order__46E78A0C",
+                        name: "FK_OrderDetails_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK__OrderDeta__Produ__47DBAE45",
+                        name: "FK_OrderDetails_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
-
-            migrationBuilder.InsertData(
-                table: "AppSettings",
-                columns: new[] { "Id", "DisableSounds", "Port", "PrintReceiptAfterSave", "PrinterName", "ReceiptFooter", "SenderEmail", "SenderPassword", "SmtpServer", "StoreAddress", "StoreName", "StorePhone" },
-                values: new object[] { 1, false, 587, true, "Default", "شكراً لزيارتكم", "", "", "smtp.gmail.com", "Address", "Vince Sweets", "0780000000" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderDetails_OrderId",
@@ -217,6 +222,11 @@ namespace VinceApp.Data.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Orders_RestaurantTableId",
+                table: "Orders",
+                column: "RestaurantTableId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Orders_TableId",
                 table: "Orders",
                 column: "TableId");
@@ -227,7 +237,7 @@ namespace VinceApp.Data.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Restaura__E8E0DB5213BD93AB",
+                name: "IX_RestaurantTables_TableNumber",
                 table: "RestaurantTables",
                 column: "TableNumber",
                 unique: true);

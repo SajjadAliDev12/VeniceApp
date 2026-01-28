@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using VinceApp.Data;
+using VinceApp.Data.Models;
 
 namespace VinceApp.Pages
 {

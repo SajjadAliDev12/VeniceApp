@@ -4,24 +4,19 @@
         Title="اختيار الطاولة" Height="700" Width="1000"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized" FlowDirection="RightToLeft" WindowStyle="None"
-        Background="#F0F0F0" ContentRendered="Window_ContentRendered">
-
+        Background="#F2F5F8" ContentRendered="Window_ContentRendered">
     <Window.Resources>
 
-        <!-- Soft shadow for cards -->
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="18" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
+        <DropShadowEffect x:Key="CardShadow" BlurRadius="12" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
 
-        <!-- Accent colors -->
-        <SolidColorBrush x:Key="BgBrush" Color="#F6F4F1"/>
+        <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="BorderBrushSoft" Color="#E7E2DC"/>
-        <SolidColorBrush x:Key="TitleBrush" Color="#2E2A27"/>
-
-        <!-- Unified button style (touch-friendly) -->
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="TitleBrush" Color="#37474F"/>
         <Style x:Key="TouchButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="58"/>
             <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Margin" Value="6,0"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -33,14 +28,14 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="14"
+                                CornerRadius="12"
                                 Padding="{TemplateBinding Padding}"
                                 BorderBrush="#00FFFFFF"
-                                BorderThickness="2"
+                                BorderThickness="0"
                                 SnapsToDevicePixels="True">
 
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.18" Color="#000000"/>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.15" Color="#000000"/>
                             </Border.Effect>
 
                             <Border.RenderTransform>
@@ -52,41 +47,27 @@
                         </Border>
 
                         <ControlTemplate.Triggers>
-
-                            <!-- Hover (useful for mouse, harmless on touch) -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.92"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#33FFFFFF"/>
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
                             </Trigger>
-
-                            <!-- Press feedback (very important for touch) -->
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="1"/>
                                 <Setter TargetName="border" Property="RenderTransform">
                                     <Setter.Value>
                                         <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
                                     </Setter.Value>
                                 </Setter>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" Color="#000000"/>
-                                    </Setter.Value>
-                                </Setter>
                             </Trigger>
-
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#D7D7D7"/>
-                                <Setter Property="Foreground" Value="#777"/>
+                                <Setter TargetName="border" Property="Background" Value="#CFD8DC"/>
+                                <Setter Property="Foreground" Value="#90A4AE"/>
                                 <Setter TargetName="border" Property="Effect" Value="{x:Null}"/>
                             </Trigger>
-
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <!-- A subtle card style for borders -->
         <Style x:Key="CardBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource CardBrush}"/>
             <Setter Property="CornerRadius" Value="16"/>
@@ -106,13 +87,12 @@
                 <RowDefinition Height="86"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
             <Border Grid.Row="0"
                     Background="#FFFFFF"
-                    CornerRadius="18"
+                    CornerRadius="16"
                     BorderBrush="{StaticResource BorderBrushSoft}"
                     BorderThickness="1"
-                    Padding="18"
+                    Padding="18,12"
                     Margin="0,0,0,16"
                     Effect="{StaticResource CardShadow}">
 
@@ -122,34 +102,28 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="يرجى اختيار طاولة لبدء الطلب"
-                               FontSize="30"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource TitleBrush}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🍽️" FontSize="26" Margin="0,0,10,0"/>
+                        <TextBlock Text="صالة الطعام" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TitleBrush}"/>
+                        <TextBlock Text=" | اختيار الطاولة" FontSize="24" Foreground="#78909C" Margin="5,0,0,0"/>
+                    </StackPanel>
 
                     <Border Grid.Column="1"
-                            Background="#FAFAFA"
-                            CornerRadius="12"
-                            BorderBrush="{StaticResource BorderBrushSoft}"
-                            BorderThickness="1"
-                            Padding="10,6"
+                            Background="#F5F5F5"
+                            CornerRadius="8"
+                            Padding="12,6"
                             VerticalAlignment="Center">
-                        <local:DigitalClock HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <local:DigitalClock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#455A64"/>
                     </Border>
                 </Grid>
             </Border>
 
-            <!-- Main Content -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="3*"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Tables -->
                 <Border Grid.Column="0"
                         Style="{StaticResource CardBorderStyle}"
                         Padding="18"
@@ -163,11 +137,10 @@
                     </ScrollViewer>
                 </Border>
 
-                <!-- Takeaway -->
                 <Border Grid.Column="1"
-                        Background="#2F2B29"
+                        Background="#455A64"
                         CornerRadius="16"
-                        BorderBrush="#3A3532"
+                        BorderBrush="#546E7A"
                         BorderThickness="1"
                         Padding="14"
                         Effect="{StaticResource CardShadow}">
@@ -178,11 +151,11 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Border Background="#3A3431"
-                                CornerRadius="14"
+                        <Border Background="#37474F"
+                                CornerRadius="12"
                                 Padding="12"
                                 Margin="0,0,0,12"
-                                BorderBrush="#4A4440"
+                                BorderBrush="#546E7A"
                                 BorderThickness="1">
                             <TextBlock Text="🛍️ سفري معلق"
                                        Foreground="White"
@@ -200,18 +173,16 @@
                 </Border>
             </Grid>
 
-            <!-- Bottom buttons -->
             <StackPanel Grid.Row="2"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Margin="0,10,0,0">
 
-                <!-- keep your existing names, only style unified -->
                 <Button x:Name="btnNewTakeaway"
                         Content="🛍️ طلب سفري جديد"
                         Width="230"
-                        Background="#8E24AA"
+                        Background="#7E57C2" 
                         FontSize="20"
                         Style="{StaticResource TouchButtonStyle}"
                         Click="TakeawayButton_Click"/>
@@ -219,14 +190,14 @@
                 <Button x:Name="btnRefresh"
                         Content="🔄 تحديث"
                         Width="150"
-                        Background="#6D4C41"
+                        Background="#607D8B"
                         Style="{StaticResource TouchButtonStyle}"
                         Click="RefreshButton_Click"/>
 
                 <Button x:Name="btnAdmin"
                         Content="👔 الإدارة"
                         Width="150"
-                        Background="#455A64"
+                        Background="#607D8B"
                         Style="{StaticResource TouchButtonStyle}"
                         Click="OpenAdmin_Click"/>
 
@@ -238,19 +209,17 @@
                         Click="SettingsButton_Click"/>
 
                 <Button x:Name="btnExit"
-                        Content="🚪 خروج"
+                        Content="🚪 خروج" 
                         Width="130"
-                        Background="#D32F2F"
+                        Background="#E57373"
                         Style="{StaticResource TouchButtonStyle}"
                         Click="ExitButton_Click"/>
             </StackPanel>
 
-            <!-- Loading Overlay -->
             <Grid x:Name="LoadingOverlay"
                   Grid.RowSpan="3"
                   Visibility="Collapsed"
-                  Background="#80000000">
-
+                  Background="#99FFFFFF">
                 <Border Background="White"
                         Width="440"
                         Padding="24"
@@ -263,18 +232,21 @@
                         <TextBlock Text="جاري التحميل..."
                                    FontSize="22"
                                    FontWeight="Bold"
-                                   Foreground="#333"
+                                   Foreground="#37474F"
                                    HorizontalAlignment="Center"
                                    Margin="0,0,0,12"/>
 
                         <ProgressBar IsIndeterminate="True"
-                                     Height="12"
+                                     Height="6"
+                                     Foreground="#7E57C2"
+                                     BorderThickness="0"
+                                     Background="#ECEFF1"
                                      Margin="0,0,0,12"/>
 
                         <TextBlock x:Name="txtLoadingHint"
                                    Text="يتم تجهيز الطاولات والطلبات"
                                    FontSize="14"
-                                   Foreground="#666"
+                                   Foreground="#78909C"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>

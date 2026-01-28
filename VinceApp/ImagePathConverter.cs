@@ -1,6 +1,5 @@
 ﻿using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Windows.Data;
@@ -10,35 +9,25 @@ namespace VinceApp
 {
     public class ImagePathConverter : IValueConverter
     {
-        // ✅ مكان واحد فقط للصور: AppData\Roaming\VinceApp\Images
+        // مكان الصور الثابت
         private static readonly string _imagesRoot =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VinceApp", "Images");
 
-        // ذاكرة مؤقتة (Cache) لتخزين الصور المحملة سابقاً
-        private static Dictionary<string, BitmapImage> _imageCache = new Dictionary<string, BitmapImage>();
+        // تم حذف _imageCache المسبب للتسريب
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             string rawPath = value as string;
             if (string.IsNullOrWhiteSpace(rawPath)) return null;
 
-            // ✅ نثبت المسار النهائي (واحد فقط)
             string fullPath = Path.Combine(_imagesRoot, rawPath);
 
-            // 1. فحص الذاكرة المؤقتة أولاً
-            if (_imageCache.ContainsKey(fullPath))
-            {
-                return _imageCache[fullPath];
-            }
-
-            BitmapImage resultImage = null;
-
-            // 2. تحميل من مجلد واحد فقط (AppData\Roaming)
             try
             {
                 if (File.Exists(fullPath))
                 {
-                    resultImage = LoadOptimizedImage(new Uri(fullPath));
+                    // تحميل الصورة مباشرة بدون تخزينها في متغير static
+                    return LoadOptimizedImage(new Uri(fullPath));
                 }
             }
             catch (Exception ex)
@@ -46,31 +35,22 @@ namespace VinceApp
                 Log.Error(ex, "فشل في مسار الصور");
             }
 
-            // 3. حفظ النتيجة في الكاش للسرعة مستقبلاً
-            if (resultImage != null)
-            {
-                if (!_imageCache.ContainsKey(fullPath))
-                {
-                    _imageCache[fullPath] = resultImage;
-                }
-            }
-
-            return resultImage;
+            return null;
         }
 
-        // دالة التحميل السريع
         private BitmapImage LoadOptimizedImage(Uri uri)
         {
             var bitmap = new BitmapImage();
             bitmap.BeginInit();
 
-            // ✅ فعّلها إذا الصور كبيرة وتظهر تدريجياً (اختياري)
-            // bitmap.DecodePixelWidth = 300;
+            // تحجيم الصورة لتوفير الذاكرة (اختياري لكن مفيد جداً في قوائم المنتجات)
+            // إذا كانت الصور صغيرة في العرض، لا داعي لتحميلها بدقة 4K مثلاً
+            bitmap.DecodePixelWidth = 200;
 
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.CacheOption = BitmapCacheOption.OnLoad; // تحميل فوري لفك القفل عن الملف
             bitmap.UriSource = uri;
             bitmap.EndInit();
-            bitmap.Freeze();
+            bitmap.Freeze(); // تجميد الصورة لجعلها Thread-Safe ولزيادة الأداء
 
             return bitmap;
         }
@@ -80,7 +60,6 @@ namespace VinceApp
             throw new NotImplementedException();
         }
 
-        // ✅ (اختياري) استدعها مرة واحدة عند بدء البرنامج/أول حفظ صورة لضمان وجود المجلد
         public static string EnsureImagesFolder()
         {
             Directory.CreateDirectory(_imagesRoot);

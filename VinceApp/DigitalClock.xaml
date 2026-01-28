@@ -9,7 +9,7 @@
             <DoubleAnimation Storyboard.TargetName="txtColon"
                              Storyboard.TargetProperty="Opacity"
                              From="1" To="0"
-                             Duration="0:0:0.5"
+                             Duration="0:0:1"
                              AutoReverse="True"/>
         </Storyboard>
     </UserControl.Resources>

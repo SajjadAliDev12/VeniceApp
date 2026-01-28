@@ -39,178 +39,230 @@ namespace VinceApp
             _isLoading = true;
 
             TablesPanel.Children.Clear();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
             if (TakeawayPanel != null) TakeawayPanel.Children.Clear();
 
             try
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    if (!await context.Database.CanConnectAsync())
-                    {
-                        MessageBox.Show("لا يمكن الاتصال بقاعدة البيانات.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
+                    var tables = await context.RestaurantTables
+                        .AsNoTracking()
+                        .OrderBy(t => t.TableNumber)
+                        .ToListAsync();
 
-                    if (!await context.RestaurantTables.AnyAsync())
-                    {
-                        for (int i = 1; i <= 12; i++)
-                            context.RestaurantTables.Add(new RestaurantTable { TableNumber = i, Status = TABLE_FREE });
-                        await context.SaveChangesAsync();
-                    }
+                    // ✅ 1) الطاولات التي عليها طلب مفتوح فعّال
+                    var busyTableIds = await context.Orders
+                        .Where(o => o.TableId != null && !o.isPaid && !o.isServed && !o.isDeleted)
+                        .Select(o => o.TableId!.Value)
+                        .Distinct()
+                        .ToListAsync();
 
-                    // رسم الطاولات (لم يتغير)
-                    var tables = await context.RestaurantTables.AsNoTracking().OrderBy(t => t.TableNumber).ToListAsync();
+                    // ✅ 2) الطاولات التي آخر طلب لها مدفوع
+                    var paidTableIds = await context.Orders
+                        .Where(o => o.TableId != null && o.isPaid && !o.isDeleted && !o.isDone)
+                        .GroupBy(o => o.TableId!.Value)
+                        .Select(g => g.Key)
+                        .ToListAsync();
+
+                    var busySet = busyTableIds.ToHashSet();
+                    var paidSet = paidTableIds.ToHashSet();
+
                     foreach (var table in tables)
                     {
-                        // ... (كود رسم الطاولات كما هو بدون تغيير) ...
+                        int computedStatus =
+                            busySet.Contains(table.Id) ? TABLE_BUSY :
+                            paidSet.Contains(table.Id) ? TABLE_PAID :
+                            TABLE_FREE;
+
+                        // --- تصميم زر الطاولة الجديد ---
                         Button btnTable = new Button
                         {
-                            Width = 250,
-                            Height = 250,
-                            Margin = new Thickness(10),
-                            FontSize = 24,
-                            FontWeight = FontWeights.Bold,
-                            Tag = table
+                            Width = 160,    // حجم مناسب للبطاقة
+                            Height = 140,
+                            Margin = new Thickness(8),
+                            Tag = table,
+                            Cursor = Cursors.Hand,
+                            Background = Brushes.White, // الخلفية بيضاء دائماً
+                            BorderThickness = new Thickness(2) // سمك الإطار
                         };
+
+                        // جعل الزوايا دائرية
+                        var borderStyle = new Style(typeof(Border));
+                        borderStyle.Setters.Add(new Setter(Border.CornerRadiusProperty, new CornerRadius(12)));
+                        btnTable.Resources.Add(typeof(Border), borderStyle);
+
+                        // تأثير ظل خفيف
+                        var dropShadow = new System.Windows.Media.Effects.DropShadowEffect
+                        {
+                            Color = Colors.Black,
+                            Direction = 270,
+                            ShadowDepth = 2,
+                            BlurRadius = 8,
+                            Opacity = 0.1
+                        };
+                        btnTable.Effect = dropShadow;
+
                         btnTable.Click += Table_Click;
 
-                        if (table.Status == TABLE_FREE)
+                        // محتوى الزر (أيقونة + رقم + حالة)
+                        var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+                        var txtIcon = new TextBlock { FontSize = 28, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 5) };
+                        var txtNumber = new TextBlock { Text = $"طاولة {table.TableNumber}", FontSize = 18, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
+                        var txtStatus = new TextBlock { FontSize = 14, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
+
+                        // --- تخصيص الألوان بناءً على الحالة ---
+                        if (computedStatus == TABLE_FREE)
                         {
-                            btnTable.Content = $"طاولة {table.TableNumber}\n(فارغة)";
-                            btnTable.Background = new SolidColorBrush(Color.FromRgb(76, 175, 80));
+                            btnTable.BorderBrush = new SolidColorBrush(Color.FromRgb(76, 175, 80)); // إطار أخضر
+                            txtIcon.Text = "🍽️";
+                            txtStatus.Text = "(فارغة)";
+                            txtStatus.Foreground = Brushes.Gray;
+                            txtNumber.Foreground = new SolidColorBrush(Color.FromRgb(46, 125, 50)); // نص غامق
                         }
-                        else if (table.Status == TABLE_BUSY)
+                        else if (computedStatus == TABLE_BUSY)
                         {
-                            btnTable.Content = $"طاولة {table.TableNumber}\n(مشغولة)";
-                            btnTable.Background = new SolidColorBrush(Color.FromRgb(244, 67, 54));
+                            btnTable.BorderBrush = new SolidColorBrush(Color.FromRgb(229, 57, 53)); // إطار أحمر
+                            txtIcon.Text = "⛔"; // أو أيقونة مشغول
+                            txtStatus.Text = "(مشغولة)";
+                            txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(229, 57, 53));
+                            txtNumber.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40));
                         }
-                        else if (table.Status == TABLE_PAID)
+                        else // TABLE_PAID
                         {
-                            btnTable.Content = $"طاولة {table.TableNumber}\n(مدفوع)";
-                            btnTable.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                            btnTable.BorderBrush = new SolidColorBrush(Color.FromRgb(255, 167, 38)); // إطار برتقالي
+                            txtIcon.Text = "💰";
+                            txtStatus.Text = "(مدفوع)";
+                            txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(239, 108, 0));
+                            txtNumber.Foreground = new SolidColorBrush(Color.FromRgb(239, 108, 0));
                         }
-                        btnTable.Foreground = Brushes.White;
+
+                        stack.Children.Add(txtIcon);
+                        stack.Children.Add(txtNumber);
+                        stack.Children.Add(txtStatus);
+                        btnTable.Content = stack;
+
                         TablesPanel.Children.Add(btnTable);
                     }
 
-                    
+                    // --- قسم الطلبات السفري ---
                     if (TakeawayPanel != null)
                     {
-                        
                         var takeawayOrders = await context.Orders
-                            .Where(o => o.TableId == null && !o.isServed)
+                            .Where(o => o.TableId == null && !o.isServed && !o.isDone && !o.isDeleted)
                             .OrderByDescending(o => o.OrderDate)
                             .ToListAsync();
 
                         foreach (var order in takeawayOrders)
                         {
-                           
                             bool isPaid = order.isPaid;
-                            bool isReady = order.isReady; 
+                            bool isReady = order.isReady;
+
                             Button btnTakeaway = new Button
                             {
-                                Height = 80,
-                                Margin = new Thickness(0, 5, 0, 5),
-                                Foreground = Brushes.White,
+                                Height = 70, // ارتفاع أقل قليلاً لشكل أنيق
+                                Margin = new Thickness(0, 0, 0, 8),
                                 Tag = order.Id,
+                                Cursor = Cursors.Hand,
+                                Background = Brushes.White, // بطاقة بيضاء
+                                BorderThickness = new Thickness(0, 0, 4, 0), // خط ملون جانبي فقط
+                                HorizontalContentAlignment = HorizontalAlignment.Stretch
                             };
 
-                            
+                            // تدوير الزوايا للزر
+                            var takeawayBorderStyle = new Style(typeof(Border));
+                            takeawayBorderStyle.Setters.Add(new Setter(Border.CornerRadiusProperty, new CornerRadius(8)));
+                            btnTakeaway.Resources.Add(typeof(Border), takeawayBorderStyle);
+
+                            string statusIcon = "";
+                            string statusText = "";
+                            SolidColorBrush statusColor;
+
                             if (isPaid)
                             {
-                                
-                                btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(46, 125, 50));
-                                btnTakeaway.BorderBrush = Brushes.LightGreen;
+                                statusColor = new SolidColorBrush(Color.FromRgb(67, 160, 71)); // أخضر
+                                btnTakeaway.BorderBrush = statusColor;
+                                statusIcon = "✅";
+                                statusText = "مدفوع";
                             }
                             else if (isReady)
                             {
-                                
-                                btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
-                                btnTakeaway.BorderBrush = Brushes.OrangeRed;
+                                statusColor = new SolidColorBrush(Color.FromRgb(251, 140, 0)); // برتقالي
+                                btnTakeaway.BorderBrush = statusColor;
+                                statusIcon = "🔔";
+                                statusText = "جاهز";
                             }
                             else
                             {
-                                
-                                btnTakeaway.Background = new SolidColorBrush(Color.FromRgb(106, 27, 154));
-                                btnTakeaway.BorderBrush = Brushes.Purple;
+                                statusColor = new SolidColorBrush(Color.FromRgb(142, 36, 170)); // بنفسجي
+                                btnTakeaway.BorderBrush = statusColor;
+                                statusIcon = "⏳";
+                                statusText = "تحضير";
                             }
-                            btnTakeaway.BorderThickness = new Thickness(2);
-
-                            
-                            string statusText;
-                            if (isPaid) statusText = "✅ (مدفوع)";
-                            else if (isReady) statusText = "🔔 (جاهز)";
-                            else statusText = "⏳ (تحضير)";
 
                             string time = order.OrderDate?.ToString("hh:mm tt") ?? "";
 
-                            var stack = new StackPanel { Orientation = Orientation.Vertical };
-                            stack.Children.Add(new TextBlock { Text = $"📦 #{order.OrderNumber} {statusText}", FontWeight = FontWeights.Bold, FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center });
-                            stack.Children.Add(new TextBlock { Text = $"{time}", FontSize = 12, Foreground = Brushes.LightGray, HorizontalAlignment = HorizontalAlignment.Center });
-                            btnTakeaway.Content = stack;
+                            // تصميم محتوى زر السفري
+                            var grid = new Grid();
+                            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
+                            // الجهة اليمنى: الرقم والحالة
+                            var infoStack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+                            infoStack.Children.Add(new TextBlock { Text = $"#{order.OrderNumber}", FontWeight = FontWeights.Bold, FontSize = 18, Foreground = Brushes.Black, Margin = new Thickness(0, 0, 10, 0) });
+                            infoStack.Children.Add(new TextBlock { Text = statusIcon, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
+
+                            // الجهة اليسرى: الوقت
+                            var timeBlock = new TextBlock
+                            {
+                                Text = time,
+                                FontSize = 12,
+                                Foreground = Brushes.Gray,
+                                VerticalAlignment = VerticalAlignment.Center,
+                                HorizontalAlignment = HorizontalAlignment.Left
+                            };
+                            Grid.SetColumn(timeBlock, 0); // الوقت في اليسار
+                            Grid.SetColumn(infoStack, 1); // المعلومات في اليمين (بسبب RightToLeft)
+
+                            grid.Children.Add(timeBlock);
+                            grid.Children.Add(infoStack);
+
+                            btnTakeaway.Content = grid;
+
+                            // Click Event (نفس اللوجيك الأصلي تماماً)
                             btnTakeaway.Click += async (s, e) =>
                             {
                                 if (s is not Button b || b.Tag == null) return;
-
-                                if (!int.TryParse(b.Tag.ToString(), out int orderId))
-                                    return;
+                                if (!int.TryParse(b.Tag.ToString(), out int orderId)) return;
 
                                 try
                                 {
-                                    // ✅ اقرأ الحالة الحقيقية وقت الضغط (حتى لا نعتمد على isPaid/isReady القديمة)
                                     bool isPaidNow = false;
-                                    bool isReadyNow = false;
-
                                     using (var ctx = new VinceSweetsDbContext())
                                     {
-                                        var current = await ctx.Orders
-                                            .AsNoTracking()
+                                        var current = await ctx.Orders.AsNoTracking()
                                             .Where(o => o.Id == orderId)
-                                            .Select(o => new { o.isPaid, o.isReady, o.isServed })
+                                            .Select(o => new { o.isPaid, o.isDone })
                                             .FirstOrDefaultAsync();
 
-                                        if (current == null)
-                                        {
-                                            ToastControl.Show("تنبيه", "لم يتم العثور على الطلب", ToastControl.NotificationType.Warning);
-                                            await LoadTables();
-                                            return;
-                                        }
-
-                                        // إذا تسلّم سابقاً، اخفيه من القائمة
-                                        if (current.isServed)
-                                        {
-                                            await LoadTables();
-                                            return;
-                                        }
-
+                                        if (current == null) { ToastControl.Show("تنبيه", "لم يتم العثور على الطلب", ToastControl.NotificationType.Warning); await LoadTables(); return; }
+                                        if (current.isDone) { await LoadTables(); return; }
                                         isPaidNow = current.isPaid;
-                                        isReadyNow = current.isReady;
                                     }
 
-                                    // ✅ إذا غير مدفوع: افتح الكاشير مباشرة
                                     if (!isPaidNow)
                                     {
                                         await OpenCashierWindow(orderId, null, null, null);
                                         return;
                                     }
 
-                                    // ✅ مدفوع: خيارات (Serve / View / Add)
                                     var dialog = new TakeawayOptionsWindow();
+                                    dialog.Owner = this;
                                     dialog.ShowDialog();
 
-                                    if (dialog.UserChoice == "Serve")
-                                    {
-                                        await CompleteOrderAsync(orderId);
-                                        return;
-                                    }
-
-                                    if (dialog.UserChoice == "View")
-                                    {
-                                        await OpenCashierWindow(orderId, null, null, null);
-                                        return;
-                                    }
-
+                                    if (dialog.UserChoice == "Serve") { await CompleteOrderAsync(orderId); return; }
+                                    if (dialog.UserChoice == "View") { await OpenCashierWindow(orderId, null, null, null); return; }
                                     if (dialog.UserChoice == "Add")
                                     {
                                         using (var ctx = new VinceSweetsDbContext())
@@ -225,19 +277,18 @@ namespace VinceApp
                                                 isServed = false,
                                                 OrderDate = DateTime.Now,
                                                 TotalAmount = 0,
+                                                isDone = false,
                                                 ParentOrderId = orderId
                                             };
-
                                             ctx.Orders.Add(childOrder);
                                             await ctx.SaveChangesAsync();
-
                                             await OpenCashierWindow(childOrder.Id, null, null, orderId);
                                         }
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    Log.Error(ex, "Takeaway click error in TablesWindow");
+                                    Log.Error(ex, "Takeaway click error");
                                     ToastControl.Show("خطأ", "حدث خطأ أثناء فتح الطلب", ToastControl.NotificationType.Error);
                                 }
                             };
@@ -249,7 +300,7 @@ namespace VinceApp
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "error with LoadTable() in tableswindow");
+                Log.Error(ex, "error with LoadTable()");
                 ToastControl.Show("خطأ", "حدث خطأ في البرنامج", ToastControl.NotificationType.Error);
             }
             finally { _isLoading = false; }
@@ -272,7 +323,8 @@ namespace VinceApp
                         var order = await context.Orders.FindAsync(orderId);
                         if (order != null)
                         {
-                            order.isServed = true; 
+                            order.isServed = true;
+                            order.isDone = true;
                             await context.SaveChangesAsync();
                         }
                     }
@@ -299,6 +351,7 @@ namespace VinceApp
                 if (table.Status == TABLE_PAID)
                 {
                     var dialog = new TableActionWindow();
+                    dialog.Owner = this;
                     dialog.ShowDialog();
 
                     if (dialog.UserChoice == "Cancel")
@@ -312,8 +365,7 @@ namespace VinceApp
                     {
                         using (var context = new VinceSweetsDbContext())
                         {
-                            // نبحث عن الطلب المدفوع المرتبط بهذه الطاولة
-                            // نأخذ الأحدث (OrderByDescending) تحسباً لوجود أكثر من طلب قديم
+                            
                             var paidOrder = await context.Orders
                                 .OrderByDescending(o => o.OrderDate)
                                 .FirstOrDefaultAsync(o => o.TableId == table.Id && (o.isPaid));
@@ -339,20 +391,35 @@ namespace VinceApp
                         {
                             using (var context = new VinceSweetsDbContext())
                             {
+                                
+                                var activeOrders = await context.Orders
+                                    .Where(o => o.TableId == table.Id && !o.isDone && !o.isDeleted)
+                                    .ToListAsync();
+
+                                
+                                foreach (var order in activeOrders)
+                                {
+                                    order.isDone = true;
+                                    order.isServed = true; 
+                                }
+
+                                // 3. تحرير الطاولة
                                 var dbTable = await context.RestaurantTables.FindAsync(table.Id);
                                 if (dbTable != null)
                                 {
                                     dbTable.Status = TABLE_FREE;
-                                    
-                                    await context.SaveChangesAsync();
                                 }
+
+                                // 4. حفظ التغييرات دفعة واحدة
+                                await context.SaveChangesAsync();
                             }
+
                             await LoadTables();
-                            ToastControl.Show("تم الاخلاء", "تم اخلاء الطاولة بنجاح", ToastControl.NotificationType.Success);
+                            ToastControl.Show("تم الاخلاء", "تم تصفية جميع طلبات الطاولة", ToastControl.NotificationType.Success);
                             btn.IsEnabled = true;
                             return;
                         }
-                        else
+                    else
                         {
                             // إذا تراجع عن الإخلاء
                             btn.IsEnabled = true;
@@ -370,7 +437,7 @@ namespace VinceApp
 
                         _ParentOrderID = ParentOrder?.Id;
 
-                        // ✅ حدّث حالة الطاولة في قاعدة البيانات فعلاً (مو بس local)
+                        
                         var dbTable = await context.RestaurantTables.FindAsync(table.Id);
                         if (dbTable != null)
                         {
@@ -378,65 +445,52 @@ namespace VinceApp
                             await context.SaveChangesAsync();
                         }
 
-                        // ✅ خليه FREE محلياً أيضاً حتى يكمل المنطق الحالي بنفس الدالة
+                        
                         table.Status = TABLE_FREE;
                     }
                 }
-
-                // ================= المنطق العادي (إنشاء/فتح طلب) =================
                 int orderId;
 
                 using (var context = new VinceSweetsDbContext())
+                using (var tx = await context.Database.BeginTransactionAsync())
                 {
-                    using (var tx = await context.Database.BeginTransactionAsync())
+
+                    var existingOrder = await context.Orders
+                        .Where(o => o.TableId == table.Id && !o.isPaid && !o.isServed && !o.isDeleted)
+                        .OrderByDescending(o => o.OrderDate)
+                        .FirstOrDefaultAsync();
+
+                    if (existingOrder != null)
                     {
-                        if (table.Status == TABLE_FREE)
+                        orderId = existingOrder.Id;
+                        await tx.CommitAsync();
+                    }
+                    else
+                    {
+                        
+                        var newOrder = new Order
                         {
-                            // إنشاء طلب جديد
-                            var newOrder = new Order
-                            {
-                                OrderNumber = await GenerateDailyOrderNumber(context),
-                                TableId = table.Id,
-                                isPaid = false,
-                                isServed = false,
-                                isReady = false,
-                                isSentToKitchen = false,
-                                OrderDate = DateTime.Now,
-                                TotalAmount = 0,
-                                ParentOrderId = _ParentOrderID
-                            };
-
-                            context.Orders.Add(newOrder);
-                            // ⚠️ ملاحظة: لا نغير حالة الطاولة هنا (كما اتفقنا سابقاً)
-                            // ستتغير فقط عند ضغط "حفظ" داخل الكاشير
-
-                            await context.SaveChangesAsync();
-                            await tx.CommitAsync();
-                            _ParentOrderID = null;
-                            orderId = newOrder.Id;
-                        }
-                        else
-                        {
-                            // فتح طلب مفتوح موجود
-                            var existingOrder = await context.Orders.FirstOrDefaultAsync(o =>
-                                o.TableId == table.Id && !o.isPaid);
-
-                            if (existingOrder == null)
-                            {
-                                // حالة نادرة: الطاولة مشغولة لكن لا يوجد طلب مفتوح (خطأ بيانات)
-                                // نصفر الطاولة ونعيد التحميل
-                                var dbTable = await context.RestaurantTables.FindAsync(table.Id);
-                                if (dbTable != null) { dbTable.Status = TABLE_FREE; await context.SaveChangesAsync(); }
-                                await LoadTables();
-                                btn.IsEnabled = true;
-                                return;
-                            }
-                            orderId = existingOrder.Id;
-                        }
+                            OrderNumber = await GenerateDailyOrderNumber(context),
+                            TableId = table.Id,
+                            isPaid = false,
+                            isServed = false,
+                            isReady = false,
+                            isSentToKitchen = false,
+                            isDone = false,
+                            OrderDate = DateTime.Now,
+                            TotalAmount = 0,
+                            ParentOrderId = _ParentOrderID
+                        };
+                        context.Orders.Add(newOrder);
+                        await context.SaveChangesAsync();
+                        await tx.CommitAsync();
+                        
+                        _ParentOrderID = null;
+                        orderId = newOrder.Id;
                     }
                 }
 
-                 OpenCashierWindow(orderId, table.Id,table.TableName,null);
+                OpenCashierWindow(orderId, table.Id, table.TableName, null);
             }
             catch (Exception ex)
             {
@@ -476,6 +530,7 @@ namespace VinceApp
                         isServed = false,
                         OrderDate = DateTime.Now,
                         TotalAmount = 0,
+                        isDone = false,
                         ParentOrderId = null
                     };
 
@@ -507,12 +562,6 @@ namespace VinceApp
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
-            var fileName = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-
-            // تشغيل نسخة جديدة من البرنامج
-            System.Diagnostics.Process.Start(fileName);
-
-            // إغلاق النسخة الحالية فوراً
             Application.Current.Shutdown();
         }
         private void OpenAdmin_Click(object sender, RoutedEventArgs e)
@@ -522,6 +571,7 @@ namespace VinceApp
                 return; }
 
             AdminWindow admin = new AdminWindow();
+            admin.Owner = this;
             admin.ShowDialog();
             ApplyPermissions();
         }
@@ -539,6 +589,7 @@ namespace VinceApp
                     Owner = this
                 };
                 cashier.ShowDialog();
+
                 if (cashier.wasPaid)
                 {
                     ToastControl.Show("تم الدفع", "تم الدفع بنجاح", ToastControl.NotificationType.Success);
@@ -549,7 +600,7 @@ namespace VinceApp
                 // نضمن رجوع نافذة الطاولات حتى لو صار استثناء
                 this.Show();
                 this.Activate();
-
+                await Task.Delay(100);
                 await LoadTables();
             }
         }
@@ -617,10 +668,10 @@ namespace VinceApp
                 FlowDirection = FlowDirection.RightToLeft,
                 Owner = this,
 
-                // ✅ الإضافات الضرورية لتصميم عصري (بدون شريط عنوان ويندوز)
-                WindowStyle = WindowStyle.None,       // إخفاء شريط العنوان القياسي
-                AllowsTransparency = true,            // السماح بالشفافية (للزوايا الدائرية)
-                Background = Brushes.Transparent      // جعل خلفية النافذة شفافة ليظهر تصميم الصفحة
+                
+                WindowStyle = WindowStyle.None,       
+                AllowsTransparency = true,            
+                Background = Brushes.Transparent      
             };
 
             window.ShowDialog();
