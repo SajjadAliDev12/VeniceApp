@@ -133,7 +133,7 @@
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="🛍️" FontSize="24" Margin="0,0,10,0"/>
-                        <TextBlock Text="حلويات البندقية" FontSize="24" FontWeight="Bold" Foreground="#37474F"/>
+                        <TextBlock x:Name="Title" Text="حلويات البندقية" FontSize="24" FontWeight="Bold" Foreground="#37474F"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -208,23 +208,57 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Button x:Name="btnConfirm" Content="حفظ" Height="60" Background="#607D8B" Foreground="White"  
-                                        FontSize="18" FontWeight="Bold" Margin="0,0,8,0" Click="ConfirmOrder_Click">
+        FontSize="18" FontWeight="Bold" Margin="0,0,8,0" Click="ConfirmOrder_Click">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="14">
+                                            <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14" RenderTransformOrigin="0.5,0.5">
+                                                <Border.RenderTransform>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </Border.RenderTransform>
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
+
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bdr" Property="Background" Value="#78909C"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="bdr" Property="Background" Value="#455A64"/>
+                                                    <Setter TargetName="bdr" Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
 
                                 <Button x:Name="btnPay" Grid.Column="1" Content="دفع وإغلاق" Height="60" Background="#43A047" Foreground="White" IsDefault="True"
-                                        FontSize="20" FontWeight="Bold" Margin="0,0,0,0" Click="PayButton_Click">
+        FontSize="20" FontWeight="Bold" Margin="0,0,0,0" Click="PayButton_Click">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="14" Effect="{StaticResource CardShadow}">
+                                            <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14" Effect="{StaticResource CardShadow}" RenderTransformOrigin="0.5,0.5">
+                                                <Border.RenderTransform>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </Border.RenderTransform>
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
+
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bdr" Property="Background" Value="#66BB6A"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="bdr" Property="Background" Value="#2E7D32"/>
+                                                    <Setter TargetName="bdr" Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
@@ -402,9 +436,25 @@
                             <Button Content="إلغاء" Width="120" Height="55" Background="#ECEFF1" Foreground="#546E7A" FontSize="18" FontWeight="Bold" Margin="10,0" Click="CloseOverlay_Click">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="14">
+                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14" RenderTransformOrigin="0.5,0.5">
+                                            <Border.RenderTransform>
+                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                            </Border.RenderTransform>
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bdr" Property="Background" Value="#CFD8DC"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="bdr" Property="Background" Value="#B0BEC5"/>
+                                                <Setter TargetName="bdr" Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -412,9 +462,25 @@
                             <Button Content="تأكيد وطباعة" Width="280" Height="55" Background="#7E57C2" Foreground="White" FontSize="20" FontWeight="Bold" Margin="10,0" Click="PrintReceipt_Click">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="14" Effect="{StaticResource CardShadow}">
+                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14" Effect="{StaticResource CardShadow}" RenderTransformOrigin="0.5,0.5">
+                                            <Border.RenderTransform>
+                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                            </Border.RenderTransform>
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="bdr" Property="Background" Value="#9575CD"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="bdr" Property="Background" Value="#5E35B1"/>
+                                                <Setter TargetName="bdr" Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -434,8 +500,12 @@
             </Grid>
         </Grid>
 
-        <Grid x:Name="ToastOverlay" IsHitTestVisible="False" Panel.ZIndex="9999" Background="{x:Null}">
-            <StackPanel x:Name="NotificationArea" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20" Width="360"/>
+        <Grid x:Name="ToastOverlay" IsHitTestVisible="True" Panel.ZIndex="9999" Background="{x:Null}">
+            <StackPanel x:Name="NotificationArea"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="20"
+                Width="360"/>
         </Grid>
     </Grid>
 </Window>

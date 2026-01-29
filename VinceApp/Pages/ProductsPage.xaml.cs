@@ -91,7 +91,7 @@ namespace VinceApp.Pages
 
             int catId = (int)cmbCategories.SelectedValue;
             bool isAvailable = chkIsAvailable.IsChecked ?? false; // القيمة الجديدة
-
+            bool isKetchin = chkIsKetchin.IsChecked ?? false;
             try
             {
                 using (var context = new VinceSweetsDbContext())
@@ -120,21 +120,22 @@ namespace VinceApp.Pages
                             Price = price,
                             CategoryId = catId,
                             ImagePath = finalImageName,
-                            IsKitchenItem = true, // افتراضياً
-                            IsAvailable = isAvailable // إضافة الحالة
+                            IsKitchenItem = isKetchin, 
+                            IsAvailable = isAvailable 
                         };
                         context.Products.Add(newProd);
                     }
                     else
                     {
-                        // === تعديل ===
+                        
                         var prod = context.Products.Find(_selectedId);
                         if (prod != null)
                         {
                             prod.Name = name;
                             prod.Price = price;
                             prod.CategoryId = catId;
-                            prod.IsAvailable = isAvailable; // تعديل الحالة
+                            prod.IsAvailable = isAvailable;
+                            prod.IsKitchenItem = isKetchin;
 
                             // نحدث الصورة فقط إذا تم اختيار واحدة جديدة
                             if (_selectedImageSourcePath != null)
@@ -157,34 +158,26 @@ namespace VinceApp.Pages
             }
         }
 
-        // دالة مساعدة لنسخ الصورة
-        // دالة مساعدة لنسخ الصورة
+        
         private string CopyImageToAppFolder(string sourcePath)
         {
             try
             {
-                // ✅ 1. تحديد مجلد الصور داخل AppData\Roaming
                 string imagesFolder = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     "VinceApp",
                     "Images"
                 );
-
-                // إنشاء المجلد إذا لم يكن موجوداً
                 if (!Directory.Exists(imagesFolder))
                 {
                     Directory.CreateDirectory(imagesFolder);
                 }
-
-                // 2. توليد اسم جديد (GUID) لضمان عدم التكرار
                 string extension = Path.GetExtension(sourcePath);
                 string newFileName = Guid.NewGuid().ToString() + extension;
                 string destPath = Path.Combine(imagesFolder, newFileName);
-
-                // 3. النسخ (overwrite = false)
                 File.Copy(sourcePath, destPath, false);
 
-                return newFileName; // نرجع الاسم فقط للحفظ في الداتا بيس
+                return newFileName;
             }
             catch (Exception ex)
             {
@@ -195,7 +188,7 @@ namespace VinceApp.Pages
         }
 
 
-        // 4. التعديل
+        
         private void Edit_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
@@ -209,8 +202,9 @@ namespace VinceApp.Pages
                         txtName.Text = prod.Name;
                         txtPrice.Text = prod.Price.ToString("0.##");
                         cmbCategories.SelectedValue = prod.CategoryId;
-                        chkIsAvailable.IsChecked = prod.IsAvailable; // جلب حالة التوفر
-                        _currentDbImageName = prod.ImagePath; // نحتفظ بالاسم القديم
+                        chkIsAvailable.IsChecked = prod.IsAvailable;
+                        chkIsKetchin.IsChecked = prod.IsKitchenItem;
+                        _currentDbImageName = prod.ImagePath; 
 
                         // عرض الصورة القديمة في المعاينة
                         if (!string.IsNullOrEmpty(prod.ImagePath))
@@ -260,16 +254,12 @@ namespace VinceApp.Pages
                                     ToastControl.NotificationType.Warning);
                                 return;
                             }
-
-                            // ✅ احتفظ باسم الصورة قبل الحذف
                             string imageNameToDelete = prod.ImagePath;
 
                             context.Products.Remove(prod);
                             context.SaveChanges();
 
                             ToastControl.Show("معلومات", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
-
-                            // ✅ حذف ملف الصورة (فقط إذا لم يكن مستخدم من منتجات أخرى)
                             try
                             {
                                 if (!string.IsNullOrWhiteSpace(imageNameToDelete))
@@ -291,12 +281,9 @@ namespace VinceApp.Pages
                                     }
                                 }
                             }
-                            catch (Exception ex)
-                            {
-                                // لا نكسر الحذف لو فشل حذف الملف
+                            catch (Exception ex) {
                                 Log.Error(ex, "error deleting product image file");
                             }
-
                             LoadData();
                             ClearFields();
                         }
@@ -312,7 +299,8 @@ namespace VinceApp.Pages
             txtName.Text = "";
             txtPrice.Text = "";
             cmbCategories.SelectedIndex = -1;
-            chkIsAvailable.IsChecked = true; // إعادة تعيين التوفر للافتراضي
+            chkIsAvailable.IsChecked = true; 
+            chkIsKetchin.IsChecked = true;
             txtImageName.Text = "لم يتم اختيار صورة";
             imgPreview.Source = null;
             _selectedId = 0;

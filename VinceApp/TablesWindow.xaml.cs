@@ -79,13 +79,13 @@ namespace VinceApp
                         // --- تصميم زر الطاولة الجديد ---
                         Button btnTable = new Button
                         {
-                            Width = 160,    // حجم مناسب للبطاقة
-                            Height = 140,
-                            Margin = new Thickness(8),
+                            Width = 200,    // حجم مناسب للبطاقة
+                            Height = 180,
+                            Margin = new Thickness(10),
                             Tag = table,
                             Cursor = Cursors.Hand,
                             Background = Brushes.White, // الخلفية بيضاء دائماً
-                            BorderThickness = new Thickness(2) // سمك الإطار
+                            BorderThickness = new Thickness(5) // سمك الإطار
                         };
 
                         // جعل الزوايا دائرية
@@ -108,9 +108,9 @@ namespace VinceApp
 
                         // محتوى الزر (أيقونة + رقم + حالة)
                         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-                        var txtIcon = new TextBlock { FontSize = 28, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 5) };
-                        var txtNumber = new TextBlock { Text = $"طاولة {table.TableNumber}", FontSize = 18, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
-                        var txtStatus = new TextBlock { FontSize = 14, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
+                        var txtIcon = new TextBlock { FontSize = 34, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 5) };
+                        var txtNumber = new TextBlock { Text = $"طاولة {table.TableNumber}", FontSize = 24, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
+                        var txtStatus = new TextBlock { FontSize = 22, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
 
                         // --- تخصيص الألوان بناءً على الحالة ---
                         if (computedStatus == TABLE_FREE)
@@ -162,11 +162,11 @@ namespace VinceApp
                             Button btnTakeaway = new Button
                             {
                                 Height = 70, // ارتفاع أقل قليلاً لشكل أنيق
-                                Margin = new Thickness(0, 0, 0, 8),
+                                Margin = new Thickness(0, 0, 0, 10),
                                 Tag = order.Id,
                                 Cursor = Cursors.Hand,
                                 Background = Brushes.White, // بطاقة بيضاء
-                                BorderThickness = new Thickness(0, 0, 4, 0), // خط ملون جانبي فقط
+                                BorderThickness = new Thickness(0, 0, 8, 0), // خط ملون جانبي فقط
                                 HorizontalContentAlignment = HorizontalAlignment.Stretch
                             };
 
@@ -210,27 +210,25 @@ namespace VinceApp
 
                             // الجهة اليمنى: الرقم والحالة
                             var infoStack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-                            infoStack.Children.Add(new TextBlock { Text = $"#{order.OrderNumber}", FontWeight = FontWeights.Bold, FontSize = 18, Foreground = Brushes.Black, Margin = new Thickness(0, 0, 10, 0) });
-                            infoStack.Children.Add(new TextBlock { Text = statusIcon, FontSize = 14, VerticalAlignment = VerticalAlignment.Center });
+                            infoStack.Children.Add(new TextBlock { Text = $"#{order.OrderNumber} {statusText}", FontWeight = FontWeights.Bold, FontSize = 24, Foreground = Brushes.Black, Margin = new Thickness(0, 0, 10, 0) });
+                            infoStack.Children.Add(new TextBlock { Text = statusIcon, FontSize = 20, VerticalAlignment = VerticalAlignment.Center });
 
                             // الجهة اليسرى: الوقت
                             var timeBlock = new TextBlock
                             {
                                 Text = time,
-                                FontSize = 12,
+                                FontSize = 18,
                                 Foreground = Brushes.Gray,
                                 VerticalAlignment = VerticalAlignment.Center,
                                 HorizontalAlignment = HorizontalAlignment.Left
                             };
-                            Grid.SetColumn(timeBlock, 0); // الوقت في اليسار
-                            Grid.SetColumn(infoStack, 1); // المعلومات في اليمين (بسبب RightToLeft)
+                            Grid.SetColumn(timeBlock, 0); 
+                            Grid.SetColumn(infoStack, 1); 
 
                             grid.Children.Add(timeBlock);
                             grid.Children.Add(infoStack);
 
                             btnTakeaway.Content = grid;
-
-                            // Click Event (نفس اللوجيك الأصلي تماماً)
                             btnTakeaway.Click += async (s, e) =>
                             {
                                 if (s is not Button b || b.Tag == null) return;
@@ -403,14 +401,14 @@ namespace VinceApp
                                     order.isServed = true; 
                                 }
 
-                                // 3. تحرير الطاولة
+                                
                                 var dbTable = await context.RestaurantTables.FindAsync(table.Id);
                                 if (dbTable != null)
                                 {
                                     dbTable.Status = TABLE_FREE;
                                 }
 
-                                // 4. حفظ التغييرات دفعة واحدة
+                                
                                 await context.SaveChangesAsync();
                             }
 
@@ -421,13 +419,13 @@ namespace VinceApp
                         }
                     else
                         {
-                            // إذا تراجع عن الإخلاء
+                            
                             btn.IsEnabled = true;
                             return;
                         }
                     }
 
-                    // --- خيار 3: طلب جديد ---
+                    
                     if (dialog.UserChoice == "NewOrder")
                     {
                         using var context = new VinceSweetsDbContext();
@@ -503,9 +501,6 @@ namespace VinceApp
             }
         }
 
-        // ============================
-        // طلب سفري جديد
-        // ============================
         private async void TakeawayButton_Click(object sender, RoutedEventArgs e )
         {
             

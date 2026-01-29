@@ -4,7 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             Height="70" Width="350" Margin="0,5,10,5"
+             Height="80" Width="320" Margin="0,5,10,5"
              FontFamily="Segoe UI" FlowDirection="RightToLeft"
              Cursor="Hand"
              MouseLeftButtonUp="UserControl_MouseLeftButtonUp"

@@ -226,6 +226,21 @@
                               FontWeight="SemiBold"
                               Foreground="#4A4440"
                               VerticalContentAlignment="Center"/>
+                            </Border >
+                            <Border Background="#FAF8F6"
+                        CornerRadius="12"
+                        BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="1"
+                        Padding="10"
+                        Margin="0,6,0,14">
+                                <CheckBox x:Name="chkIsKetchin"
+Content="عنصر مطبخ (يحتاج تحضير)"
+IsChecked="True"
+FontSize="14"
+FontWeight="SemiBold"
+Foreground="#4A4440"
+VerticalContentAlignment="Center"/>
+
                             </Border>
 
                             <TextBlock Text="صورة المنتج:" Foreground="#7A726C" Margin="0,0,0,6"/>
@@ -278,7 +293,7 @@
                         Margin="6,0"
                         Click="Save_Click"/>
 
-                            <Button Content="إلغاء / جديد" 
+                            <Button Content="تفريغ الحقول" 
                         Width="130"
                         Background="#ECE7E2"
                         Foreground="#4A4440"
