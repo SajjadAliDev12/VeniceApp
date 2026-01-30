@@ -1,14 +1,12 @@
 ﻿<Window x:Class="VinceApp.AdminWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:VinceApp"
         Title="لوحة التحكم" Height="700" Width="1000"
         WindowState="Maximized" WindowStyle="None"
         WindowStartupLocation="CenterScreen"
         FlowDirection="RightToLeft" Background="#F2F5F8">
     <Window.Resources>
-
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="12" ShadowDepth="3" Opacity="0.08" Color="#000000"/>
-
         <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="BorderBrushSoft" Color="#ECEFF1"/>
@@ -89,7 +87,7 @@
                     BorderBrush="#37474F"
                     BorderThickness="1"
                     Padding="12"
-                    Effect="{StaticResource CardShadow}">
+                    >
 
                 <StackPanel>
 
@@ -147,7 +145,7 @@
                         BorderBrush="{StaticResource BorderBrushSoft}"
                         BorderThickness="1"
                         Padding="20,0"
-                        Effect="{StaticResource CardShadow}">
+                        >
 
                     <Grid>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -167,13 +165,13 @@
                         CornerRadius="16"
                         BorderBrush="{StaticResource BorderBrushSoft}"
                         BorderThickness="1"
-                        Effect="{StaticResource CardShadow}">
+                        >
 
                     <Frame x:Name="MainFrame"
                            NavigationUIVisibility="Hidden"/>
                 </Border>
             </Grid>
-
+            
         </Grid>
 
         <Grid x:Name="ToastOverlay" IsHitTestVisible="True" Panel.ZIndex="9999" Background="{x:Null}">
@@ -183,5 +181,6 @@
                         Margin="20"
                         Width="360"/>
         </Grid>
+        <local:ConfirmDialog x:Name="GlobalConfirmDialog" Panel.ZIndex="99999"/>
     </Grid>
 </Window>

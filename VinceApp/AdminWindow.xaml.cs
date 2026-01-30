@@ -62,6 +62,11 @@ namespace VinceApp
             PageTitle.Text = "سجل حركات النظام (Audit Log)";
             MainFrame.Navigate(new VinceApp.Pages.AuditLogPage());
         }
+        public async Task<bool> ShowConfirmMessage(string title, string message)
+        {
+            // استدعاء الدالة الموجودة داخل اليوزر كونترول
+            return await GlobalConfirmDialog.ShowAsync(title, message);
+        }
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
             

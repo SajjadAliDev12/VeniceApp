@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>gondola.ico</ApplicationIcon>
+    <ApplicationIcon>Venice.ico</ApplicationIcon>
     <AssemblyVersion>1.0.4.5</AssemblyVersion>
     <FileVersion>1.0.4.5</FileVersion>
     <Version>1.0.4.5</Version>
@@ -34,7 +34,7 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="gondola.ico" />
+    <Content Include="Venice.ico" />
   </ItemGroup>
 
   <ItemGroup>

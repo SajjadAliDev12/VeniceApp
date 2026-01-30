@@ -80,7 +80,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppSettings");
+                    b.ToTable("AppSettings", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.AuditLog", b =>
@@ -102,8 +102,8 @@ namespace VinceApp.Data.Migrations
 
                     b.Property<string>("RecordId")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("TableName")
                         .IsRequired()
@@ -120,7 +120,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Category", b =>
@@ -138,7 +138,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Order", b =>
@@ -206,9 +206,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("RestaurantTableId");
 
-                    b.HasIndex("TableId");
-
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.OrderDetail", b =>
@@ -251,7 +249,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderDetails");
+                    b.ToTable("OrderDetails", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Product", b =>
@@ -289,7 +287,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.RestaurantTable", b =>
@@ -317,7 +315,7 @@ namespace VinceApp.Data.Migrations
                     b.HasIndex("TableNumber")
                         .IsUnique();
 
-                    b.ToTable("RestaurantTables");
+                    b.ToTable("RestaurantTables", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.User", b =>
@@ -363,7 +361,7 @@ namespace VinceApp.Data.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.UserToken", b =>
@@ -394,7 +392,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserTokens");
+                    b.ToTable("UserTokens", (string)null);
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Order", b =>
@@ -402,13 +400,6 @@ namespace VinceApp.Data.Migrations
                     b.HasOne("VinceApp.Data.Models.RestaurantTable", null)
                         .WithMany("Orders")
                         .HasForeignKey("RestaurantTableId");
-
-                    b.HasOne("VinceApp.Data.Models.RestaurantTable", "Table")
-                        .WithMany()
-                        .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Table");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.OrderDetail", b =>

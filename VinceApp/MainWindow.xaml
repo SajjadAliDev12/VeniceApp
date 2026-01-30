@@ -10,8 +10,7 @@
     <Window.Resources>
         <local:ImagePathConverter x:Key="ImgConverter"/>
 
-        <DropShadowEffect x:Key="SoftShadow" BlurRadius="12" ShadowDepth="3" Opacity="0.08" Color="#000000"/>
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="8" ShadowDepth="2" Opacity="0.05" Color="#000000"/>
+        
 
         <Style x:Key="CategoryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="White"/>
@@ -28,7 +27,7 @@
                                 CornerRadius="12"
                                 BorderBrush="#CFD8DC"
                                 BorderThickness="1"
-                                Effect="{StaticResource CardShadow}">
+                               >
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
 
@@ -63,9 +62,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="12" 
                                 BorderBrush="#ECEFF1" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="4" ShadowDepth="2" Opacity="0.05" Color="Black"/>
-                            </Border.Effect>
+                            
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -100,7 +97,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Grid.ColumnSpan="3" Background="White" Effect="{StaticResource SoftShadow}" Panel.ZIndex="10">
+            <Border Grid.Row="0" Grid.ColumnSpan="3" Background="White"  Panel.ZIndex="10">
                 <Grid Margin="24,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <local:DigitalClock Width="120" Height="50" Foreground="#546E7A"/>
@@ -138,7 +135,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Grid.Column="0" Background="White" Margin="20,20,0,20" CornerRadius="16" Effect="{StaticResource SoftShadow}">
+            <Border Grid.Row="1" Grid.Column="0" Background="White" Margin="20,20,0,20" CornerRadius="16" >
                 <Grid Margin="15">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -239,7 +236,7 @@
         FontSize="20" FontWeight="Bold" Margin="0,0,0,0" Click="PayButton_Click">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14" Effect="{StaticResource CardShadow}" RenderTransformOrigin="0.5,0.5">
+                                            <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14"  RenderTransformOrigin="0.5,0.5">
                                                 <Border.RenderTransform>
                                                     <ScaleTransform ScaleX="1" ScaleY="1"/>
                                                 </Border.RenderTransform>
@@ -280,7 +277,7 @@
                             <Button Width="180" Height="250" Margin="10" Background="White" Click="Product_Click" IsEnabled="{Binding IsAvailable}" Cursor="Hand">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border x:Name="border" Background="White" CornerRadius="18" BorderThickness="0" Effect="{StaticResource SoftShadow}">
+                                        <Border x:Name="border" Background="White" CornerRadius="18" BorderThickness="0" >
                                             <StackPanel VerticalAlignment="Top">
                                                 <Border CornerRadius="18,18,0,0" ClipToBounds="True">
                                                     <Image CacheMode="BitmapCache"
@@ -462,7 +459,7 @@
                             <Button Content="تأكيد وطباعة" Width="280" Height="55" Background="#7E57C2" Foreground="White" FontSize="20" FontWeight="Bold" Margin="10,0" Click="PrintReceipt_Click">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14" Effect="{StaticResource CardShadow}" RenderTransformOrigin="0.5,0.5">
+                                        <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="14" RenderTransformOrigin="0.5,0.5">
                                             <Border.RenderTransform>
                                                 <ScaleTransform ScaleX="1" ScaleY="1"/>
                                             </Border.RenderTransform>
@@ -490,7 +487,7 @@
             </Grid>
 
             <Grid x:Name="LoadingOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Visibility="Collapsed" Background="#CCFFFFFF">
-                <Border Background="White" Width="300" Padding="30" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center" Effect="{StaticResource SoftShadow}">
+                <Border Background="White" Width="300" Padding="30" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center" >
                     <StackPanel>
                         <ProgressBar IsIndeterminate="True" Height="6" Margin="0,0,0,20" Foreground="#7E57C2" Background="#ECEFF1" BorderThickness="0"/>
                         <TextBlock Text="جاري التحميل..." FontSize="18" FontWeight="Bold" Foreground="#37474F" HorizontalAlignment="Center" Margin="0,0,0,5"/>
@@ -507,5 +504,6 @@
                 Margin="20"
                 Width="360"/>
         </Grid>
+        <local:ConfirmDialog x:Name="MyConfirmDialog" Panel.ZIndex="99999"/>
     </Grid>
 </Window>

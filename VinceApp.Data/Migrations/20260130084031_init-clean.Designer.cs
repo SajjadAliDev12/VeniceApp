@@ -12,8 +12,8 @@ using VinceApp.Data.Models;
 namespace VinceApp.Data.Migrations
 {
     [DbContext(typeof(VinceSweetsDbContext))]
-    [Migration("20260127224014_initCreate")]
-    partial class initCreate
+    [Migration("20260130084031_init-clean")]
+    partial class initclean
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -105,8 +105,8 @@ namespace VinceApp.Data.Migrations
 
                     b.Property<string>("RecordId")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("TableName")
                         .IsRequired()
@@ -208,8 +208,6 @@ namespace VinceApp.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RestaurantTableId");
-
-                    b.HasIndex("TableId");
 
                     b.ToTable("Orders");
                 });
@@ -405,13 +403,6 @@ namespace VinceApp.Data.Migrations
                     b.HasOne("VinceApp.Data.Models.RestaurantTable", null)
                         .WithMany("Orders")
                         .HasForeignKey("RestaurantTableId");
-
-                    b.HasOne("VinceApp.Data.Models.RestaurantTable", "Table")
-                        .WithMany()
-                        .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Table");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.OrderDetail", b =>

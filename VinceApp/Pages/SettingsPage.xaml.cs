@@ -176,6 +176,7 @@ namespace VinceApp.Pages
                         dbSettings.SenderEmail = txtSenderEmail.Text;
                         if (!string.IsNullOrWhiteSpace(txtSenderPass.Password))
                             dbSettings.SenderPassword = txtSenderPass.Password;
+                        
                     }
                     else
                     {
@@ -185,8 +186,8 @@ namespace VinceApp.Pages
                         dbSettings.StoreAddress = txtStoreAddress.Text;
                         dbSettings.ReceiptFooter = txtReceiptFooter.Text;
                         dbSettings.PrintReceiptAfterSave = chkAutoPrint.IsChecked == true;
-
-                        // ملاحظة هامة: لا نحفظ الطابعة هنا لأنها إعداد محلي
+                        dbSettings.PrinterName = cmbPrinters.Text;
+                        
                     }
 
                     context.SaveChanges();
@@ -198,7 +199,6 @@ namespace VinceApp.Pages
             {
                 Log.Error(ex, "Error saving settings");
                 OnNotificationReqested?.Invoke("خطأ", "حصل خطأ عند الحفظ تأكد من ادخال كل البيانات");
-                //MessageBox.Show($"حدث خطأ أثناء الحفظ","Error",MessageBoxButton.OK,MessageBoxImage.Warning);
             }
         }
 
@@ -291,7 +291,6 @@ namespace VinceApp.Pages
                 {
                     Log.Error(ex, "Backup Failed");
                     OnNotificationReqested?.Invoke("خطأ", "حصل خطأ تأكد من امتلاك الصلاحيات للكتابة على القرص");
-                    //MessageBox.Show($"فشل النسخ الاحتياطي.\nتأكد من صلاحيات المجلد.\n\nالخطأ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -304,13 +303,12 @@ namespace VinceApp.Pages
         // --- الاستعادة ---
         private async void Restore_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show(
-                "⚠️ تحذير!\nسيتم استبدال البيانات الحالية بالكامل.\nهل أنت متأكد؟",
-                "تأكيد الاستعادة",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
 
-            if (result == MessageBoxResult.Yes)
+            var result = await MyConfirmDialog.ShowAsync("تأكيد الاستعادة",
+                "⚠️ تحذير!\nسيتم استبدال البيانات الحالية بالكامل.\nهل أنت متأكد؟"
+                );
+
+            if (result)
             {
                 OpenFileDialog openFileDialog = new OpenFileDialog();
                 openFileDialog.Filter = "SQL Backup files (*.bak)|*.bak";

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace VinceApp.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class initCreate : Migration
+    public partial class initclean : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -44,7 +44,7 @@ namespace VinceApp.Data.Migrations
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Action = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     TableName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    RecordId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    RecordId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Changes = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -150,12 +150,6 @@ namespace VinceApp.Data.Migrations
                         column: x => x.RestaurantTableId,
                         principalTable: "RestaurantTables",
                         principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Orders_RestaurantTables_TableId",
-                        column: x => x.TableId,
-                        principalTable: "RestaurantTables",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -225,11 +219,6 @@ namespace VinceApp.Data.Migrations
                 name: "IX_Orders_RestaurantTableId",
                 table: "Orders",
                 column: "RestaurantTableId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Orders_TableId",
-                table: "Orders",
-                column: "TableId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_CategoryId",

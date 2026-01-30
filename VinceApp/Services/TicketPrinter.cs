@@ -4,12 +4,11 @@ using System;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Linq;
-using System.Windows.Forms; // قد نحتاجه للمسافات ولكن ليس ضرورياً هنا
+using System.Windows.Forms;
 using VinceApp.Data.Models;
 
 namespace VinceApp.Services
 {
-    // ✅ 1. إضافة IDisposable لتنظيف الخطوط
     public class TicketPrinter : IDisposable
     {
         // الخطوط
@@ -45,7 +44,6 @@ namespace VinceApp.Services
             _orderId = orderId;
             _isKitchen = isKitchenTicket;
 
-            // ✅ استخدام using لضمان حذف كائن الطباعة
             using (PrintDocument pDoc = new PrintDocument())
             {
                 pDoc.PrintPage += new PrintPageEventHandler(pDoc_PrintPage);
@@ -57,10 +55,14 @@ namespace VinceApp.Services
                     string printerName = null;
                     using (var context = new VinceSweetsDbContext())
                     {
-                        // جلب اسم الطابعة بسرعة (Select لتقليل البيانات المسحوبة)
-                        printerName = context.AppSettings
-                                             .Select(s => s.PrinterName)
-                                             .FirstOrDefault();
+                        try
+                        {
+                            printerName = context.AppSettings
+                                         .Select(s => s.PrinterName)
+                                         .FirstOrDefault();
+                        }
+                        catch { throw; }
+                        ;
                     }
 
                     if (!string.IsNullOrWhiteSpace(printerName))
@@ -94,24 +96,19 @@ namespace VinceApp.Services
             Graphics g = e.Graphics;
             float y = 10;
 
-            // ✅ عرض الورقة (80mm ≈ 280-300 units)
-            // إذا كانت الطابعة 58mm اجعلها 180-200
             int w = 270;
 
             try
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    // جلب الطلب مع التفاصيل والعلاقات الضرورية فقط
                     var order = context.Orders
-                        .Include(o => o.Table)
-                        .Include(o => o.OrderDetails) // ✅ نجلب التفاصيل هنا مباشرة
-                        .AsNoTracking() // ✅ أسرع للقراءة فقط
+                        .Include(o => o.OrderDetails)
+                        .AsNoTracking()
                         .FirstOrDefault(o => o.Id == _orderId);
 
                     if (order == null) return;
 
-                    // بيانات المتجر
                     var settings = context.AppSettings.FirstOrDefault();
                     string storeName = settings?.StoreName ?? "Venice Sweets";
                     string storePhone = settings?.StorePhone ?? "";
@@ -135,23 +132,45 @@ namespace VinceApp.Services
                     // ------------------ (Order Info) ------------------
                     DrawFullLine(g, $"#{order.OrderNumber}", fontTitle, fmtCenter, w, ref y);
                     DrawFullLine(g, DateTime.Now.ToString("dd/MM/yyyy HH:mm"), fontSmall, fmtRight, w, ref y);
-
-                    // نوع الطلب
+                    string tblNum = "";
+                    // نوع الطلب (سفري / طاولة)
                     string typeText = "سفري";
                     if (order.TableId.HasValue)
                     {
-                        string tblNum = order.Table != null ? order.Table.TableNumber.ToString() : "?";
-                        typeText = $"طاولة {tblNum}";
+                        if (order.TableId != null)
+                        {
+                            tblNum = context.RestaurantTables.Find(order.TableId).TableNumber.ToString();
+                            
+                        }
+                        else
+                            tblNum = "?";
+
+                         typeText = $"طاولة {tblNum}";
+                        
                     }
                     DrawFullLine(g, typeText, fontHeader, fmtRight, w, ref y);
+
+                    // ✅ إضافة: طباعة الملحق إذا وجد
+                    if (order.ParentOrderId.HasValue)
+                    {
+                        // جلب رقم الطلب الأب
+                        var parentOrderNumber = context.Orders
+                            .Where(o => o.Id == order.ParentOrderId.Value)
+                            .Select(o => o.OrderNumber)
+                            .FirstOrDefault();
+
+                        if (parentOrderNumber > 0)
+                        {
+                            DrawFullLine(g, $"ملحق للطلب رقم {parentOrderNumber}", fontHeader, fmtRight, w, ref y);
+                        }
+                    }
+                    // ✅ نهاية الإضافة
 
                     DrawLineSeparator(g, w, ref y);
 
                     // ------------------ (Details) ------------------
-                    // تفاصيل المنتجات (مفلترة من المحذوفات)
                     var items = order.OrderDetails.Where(x => !x.isDeleted).ToList();
 
-                    // رأس الجدول
                     if (!_isKitchen)
                     {
                         g.DrawString("الصنف", fontBody, Brushes.Black, new RectangleF(100, y, 170, 20), fmtRight);
@@ -169,14 +188,11 @@ namespace VinceApp.Services
 
                         if (!_isKitchen)
                         {
-                            // اسم المنتج
                             g.DrawString(item.ProductName, fontSmall, Brushes.Black, new RectangleF(100, y, 170, h), fmtRight);
-                            // السعر
                             g.DrawString($"{item.Price:0.#}", fontSmall, Brushes.Black, new RectangleF(50, y, 50, h), fmtCenter);
-                            // الكمية
                             g.DrawString(item.Quantity.ToString(), fontBody, Brushes.Black, new RectangleF(0, y, 50, h), fmtCenter);
                         }
-                        else // للمطبخ (خط كبير واسم فقط)
+                        else
                         {
                             g.DrawString(item.ProductName, fontHeader, Brushes.Black, new RectangleF(60, y, 210, h), fmtRight);
                             g.DrawString($"x{item.Quantity}", fontTitle, Brushes.Black, new RectangleF(0, y, 60, h), fmtLeft);
@@ -200,7 +216,6 @@ namespace VinceApp.Services
                             DrawLineSeparator(g, w, ref y);
                         }
 
-                        // الصافي بخط كبير
                         DrawTwoCols(g, "الصافي:", $"{final:N0}", fontTitle, w, ref y);
 
                         y += 20;
@@ -214,7 +229,6 @@ namespace VinceApp.Services
             }
         }
 
-        // دوال مساعدة للرسم
         private void DrawFullLine(Graphics g, string text, Font f, StringFormat fmt, int w, ref float y)
         {
             float h = g.MeasureString(text, f, w).Height;
@@ -236,7 +250,6 @@ namespace VinceApp.Services
             y += 5;
         }
 
-        // ✅ 2. تنفيذ Dispose لتحرير الذاكرة
         public void Dispose()
         {
             fontTitle?.Dispose();

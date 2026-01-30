@@ -4,7 +4,7 @@
       Title="إدارة الطاولات" FlowDirection="RightToLeft" Background="#F2F5F8">
     <Page.Resources>
 
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="12" ShadowDepth="3" Opacity="0.08" Color="#000000"/>
+        
 
         <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
@@ -161,7 +161,7 @@
                     Padding="20"
                     VerticalAlignment="Top"
                     Margin="0,0,16,0"
-                    Effect="{StaticResource CardShadow}">
+                    >
 
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
@@ -205,7 +205,7 @@
                     BorderBrush="{StaticResource BorderSoft}"
                     BorderThickness="1"
                     Padding="1"
-                    Effect="{StaticResource CardShadow}">
+                    >
 
                 <Border CornerRadius="16" ClipToBounds="True">
                     <DataGrid x:Name="dgTables"
@@ -274,5 +274,6 @@
             </Border>
 
         </Grid>
+        
     </Grid>
 </Page>

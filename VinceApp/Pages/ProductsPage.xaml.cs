@@ -233,59 +233,65 @@ namespace VinceApp.Pages
         }
 
         // 5. الحذف
-        private void Delete_Click(object sender, RoutedEventArgs e)
+        private async void Delete_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
-                if (MessageBox.Show("هل أنت متأكد من حذف المنتج؟", "تأكيد", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                var parentWindow = Window.GetWindow(this) as AdminWindow;
+
+                if (parentWindow != null)
                 {
-                    using (var context = new VinceSweetsDbContext())
+                    if (await parentWindow.ShowConfirmMessage("تأكيد", "سيتم حذف المنتج هل انت متأكد؟"))
                     {
-                        var prod = context.Products.Find(id);
-                        if (prod != null)
+                        using (var context = new VinceSweetsDbContext())
                         {
-                            // قبل Remove
-                            bool used = context.OrderDetails.AsNoTracking().Any(od => od.ProductId == id);
-
-                            if (used)
+                            var prod = context.Products.Find(id);
+                            if (prod != null)
                             {
-                                ToastControl.Show("لا يمكن الحذف",
-                                    "هذا الصنف مستخدم في فواتير/طلبات سابقة. يمكنك تعطيله بدلاً من حذفه.",
-                                    ToastControl.NotificationType.Warning);
-                                return;
-                            }
-                            string imageNameToDelete = prod.ImagePath;
+                                // قبل Remove
+                                bool used = context.OrderDetails.AsNoTracking().Any(od => od.ProductId == id);
 
-                            context.Products.Remove(prod);
-                            context.SaveChanges();
-
-                            ToastControl.Show("معلومات", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
-                            try
-                            {
-                                if (!string.IsNullOrWhiteSpace(imageNameToDelete))
+                                if (used)
                                 {
-                                    bool usedByAnother = context.Products.Any(p => p.ImagePath == imageNameToDelete);
-                                    if (!usedByAnother)
-                                    {
-                                        string imgFullPath = Path.Combine(
-                                            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                                            "VinceApp",
-                                            "Images",
-                                            imageNameToDelete
-                                        );
+                                    ToastControl.Show("لا يمكن الحذف",
+                                        "هذا الصنف مستخدم في فواتير/طلبات سابقة. يمكنك تعطيله بدلاً من حذفه.",
+                                        ToastControl.NotificationType.Warning);
+                                    return;
+                                }
+                                string imageNameToDelete = prod.ImagePath;
 
-                                        if (File.Exists(imgFullPath))
+                                context.Products.Remove(prod);
+                                context.SaveChanges();
+
+                                ToastControl.Show("معلومات", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
+                                try
+                                {
+                                    if (!string.IsNullOrWhiteSpace(imageNameToDelete))
+                                    {
+                                        bool usedByAnother = context.Products.Any(p => p.ImagePath == imageNameToDelete);
+                                        if (!usedByAnother)
                                         {
-                                            File.Delete(imgFullPath);
+                                            string imgFullPath = Path.Combine(
+                                                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                                "VinceApp",
+                                                "Images",
+                                                imageNameToDelete
+                                            );
+
+                                            if (File.Exists(imgFullPath))
+                                            {
+                                                File.Delete(imgFullPath);
+                                            }
                                         }
                                     }
                                 }
+                                catch (Exception ex)
+                                {
+                                    Log.Error(ex, "error deleting product image file");
+                                }
+                                LoadData();
+                                ClearFields();
                             }
-                            catch (Exception ex) {
-                                Log.Error(ex, "error deleting product image file");
-                            }
-                            LoadData();
-                            ClearFields();
                         }
                     }
                 }

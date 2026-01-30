@@ -6,7 +6,7 @@
       Title="DashboardPage" FlowDirection="RightToLeft" Background="#F2F5F8">
     <Page.Resources>
 
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="12" ShadowDepth="3" Opacity="0.08" Color="#000000"/>
+        
 
         <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
@@ -30,9 +30,7 @@
                                 Background="{TemplateBinding Background}"
                                 CornerRadius="12"
                                 Padding="{TemplateBinding Padding}">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="6" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
-                            </Border.Effect>
+                            
                             <Border.RenderTransform>
                                 <ScaleTransform ScaleX="1" ScaleY="1"/>
                             </Border.RenderTransform>
@@ -115,7 +113,7 @@
                     BorderThickness="1"
                     Padding="20"
                     Margin="0,0,0,20"
-                    Effect="{StaticResource CardShadow}">
+                    >
 
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -148,28 +146,28 @@
 
             <UniformGrid Grid.Row="1" Rows="1" Columns="4" Margin="0,0,0,20">
 
-                <Border Background="#66BB6A" CornerRadius="16" Margin="0,0,10,0" Padding="20" Effect="{StaticResource CardShadow}">
+                <Border Background="#66BB6A" CornerRadius="16" Margin="0,0,10,0" Padding="20" >
                     <StackPanel>
                         <TextBlock Text="📅 مبيعات اليوم" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
                         <TextBlock x:Name="txtDailySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#29B6F6" CornerRadius="16" Margin="10,0" Padding="20" Effect="{StaticResource CardShadow}">
+                <Border Background="#29B6F6" CornerRadius="16" Margin="10,0" Padding="20" >
                     <StackPanel>
                         <TextBlock Text="📅 آخر 7 أيام" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
                         <TextBlock x:Name="txtWeeklySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#7E57C2" CornerRadius="16" Margin="10,0" Padding="20" Effect="{StaticResource CardShadow}">
+                <Border Background="#7E57C2" CornerRadius="16" Margin="10,0" Padding="20" >
                     <StackPanel>
                         <TextBlock Text="📅 الشهر الحالي" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
                         <TextBlock x:Name="txtMonthlySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="#FFA726" CornerRadius="16" Margin="10,0,0,0" Padding="20" Effect="{StaticResource CardShadow}">
+                <Border Background="#FFA726" CornerRadius="16" Margin="10,0,0,0" Padding="20" >
                     <StackPanel>
                         <TextBlock Text="📅 السنة الحالية" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
                         <TextBlock x:Name="txtYearlySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
@@ -184,7 +182,7 @@
                     BorderThickness="1"
                     CornerRadius="16"
                     Padding="1"
-                    Effect="{StaticResource CardShadow}">
+                    >
 
                 <Grid>
                     <Grid.RowDefinitions>

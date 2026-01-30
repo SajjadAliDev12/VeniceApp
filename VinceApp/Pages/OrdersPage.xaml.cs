@@ -2,6 +2,7 @@
 using Serilog;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -37,7 +38,7 @@ namespace VinceApp.Pages
                     {
                         query = query.Where(o => o.isDeleted == true);
                         txtPageTitle.Text = "أرشيف الفواتير الملغاة";
-                        
+
                     }
                     else
                     {
@@ -182,60 +183,64 @@ namespace VinceApp.Pages
         }
 
         // === الإلغاء (Soft Delete) ===
-        private void DeleteOrder_Click(object sender, RoutedEventArgs e)
+        private async void DeleteOrder_Click(object sender, RoutedEventArgs e)
         {
             // التحقق من الصلاحية (الأدمن فقط)
             if (CurrentUser.Role != (int)UserRole.Admin)
             {
-                ToastControl.Show( "صلاحيات","عذراً، إلغاء الفواتير متاح للمدير فقط.", ToastControl.NotificationType.Warning);
-                
+                ToastControl.Show("صلاحيات", "عذراً، إلغاء الفواتير متاح للمدير فقط.", ToastControl.NotificationType.Warning);
+
                 return;
             }
 
             if (sender is Button btn && btn.Tag is int id)
             {
-                if (MessageBox.Show("هل أنت متأكد من إلغاء هذه الفاتورة؟\nسيتم نقلها للأرشيف ولن تحتسب في المبيعات.",
-                    "تأكيد الإلغاء", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                var parentWindow = Window.GetWindow(this) as AdminWindow;
+
+                if (parentWindow != null)
                 {
-                    try
+                    if (await parentWindow.ShowConfirmMessage("تأكيد", "سيتم أرشفة هذه الفاتورة ولن تحتسب في المبيعات \nهل انت متأكد؟"))
                     {
-                        using (var context = new VinceSweetsDbContext())
+                        try
                         {
-                            // 1. جلب الطلب مع تفاصيله
-                            var order = context.Orders
-                                .Include(o => o.OrderDetails)
-                                .FirstOrDefault(o => o.Id == id);
-
-                            if (order != null)
+                            using (var context = new VinceSweetsDbContext())
                             {
-                                // التحقق: هل هي ملغاة بالفعل؟
-                                if (order.isDeleted)
+                                // 1. جلب الطلب مع تفاصيله
+                                var order = context.Orders
+                                    .Include(o => o.OrderDetails)
+                                    .FirstOrDefault(o => o.Id == id);
+
+                                if (order != null)
                                 {
-                                    ToastControl.Show("معلومات", "هذه الفاتورة محذوفة (ملفاة)", ToastControl.NotificationType.Info);
-                                    return;
+                                    // التحقق: هل هي ملغاة بالفعل؟
+                                    if (order.isDeleted)
+                                    {
+                                        ToastControl.Show("معلومات", "هذه الفاتورة محذوفة (ملفاة)", ToastControl.NotificationType.Info);
+                                        return;
+                                    }
+
+                                    // 2. تنفيذ Soft Delete (تحديث الحالة فقط)
+                                    order.isDeleted = true;
+
+                                    // اختياري: إلغاء التفاصيل أيضاً لضمان التناسق
+                                    foreach (var detail in order.OrderDetails)
+                                    {
+                                        detail.isDeleted = true;
+                                    }
+
+                                    // 3. الحفظ (هنا سيعمل Audit Log ويسجل أن الأدمن قام بـ SoftDelete)
+                                    context.SaveChanges();
+
+                                    ToastControl.Show("معلومات", "تم الغاء الفاتورة ونقلها الى الارشيف", ToastControl.NotificationType.Success);
+                                    LoadOrders(); // تحديث القائمة لإخفاء الفاتورة الملغاة
                                 }
-
-                                // 2. تنفيذ Soft Delete (تحديث الحالة فقط)
-                                order.isDeleted = true;
-
-                                // اختياري: إلغاء التفاصيل أيضاً لضمان التناسق
-                                foreach (var detail in order.OrderDetails)
-                                {
-                                    detail.isDeleted = true;
-                                }
-
-                                // 3. الحفظ (هنا سيعمل Audit Log ويسجل أن الأدمن قام بـ SoftDelete)
-                                context.SaveChanges();
-
-                                ToastControl.Show("معلومات", "تم الغاء الفاتورة ونقلها الى الارشيف", ToastControl.NotificationType.Success);
-                                LoadOrders(); // تحديث القائمة لإخفاء الفاتورة الملغاة
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "Error deleting order");
-                        ToastControl.Show("معلومات", "فشل الغاء الفاتورة", ToastControl.NotificationType.Error);
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error deleting order");
+                            ToastControl.Show("معلومات", "فشل الغاء الفاتورة", ToastControl.NotificationType.Error);
+                        }
                     }
                 }
             }

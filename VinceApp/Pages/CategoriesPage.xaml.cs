@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -48,7 +49,6 @@ namespace VinceApp.Pages
             if (string.IsNullOrEmpty(name))
             {
                 ToastControl.Show("الاسم مطلوب", "يرجى كتابة الاسم", ToastControl.NotificationType.Info);
-                //MessageBox.Show("يرجى كتابة اسم التصنيف", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -87,7 +87,6 @@ namespace VinceApp.Pages
                     ClearFields();
                     LoadCategories();
                     ToastControl.Show("نجاح", "تم الحفظ بنجاح ", ToastControl.NotificationType.Success);
-                    //MessageBox.Show("تم الحفظ بنجاح","OK",MessageBoxButton.OK,MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
@@ -114,42 +113,47 @@ namespace VinceApp.Pages
             }
         }
 
-        private void Delete_Click(object sender, RoutedEventArgs e)
+        private async void Delete_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
-                if (MessageBox.Show("هل أنت متأكد من الحذف؟", "تأكيد", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-                {
-                    try
-                    {
-                        using (var context = new VinceSweetsDbContext())
-                        {
-                            // 1. حماية: منع الحذف إذا كان التصنيف يحتوي منتجات
-                            // لأن حذف التصنيف سيجعل المنتجات يتيمة (أو يسبب خطأ FK)
-                            bool hasProducts = context.Products.Any(p => p.CategoryId == id);
-                            if (hasProducts)
-                            {
-                                ToastControl.Show( "منع الحذف","لا يمكن حذف هذا التصنيف لأنه يحتوي على منتجات.\nيرجى حذف المنتجات أو نقلها أولاً.", ToastControl.NotificationType.Warning);
-                                
-                                return;
-                            }
+                var parentWindow = Window.GetWindow(this) as AdminWindow;
 
-                            // 2. الحذف
-                            var cat = context.Categories.Find(id);
-                            if (cat != null)
+                if (parentWindow != null)
+                {
+                    if (await parentWindow.ShowConfirmMessage("تأكيد", "حذف التصنيف؟"))
+                    {
+                        try
+                        {
+                            using (var context = new VinceSweetsDbContext())
                             {
-                                context.Categories.Remove(cat);
-                                context.SaveChanges();
-                                LoadCategories();
-                                ClearFields();
-                                ToastControl.Show("تم الحذف", "تم حذف التصنيف بنجاح", ToastControl.NotificationType.Success);
+                                // 1. حماية: منع الحذف إذا كان التصنيف يحتوي منتجات
+                                // لأن حذف التصنيف سيجعل المنتجات يتيمة (أو يسبب خطأ FK)
+                                bool hasProducts = context.Products.Any(p => p.CategoryId == id);
+                                if (hasProducts)
+                                {
+                                    ToastControl.Show("منع الحذف", "لا يمكن حذف هذا التصنيف لأنه يحتوي على منتجات.\nيرجى حذف المنتجات أو نقلها أولاً.", ToastControl.NotificationType.Warning);
+
+                                    return;
+                                }
+
+                                // 2. الحذف
+                                var cat = context.Categories.Find(id);
+                                if (cat != null)
+                                {
+                                    context.Categories.Remove(cat);
+                                    context.SaveChanges();
+                                    LoadCategories();
+                                    ClearFields();
+                                    ToastControl.Show("تم الحذف", "تم حذف التصنيف بنجاح", ToastControl.NotificationType.Success);
+                                }
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "error with categories page");
-                        ToastControl.Show("خطأ", "لا يمكن الحذف", ToastControl.NotificationType.Error);
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "error with categories page");
+                            ToastControl.Show("خطأ", "لا يمكن الحذف", ToastControl.NotificationType.Error);
+                        }
                     }
                 }
             }

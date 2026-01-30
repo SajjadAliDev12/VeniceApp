@@ -168,31 +168,35 @@ namespace VinceApp.Pages
             txtFullName.Text = "";
         }
 
-        
-        private void Delete_Click(object sender, RoutedEventArgs e)
+
+        private async void Delete_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
                 if (id == 1)
                 {
-                    
-                    ToastControl.Show("منع","لا يمكن حذف المدير الرئيسي (Admin)!",  ToastControl.NotificationType.Error);
+
+                    ToastControl.Show("منع", "لا يمكن حذف المدير الرئيسي (Admin)!", ToastControl.NotificationType.Error);
                     return;
                 }
-                // ... باقي كود الحذف كما هو ...
-                if (MessageBox.Show("هل أنت متأكد من حذف هذا المستخدم؟", "تأكيد", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                var parentWindow = Window.GetWindow(this) as AdminWindow;
+
+                if (parentWindow != null)
                 {
-                    using (var context = new VinceSweetsDbContext())
+                    if (await parentWindow.ShowConfirmMessage("تأكيد", "هل أنت متأكد من حذف هذا المستخدم؟"))
                     {
-                        // ... كود الحذف القديم ...
-                        var user = context.Users.Find(id);
-                        if (user != null)
+                        using (var context = new VinceSweetsDbContext())
                         {
-                            context.Users.Remove(user);
-                            context.SaveChanges();
-                            LoadUsers();
-                            ClearFields();
-                            ToastControl.Show("تم الحذف", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
+                            // ... كود الحذف القديم ...
+                            var user = context.Users.Find(id);
+                            if (user != null)
+                            {
+                                context.Users.Remove(user);
+                                context.SaveChanges();
+                                LoadUsers();
+                                ClearFields();
+                                ToastControl.Show("تم الحذف", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
+                            }
                         }
                     }
                 }

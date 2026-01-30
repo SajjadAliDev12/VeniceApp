@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
-
 
 namespace VinceApp.Data.Models
 {
@@ -20,6 +20,10 @@ namespace VinceApp.Data.Models
         public virtual DbSet<AppSetting> AppSettings { get; set; }
         public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+        // التحكم بتفعيل/تعطيل التسجيل
+        private static bool _auditEnabled = true;
+        public static void EnableAudit(bool enable) => _auditEnabled = enable;
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
@@ -35,9 +39,9 @@ namespace VinceApp.Data.Models
                 optionsBuilder.UseSqlServer(connectionString);
             }
         }
+
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
-            // كل decimal في المشروع = decimal(18,2)
             configurationBuilder
                 .Properties<decimal>()
                 .HavePrecision(18, 2);
@@ -51,23 +55,17 @@ namespace VinceApp.Data.Models
             modelBuilder.Entity<Order>(e =>
             {
                 e.Property(x => x.OrderDate).HasColumnType("datetime2");
-
                 e.Property(x => x.TotalAmount).HasPrecision(18, 2);
                 e.Property(x => x.DiscountAmount).HasPrecision(18, 2);
-
+                e.Property(x => x.TableId).HasDefaultValue(null);
                 e.Property(x => x.isPaid).HasDefaultValue(false);
                 e.Property(x => x.isReady).HasDefaultValue(false);
                 e.Property(x => x.isServed).HasDefaultValue(false);
                 e.Property(x => x.isSentToKitchen).HasDefaultValue(false);
                 e.Property(x => x.isDeleted).HasDefaultValue(false);
-
-                
                 e.Property(x => x.isDone).HasDefaultValue(false);
 
-                e.HasOne(x => x.Table)
-                    .WithMany()
-                    .HasForeignKey(x => x.TableId)
-                    .OnDelete(DeleteBehavior.Restrict);
+
             });
 
             // =======================
@@ -79,20 +77,16 @@ namespace VinceApp.Data.Models
                 e.Property(x => x.Quantity).HasDefaultValue(1);
                 e.Property(x => x.Price).HasPrecision(18, 2);
 
-                // ✅ Order ← OrderId
                 e.HasOne(x => x.Order)
                     .WithMany(o => o.OrderDetails)
                     .HasForeignKey(x => x.OrderId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // ✅ Product ← ProductId
                 e.HasOne(x => x.Product)
                     .WithMany(p => p.OrderDetails)
                     .HasForeignKey(x => x.ProductId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-
-
 
             // =======================
             // Products
@@ -101,8 +95,6 @@ namespace VinceApp.Data.Models
             {
                 e.Property(x => x.Name).HasMaxLength(150).IsRequired();
                 e.Property(x => x.Price).HasPrecision(18, 2);
-
-                
                 e.Property(x => x.IsKitchenItem).HasDefaultValue(false);
 
                 e.HasOne(x => x.Category)
@@ -126,7 +118,6 @@ namespace VinceApp.Data.Models
             {
                 e.Property(x => x.TableName).HasMaxLength(100);
                 e.Property(x => x.Status).HasDefaultValue(0);
-
                 e.HasIndex(x => x.TableNumber).IsUnique();
             });
 
@@ -137,7 +128,6 @@ namespace VinceApp.Data.Models
             {
                 e.Property(x => x.Username).HasMaxLength(50).IsRequired();
                 e.Property(x => x.EmailAddress).HasMaxLength(150);
-
                 e.Property(x => x.IsEmailConfirmed).HasDefaultValue(false);
 
                 e.HasIndex(x => x.Username).IsUnique();
@@ -149,7 +139,6 @@ namespace VinceApp.Data.Models
             // =======================
             modelBuilder.Entity<UserToken>(e =>
             {
-                // عدّل الاسم حسب موديلك لو الحقل اسمه غير Token
                 e.Property(x => x.Token).HasMaxLength(500).IsRequired();
             });
 
@@ -161,7 +150,7 @@ namespace VinceApp.Data.Models
                 e.Property(x => x.TableName).HasMaxLength(100);
                 e.Property(x => x.UserFullName).HasMaxLength(150);
                 e.Property(x => x.Action).HasMaxLength(50);
-                e.Property(x => x.RecordId).HasMaxLength(50);
+                e.Property(x => x.RecordId).HasMaxLength(100); // زدنا الطول ليتسع لـ TEMP_123
             });
 
             // =======================
@@ -179,13 +168,39 @@ namespace VinceApp.Data.Models
             OnModelCreatingPartial(modelBuilder);
         }
 
-
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 
         // ---------------------------------------------------------
-        //  Audit Trail والـ Soft Delete
+        //  قوائم الحقول المهمة
         // ---------------------------------------------------------
+        private static readonly HashSet<string> _orderImportantProps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "isSentToKitchen", "isReady", "isServed", "isPaid",
+            "isDeleted", "TableId", "TotalAmount", "DiscountAmount", "ParentOrderId"
+        };
 
+        private static readonly HashSet<string> _orderDetailImportantProps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Quantity", "isDeleted", "Price", "ProductId", "ProductName", "OrderId"
+        };
+
+        // الحقول التي تتغير باستمرار ولا تهم في التسجيل
+        private static readonly HashSet<string> _excludedProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "CreatedAt", "UpdatedAt", "LastModified", "RowVersion",
+            "Timestamp", "ConcurrencyToken", "Version", "LastUpdated",
+            "ModifiedDate", "CreatedDate"
+        };
+
+        // الحقول التفسيرية فقط (ليست مهمة للتسجيل إذا تغيرت وحدها)
+        private static readonly HashSet<string> _infoOnlyProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Note", "Comment", "Remarks", "Description", "Notes"
+        };
+
+        // ---------------------------------------------------------
+        //  SaveChanges Overrides
+        // ---------------------------------------------------------
         public override int SaveChanges()
         {
             OnBeforeSaveChanges();
@@ -198,312 +213,437 @@ namespace VinceApp.Data.Models
             return await base.SaveChangesAsync(cancellationToken);
         }
 
-        // ✅ قائمة الحقول المهمة لتغييرات الطلب (Order)
-        private static readonly HashSet<string> _orderImportantProps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "isSentToKitchen",
-            "isReady",
-            "isServed",
-            "isPaid",
-            "isDeleted",
-            "TableId",
-            "TotalAmount",
-            "DiscountAmount",
-            "ParentOrderId"
-        };
-
-        // ✅ قائمة الحقول المهمة لتغييرات تفاصيل الطلب (OrderDetail)
-        private static readonly HashSet<string> _orderDetailImportantProps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Quantity",
-            "isDeleted",
-            "Price",
-            "ProductId",
-            "ProductName",
-            "OrderId"
-        };
-
+        // ---------------------------------------------------------
+        //  الدالة الرئيسية للتحقق قبل الحفظ
+        // ---------------------------------------------------------
         private void OnBeforeSaveChanges()
         {
+            if (!_auditEnabled) return;
+
             var client = VinceApp.Services.AppConfigService.GetClient();
             bool isKitchenClient = client.Equals("KITCHEN", StringComparison.OrdinalIgnoreCase);
 
-            ChangeTracker.DetectChanges();
-            var auditEntries = new List<AuditLog>();
+            // إذا كان مطبخ ولا يوجد تغييرات مهمة، خروج
+            if (isKitchenClient && !HasImportantKitchenChanges()) return;
 
-            // 1) كشف الطلبات التي يتم حذفها منطقياً (Soft Delete) الآن
+            ChangeTracker.DetectChanges();
+
+            // التحقق من عدد التغييرات الكبير
+            int totalChanges = ChangeTracker.Entries()
+                .Count(e => e.State != EntityState.Unchanged &&
+                           e.State != EntityState.Detached &&
+                           !(e.Entity is AuditLog));
+
+            if (totalChanges > 100)
+            {
+                // تسجيل تحذير فقط بدلاً من كل التغييرات
+                var warningEntry = new AuditLog
+                {
+                    TableName = "System",
+                    Action = "Warning",
+                    Changes = JsonSerializer.Serialize(new
+                    {
+                        Message = $"Too many changes ({totalChanges}), audit limited to important changes only",
+                        Timestamp = DateTime.Now
+                    }),
+                    Timestamp = DateTime.Now,
+                    UserFullName = GetCurrentUserName(),
+                    RecordId = "0"
+                };
+                AuditLogs.Add(warningEntry);
+
+                // سنسجل فقط التغييرات المهمة جداً
+                ProcessLimitedAudit(isKitchenClient);
+                return;
+            }
+
+            ProcessFullAudit(isKitchenClient);
+        }
+
+        // ---------------------------------------------------------
+        //  دوال المعالجة
+        // ---------------------------------------------------------
+        private bool HasImportantKitchenChanges()
+        {
+            return ChangeTracker.Entries<Order>()
+                .Any(e => e.State == EntityState.Modified &&
+                         (e.Property(p => p.isReady).IsModified ||
+                          e.Property(p => p.isServed).IsModified));
+        }
+
+        private void ProcessLimitedAudit(bool isKitchenClient)
+        {
+            var auditEntries = new List<AuditLog>();
+            var batchId = Guid.NewGuid();
+
+            // فقط التغييرات المهمة جداً
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.Entity is AuditLog || entry.State == EntityState.Unchanged || entry.State == EntityState.Detached)
+                    continue;
+
+                // فقط المستخدمين والإعدادات والمنتجات (إضافة/حذف)
+                if (entry.Entity is User || entry.Entity is AppSetting)
+                {
+                    var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
+                    if (auditEntry != null) auditEntries.Add(auditEntry);
+                }
+                else if (entry.Entity is Product &&
+                        (entry.State == EntityState.Added || entry.State == EntityState.Deleted))
+                {
+                    var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
+                    if (auditEntry != null) auditEntries.Add(auditEntry);
+                }
+                else if (entry.Entity is Order && entry.State == EntityState.Added)
+                {
+                    var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
+                    if (auditEntry != null) auditEntries.Add(auditEntry);
+                }
+            }
+
+            if (auditEntries.Any())
+                AuditLogs.AddRange(auditEntries);
+        }
+
+        private void ProcessFullAudit(bool isKitchenClient)
+        {
+            var auditEntries = new List<AuditLog>();
+            var batchId = Guid.NewGuid();
+
+            // جمع معلومات الحذف المنطقي للطلبات
             var softDeletedOrderIds = ChangeTracker.Entries<Order>()
                 .Where(e => e.State == EntityState.Modified &&
-                            (e.Property(p => p.isDeleted).CurrentValue as bool? == true) &&
-                            (e.Property(p => p.isDeleted).OriginalValue as bool? == false))
+                           e.Property(p => p.isDeleted).IsModified &&
+                           e.Entity.isDeleted)
                 .Select(e => e.Entity.Id)
                 .ToHashSet();
 
-            // 2) تجميع OrderIds الموجودة داخل ChangeTracker (حتى لا نسوي Find داخل اللوب)
-            var trackedOrderIds = ChangeTracker.Entries<Order>()
-                .Select(e => e.Entity.Id)
-                .ToHashSet();
+            // تجميع الطلبات الموجودة في ChangeTracker
+            var trackedOrders = ChangeTracker.Entries<Order>()
+                .ToDictionary(e => e.Entity.Id, e => e.Entity);
 
-            // 3) OrderIds المطلوبة لتفاصيل الطلب التي ليست tracked
+            // جمع OrderIds التي نحتاجها من OrderDetails
             var neededOrderIds = ChangeTracker.Entries<OrderDetail>()
-                .Where(e => e.State != EntityState.Detached && e.State != EntityState.Unchanged)
+                .Where(e => e.State != EntityState.Unchanged &&
+                           e.State != EntityState.Detached)
                 .Select(e => e.Entity.OrderId)
                 .Distinct()
-                .Where(id => !trackedOrderIds.Contains(id))
+                .Where(id => !trackedOrders.ContainsKey(id))
                 .ToList();
 
-            // 4) جلب isSentToKitchen للطلبات المطلوبة مرة واحدة
-            var sentToKitchenLookup = new Dictionary<int, bool>();
+            // جلب الطلبات المطلوبة من قاعدة البيانات
             if (neededOrderIds.Count > 0)
             {
-                sentToKitchenLookup = Orders
-                    .AsNoTracking()
+                var ordersFromDb = Orders.AsNoTracking()
                     .Where(o => neededOrderIds.Contains(o.Id))
-                    .Select(o => new { o.Id, o.isSentToKitchen })
-                    .ToDictionary(x => x.Id, x => x.isSentToKitchen);
+                    .ToList();
+
+                foreach (var order in ordersFromDb)
+                {
+                    trackedOrders[order.Id] = order;
+                }
             }
 
             foreach (var entry in ChangeTracker.Entries())
             {
-                // تجاهل السجلات غير المهمة
-                if (entry.Entity is AuditLog || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
+                if (entry.Entity is AuditLog || entry.State == EntityState.Unchanged || entry.State == EntityState.Detached)
                     continue;
 
-                // ✅ تجاهل كيانات ما نريدها بالـ Audit (اختياري)
-                // مثال: Categories / RestaurantTable إذا تسبب ضوضاء:
-                // if (entry.Entity is Category || entry.Entity is RestaurantTable) continue;
-
-                bool shouldAudit = false;
-
-                // =========================================================
-                // (1) Selection Logic (فلترة ماذا نسجل)
-                // =========================================================
-
-                // Users + AppSetting دائمًا مهمين
-                if (entry.Entity is User || entry.Entity is AppSetting)
-                {
-                    shouldAudit = true;
-                }
-                // Product: سجّل فقط Add/Delete و (Price/Name) إذا Modified
-                else if (entry.Entity is Product)
-                {
-                    if (entry.State == EntityState.Added || entry.State == EntityState.Deleted)
-                    {
-                        shouldAudit = true;
-                    }
-                    else if (entry.State == EntityState.Modified)
-                    {
-                        bool isPriceChanged = entry.Property("Price").IsModified;
-                        bool isNameChanged = entry.Property("Name").IsModified;
-                        shouldAudit = isPriceChanged || isNameChanged;
-                    }
-                }
-                // Order: سجّل فقط إذا تغيّر شيء مهم فعلًا (ليس مجرد isSentToKitchen == true)
-                else if (entry.Entity is Order)
-                {
-                    if (entry.State == EntityState.Added || entry.State == EntityState.Deleted)
-                    {
-                        // ❌ المطبخ لا يضيف ولا يحذف طلبات
-                        if (!isKitchenClient)
-                            shouldAudit = true;
-                    }
-                    else if (entry.State == EntityState.Modified)
-                    {
-                        if (isKitchenClient)
-                        {
-                            // ✅ المطبخ: فقط تغييرات الحالة
-                            shouldAudit = entry.Properties.Any(p =>
-                                p.IsModified &&
-                                (p.Metadata.Name.Equals("isReady", StringComparison.OrdinalIgnoreCase) ||
-                                 p.Metadata.Name.Equals("isServed", StringComparison.OrdinalIgnoreCase))
-                            );
-                        }
-                        else
-                        {
-                            // ✅ POS: منطقك الحالي كما هو
-                            shouldAudit = entry.Properties.Any(p =>
-                                p.IsModified && _orderImportantProps.Contains(p.Metadata.Name)
-                            );
-                        }
-                    }
-                }
-
-
-                // OrderDetail: سجّل فقط عمليات مهمة + بشرط أن الطلب تم إرساله للمطبخ (اختياري حسب رغبتك)
-                else if (entry.Entity is OrderDetail detail)
-                {
-                    if (isKitchenClient)
-                        continue;
-
-                    // تجاهل حذف عناصر الطلب الذي صار بسبب حذف الطلب نفسه (حتى ما يتكرر)
-                    bool isItemBeingSoftDeleted = entry.State == EntityState.Modified &&
-                                                  (entry.Property("isDeleted").CurrentValue as bool? == true) &&
-                                                  (entry.Property("isDeleted").OriginalValue as bool? == false);
-
-                    if (isItemBeingSoftDeleted && softDeletedOrderIds.Contains(detail.OrderId))
-                        continue;
-
-                    // ✅ قرر هل تربط تسجيل تفاصيل الطلب بشرط isSentToKitchen أم لا
-                    // إذا تريد منع “ضوضاء المطبخ” تحديدًا:
-                    // خليه يسجّل فقط قبل الإرسال أو عند الإرسال من POS.
-                    // أنا هنا أخليه يسجّل فقط إذا الطلب isSentToKitchen=true (مثل منطقك) لكن مع تقييد الحقول.
-                    bool isSentToKitchen = false;
-
-                    // إذا الطلب tracked (موجود في الذاكرة)
-                    var trackedOrderEntry = ChangeTracker.Entries<Order>().FirstOrDefault(o => o.Entity.Id == detail.OrderId);
-                    if (trackedOrderEntry != null)
-                        isSentToKitchen = trackedOrderEntry.Entity.isSentToKitchen;
-                    else if (sentToKitchenLookup.TryGetValue(detail.OrderId, out bool v))
-                        isSentToKitchen = v;
-
-                    if (!isSentToKitchen)
-                    {
-                        // إذا تريد تسجيل تغييرات OrderDetail حتى قبل الإرسال، غيّر هذا إلى (true).
-                        continue;
-                    }
-
-                    if (entry.State == EntityState.Added || entry.State == EntityState.Deleted)
-                    {
-                        shouldAudit = true;
-                    }
-                    else if (entry.State == EntityState.Modified)
-                    {
-                        // ✅ فقط إذا تغيّرت خواص مهمة (Quantity / isDeleted / Price ...)
-                        shouldAudit = entry.Properties.Any(p => p.IsModified && _orderDetailImportantProps.Contains(p.Metadata.Name));
-                    }
-                }
-
-                if (!shouldAudit) continue;
-
-                // =========================================================
-                // (2) بناء السجل
-                // =========================================================
-                string tableName = entry.Entity.GetType().Name;
-
-                var auditEntry = new AuditLog
-                {
-                    TableName = tableName,
-                    UserFullName = "System",
-                    Timestamp = DateTime.Now,
-                    Changes = "{}",
-                    Action = "Unknown"
-                };
-
-                try
-                {
-                    if (!string.IsNullOrEmpty(CurrentUser.FullName))
-                        auditEntry.UserFullName = CurrentUser.FullName;
-                }
-                catch { }
-
-                var primaryKey = entry.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey());
-                auditEntry.RecordId = primaryKey?.CurrentValue?.ToString() ?? "New";
-
-                var changesDict = new Dictionary<string, object>();
-
-                // معلومات مختصرة
-                if (entry.Entity is OrderDetail od) changesDict["_Info"] = $"Item: {od.ProductName} | Qty: {od.Quantity}";
-                else if (entry.Entity is Product p) changesDict["_Info"] = $"Product: {p.Name}";
-                else if (entry.Entity is Order o) changesDict["_Info"] = $"Order Total: {o.TotalAmount}";
-
-                // =========================================================
-                // (3) تحديد Action + تسجيل التغييرات (Diff فقط)
-                // =========================================================
-
-                if (entry.State == EntityState.Added)
-                {
-                    auditEntry.Action = "Insert";
-
-                    // ✅ ممكن تقيّد إضافة خصائص معينة بدل كل شيء (خصوصًا لو فيه حقول كبيرة)
-                    foreach (var prop in entry.Properties)
-                    {
-                        if (prop.IsTemporary) continue;
-
-                        // تقليل الضوضاء لو أحببت: تجاهل Timestamps
-                        if (IsNoiseProperty(prop.Metadata.Name)) continue;
-
-                        changesDict[prop.Metadata.Name] = prop.CurrentValue;
-                    }
-                }
-                else if (entry.State == EntityState.Deleted)
-                {
-                    auditEntry.Action = "HardDelete";
-                    foreach (var prop in entry.Properties)
-                    {
-                        if (IsNoiseProperty(prop.Metadata.Name)) continue;
-                        changesDict[prop.Metadata.Name] = prop.OriginalValue;
-                    }
-                }
-                else if (entry.State == EntityState.Modified)
-                {
-                    auditEntry.Action = "Update";
-
-                    var isDeletedProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name.Equals("isDeleted", StringComparison.OrdinalIgnoreCase));
-                    if (isDeletedProp != null &&
-                        (isDeletedProp.CurrentValue as bool? == true) &&
-                        (isDeletedProp.OriginalValue as bool? == false))
-                    {
-                        auditEntry.Action = "SoftDelete";
-                    }
-
-                    foreach (var prop in entry.Properties)
-                    {
-                        if (!prop.IsModified) continue;
-                        if (IsNoiseProperty(prop.Metadata.Name)) continue;
-
-                        // ✅ Product: فقط Price/Name
-                        if (entry.Entity is Product)
-                        {
-                            if (!prop.Metadata.Name.Equals("Price", StringComparison.OrdinalIgnoreCase) &&
-                                !prop.Metadata.Name.Equals("Name", StringComparison.OrdinalIgnoreCase))
-                                continue;
-                        }
-
-                        // ✅ Order: فقط حقول مهمة
-                        if (entry.Entity is Order)
-                        {
-                            if (!_orderImportantProps.Contains(prop.Metadata.Name))
-                                continue;
-                        }
-
-                        // ✅ OrderDetail: فقط حقول مهمة
-                        if (entry.Entity is OrderDetail)
-                        {
-                            if (!_orderDetailImportantProps.Contains(prop.Metadata.Name))
-                                continue;
-                        }
-
-                        changesDict[prop.Metadata.Name] = new { Old = prop.OriginalValue, New = prop.CurrentValue };
-                    }
-                }
-
-                // ✅ لا تسجّل إذا ماكو تغييرات مفيدة
-                // (_Info وحده لا تكفي — نريد تغيير فعلي)
-                if (changesDict.Count <= 1 && changesDict.ContainsKey("_Info"))
+                // التحقق مما إذا كان التسجيل ضرورياً
+                if (!ShouldAuditEntry(entry, isKitchenClient, softDeletedOrderIds, trackedOrders))
                     continue;
 
-                // حفظ السجل
-                auditEntry.Changes = JsonSerializer.Serialize(changesDict);
-                auditEntries.Add(auditEntry);
+                var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
+                if (auditEntry != null) auditEntries.Add(auditEntry);
             }
 
             if (auditEntries.Any())
             {
+                // إضافة BatchId لتجميع الأحداث
+                foreach (var entry in auditEntries)
+                {
+                    try
+                    {
+                        var changes = JsonSerializer.Deserialize<Dictionary<string, object>>(entry.Changes);
+                        changes["_BatchId"] = batchId.ToString();
+                        entry.Changes = JsonSerializer.Serialize(changes);
+                    }
+                    catch { /* تجاهل إذا كان هناك مشكلة في التسلسل */ }
+                }
+
                 AuditLogs.AddRange(auditEntries);
             }
         }
 
-        // ✅ فلتر حقول “ضوضاء” عامة (عدّلها حسب مشروعك)
+        // ---------------------------------------------------------
+        //  دوال المساعدة
+        // ---------------------------------------------------------
+        private bool ShouldAuditEntry(EntityEntry entry, bool isKitchenClient,
+    HashSet<int> softDeletedOrderIds, Dictionary<int, Order> trackedOrders)
+        {
+            // المستخدمون والإعدادات مهمة دائماً
+            if (entry.Entity is User || entry.Entity is AppSetting)
+                return true;
+
+            // المنتجات: فقط الإضافة والحذف وتغيير السعر أو الاسم
+            if (entry.Entity is Product)
+            {
+                if (entry.State == EntityState.Added || entry.State == EntityState.Deleted)
+                    return true;
+
+                if (entry.State == EntityState.Modified)
+                {
+                    bool isPriceChanged = entry.Property("Price").IsModified;
+                    bool isNameChanged = entry.Property("Name").IsModified;
+                    return isPriceChanged || isNameChanged;
+                }
+                return false;
+            }
+
+            // الطلبات
+            if (entry.Entity is Order order)
+            {
+                if (entry.State == EntityState.Added)
+                    return !isKitchenClient; // المطبخ لا يضيف طلبات
+
+                if (entry.State == EntityState.Deleted)
+                    return false; // الحذف الفعلي نادر، يمكن تجاهله
+
+                if (entry.State == EntityState.Modified)
+                {
+                    if (isKitchenClient)
+                    {
+                        // المطبخ: فقط isReady و isServed
+                        return entry.Properties.Any(p =>
+                            p.IsModified &&
+                            (p.Metadata.Name.Equals("isReady", StringComparison.OrdinalIgnoreCase) ||
+                             p.Metadata.Name.Equals("isServed", StringComparison.OrdinalIgnoreCase)));
+                    }
+                    else
+                    {
+                        // POS: الحقول المهمة فقط
+                        return entry.Properties.Any(p =>
+                            p.IsModified && _orderImportantProps.Contains(p.Metadata.Name));
+                    }
+                }
+            }
+
+            // تفاصيل الطلب
+            if (entry.Entity is OrderDetail detail)
+            {
+                if (isKitchenClient) return false;
+
+                // تجاهل إذا كان الطلب محذوفاً منطقياً
+                if (softDeletedOrderIds.Contains(detail.OrderId)) return false;
+
+                // التحقق مما إذا كان الطلب قد أرسل للمطبخ
+                bool isSentToKitchen = false;
+                if (trackedOrders.TryGetValue(detail.OrderId, out var or))
+                {
+                    isSentToKitchen = or.isSentToKitchen;
+                }
+                else
+                {
+                    // إذا لم يكن الطلب موجوداً في trackedOrders، استعلم عنه من قاعدة البيانات
+                    var orderFromDb = Orders.AsNoTracking()
+                        .FirstOrDefault(o => o.Id == detail.OrderId);
+                    isSentToKitchen = orderFromDb?.isSentToKitchen ?? false;
+                }
+
+                // يمكنك تغيير هذا الشرط حسب احتياجك
+                if (!isSentToKitchen) return false;
+
+                if (entry.State == EntityState.Added || entry.State == EntityState.Deleted)
+                    return true;
+
+                if (entry.State == EntityState.Modified)
+                {
+                    // التحقق من التغييرات المهمة فقط
+                    var importantChanges = entry.Properties
+                        .Count(p => p.IsModified &&
+                                   _orderDetailImportantProps.Contains(p.Metadata.Name) &&
+                                   !_infoOnlyProperties.Contains(p.Metadata.Name));
+
+                    // إذا كانت التغييرات فقط في الحقول التفسيرية، تجاهل
+                    var allChanges = entry.Properties.Where(p => p.IsModified).ToList();
+                    var onlyInfoChanges = allChanges.All(p =>
+                        _infoOnlyProperties.Contains(p.Metadata.Name) ||
+                        _excludedProperties.Contains(p.Metadata.Name));
+
+                    return importantChanges > 0 && !onlyInfoChanges;
+                }
+            }
+
+            // الأنواع الأخرى: تجاهل (مثل Categories, RestaurantTables)
+            return false;
+        }
+
+        private AuditLog BuildAuditEntry(EntityEntry entry, Guid batchId, bool isKitchenClient)
+        {
+            string tableName = entry.Entity.GetType().Name;
+
+            // الحصول على اسم المستخدم
+            string userName = GetCurrentUserName();
+
+            // التعامل مع الـ ID المؤقت
+            string recordId = GetRecordId(entry);
+
+            // تحديد الـ Action
+            string action = GetAction(entry);
+
+            // بناء التغييرات
+            var changesDict = BuildChangesDictionary(entry, tableName);
+
+            // إذا لم يكن هناك تغييرات مفيدة، تجاهل
+            if (changesDict.Count <= 1 && changesDict.ContainsKey("_Info"))
+                return null;
+
+            // إضافة معلومات إضافية
+            AddAdditionalInfo(entry, changesDict);
+
+            return new AuditLog
+            {
+                TableName = tableName,
+                UserFullName = userName,
+                Timestamp = DateTime.Now,
+                Changes = JsonSerializer.Serialize(changesDict),
+                Action = action,
+                RecordId = recordId
+            };
+        }
+
+        private string GetCurrentUserName()
+        {
+            try
+            {
+                return string.IsNullOrEmpty(CurrentUser.FullName) ? "System" : CurrentUser.FullName;
+            }
+            catch
+            {
+                return "System";
+            }
+        }
+
+        private string GetRecordId(EntityEntry entry)
+        {
+            var primaryKey = entry.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey());
+            if (primaryKey?.CurrentValue == null) return "New";
+
+            // التعامل مع الـ IDs المؤقتة السالبة
+            if (entry.State == EntityState.Added)
+            {
+                if (primaryKey.CurrentValue is int intId && intId < 0)
+                    return $"TEMP_{Math.Abs(intId)}";
+
+                if (primaryKey.CurrentValue is long longId && longId < 0)
+                    return $"TEMP_{Math.Abs(longId)}";
+
+                if (primaryKey.CurrentValue is short shortId && shortId < 0)
+                    return $"TEMP_{Math.Abs(shortId)}";
+            }
+
+            return primaryKey.CurrentValue.ToString() ?? "New";
+        }
+
+        private string GetAction(EntityEntry entry)
+        {
+            return entry.State switch
+            {
+                EntityState.Added => "Insert",
+                EntityState.Deleted => "HardDelete",
+                EntityState.Modified when IsSoftDelete(entry) => "SoftDelete",
+                EntityState.Modified => "Update",
+                _ => "Unknown"
+            };
+        }
+
+        private bool IsSoftDelete(EntityEntry entry)
+        {
+            var isDeletedProp = entry.Properties
+                .FirstOrDefault(p => p.Metadata.Name.Equals("isDeleted", StringComparison.OrdinalIgnoreCase));
+
+            return isDeletedProp != null &&
+                   (isDeletedProp.CurrentValue as bool? == true) &&
+                   (isDeletedProp.OriginalValue as bool? == false);
+        }
+
+        private Dictionary<string, object> BuildChangesDictionary(EntityEntry entry, string tableName)
+        {
+            var changesDict = new Dictionary<string, object>();
+
+            if (entry.State == EntityState.Added)
+            {
+                foreach (var prop in entry.Properties)
+                {
+                    if (prop.IsTemporary || IsNoiseProperty(prop.Metadata.Name)) continue;
+
+                    // للمنتجات: فقط الاسم والسعر
+                    if (entry.Entity is Product &&
+                        !prop.Metadata.Name.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
+                        !prop.Metadata.Name.Equals("Price", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    changesDict[prop.Metadata.Name] = prop.CurrentValue;
+                }
+            }
+            else if (entry.State == EntityState.Deleted)
+            {
+                foreach (var prop in entry.Properties)
+                {
+                    if (IsNoiseProperty(prop.Metadata.Name)) continue;
+                    changesDict[prop.Metadata.Name] = prop.OriginalValue;
+                }
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                foreach (var prop in entry.Properties)
+                {
+                    if (!prop.IsModified || IsNoiseProperty(prop.Metadata.Name)) continue;
+
+                    // فلترة حسب نوع الكيان
+                    if (entry.Entity is Product)
+                    {
+                        if (!prop.Metadata.Name.Equals("Price", StringComparison.OrdinalIgnoreCase) &&
+                            !prop.Metadata.Name.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                    }
+                    else if (entry.Entity is Order)
+                    {
+                        if (!_orderImportantProps.Contains(prop.Metadata.Name))
+                            continue;
+                    }
+                    else if (entry.Entity is OrderDetail)
+                    {
+                        if (!_orderDetailImportantProps.Contains(prop.Metadata.Name) ||
+                            _infoOnlyProperties.Contains(prop.Metadata.Name))
+                            continue;
+                    }
+
+                    changesDict[prop.Metadata.Name] = new
+                    {
+                        Old = prop.OriginalValue,
+                        New = prop.CurrentValue
+                    };
+                }
+            }
+
+            return changesDict;
+        }
+
+        private void AddAdditionalInfo(EntityEntry entry, Dictionary<string, object> changesDict)
+        {
+            if (entry.Entity is OrderDetail od)
+                changesDict["_Info"] = $"{od.ProductName} (Qty: {od.Quantity})";
+            else if (entry.Entity is Product p)
+                changesDict["_Info"] = p.Name;
+            else if (entry.Entity is Order o)
+                changesDict["_Info"] = $"Order #{o.Id} - Total: {o.TotalAmount}";
+        }
+
         private static bool IsNoiseProperty(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) return true;
-
-            // خصائص تتغير دائمًا أو لا قيمة Audit لها
-            return name.Equals("UpdatedAt", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("CreatedAt", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("RowVersion", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("Timestamp", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("LastModified", StringComparison.OrdinalIgnoreCase);
+            return string.IsNullOrWhiteSpace(name) ||
+                   _excludedProperties.Contains(name);
         }
     }
 }

@@ -146,39 +146,44 @@ namespace VinceApp.Pages
             btnCancel.Visibility = Visibility.Collapsed;
         }
 
-        private void DeleteTable_Click(object sender, RoutedEventArgs e)
+        private async void DeleteTable_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
-                if (MessageBox.Show("هل أنت متأكد من حذف هذه الطاولة؟", "تأكيد الحذف", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                var parentWindow = Window.GetWindow(this) as AdminWindow;
+
+                if (parentWindow != null)
                 {
-                    try
+                    if (await parentWindow.ShowConfirmMessage("تأكيد الحذف", "هل أنت متأكد من حذف هذه الطاولة؟"))
                     {
-                        using (var context = new VinceSweetsDbContext())
+                        try
                         {
-                            var table = context.RestaurantTables.Find(id);
-                            if (table != null)
+                            using (var context = new VinceSweetsDbContext())
                             {
-                                if (table.Status != 0)
+                                var table = context.RestaurantTables.Find(id);
+                                if (table != null)
                                 {
-                                    ToastControl.Show("معلومات", "لا يمكن حذف الطاولة وهي مشغولة حالياً!", ToastControl.NotificationType.Warning);
-                                    return;
+                                    if (table.Status != 0)
+                                    {
+                                        ToastControl.Show("معلومات", "لا يمكن حذف الطاولة وهي مشغولة حالياً!", ToastControl.NotificationType.Warning);
+                                        return;
+                                    }
+
+                                    context.RestaurantTables.Remove(table);
+                                    context.SaveChanges();
+
+                                    // إذا كنا نعدل نفس الطاولة التي قمنا بحذفها، يجب تصفية الحقول
+                                    if (_editingId == id) ResetForm();
+
+                                    LoadTables();
                                 }
-
-                                context.RestaurantTables.Remove(table);
-                                context.SaveChanges();
-
-                                // إذا كنا نعدل نفس الطاولة التي قمنا بحذفها، يجب تصفية الحقول
-                                if (_editingId == id) ResetForm();
-
-                                LoadTables();
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "error with tables page delete");
-                        ToastControl.Show("معلومات", "لا يمكن حذف الطاولة ", ToastControl.NotificationType.Error);
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "error with tables page delete");
+                            ToastControl.Show("معلومات", "لا يمكن حذف الطاولة ", ToastControl.NotificationType.Error);
+                        }
                     }
                 }
             }

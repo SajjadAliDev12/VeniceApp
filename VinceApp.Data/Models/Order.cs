@@ -27,8 +27,6 @@ public partial class Order
     public decimal DiscountAmount { get; set; } = 0;
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
-    public virtual RestaurantTable? Table { get; set; }
-
     [NotMapped]
     public string StatusText
     {

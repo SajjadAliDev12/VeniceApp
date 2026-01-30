@@ -9,7 +9,7 @@
 
     <Window.Resources>
 
-        <DropShadowEffect x:Key="CardShadow" BlurRadius="20" ShadowDepth="5" Opacity="0.15" Color="#000000"/>
+        
 
         <SolidColorBrush x:Key="PrimaryColor" Color="#7E57C2"/>
         <SolidColorBrush x:Key="TextDark" Color="#37474F"/>
@@ -87,9 +87,7 @@
                         <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
                                 CornerRadius="14">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.2" Color="#7E57C2"/>
-                            </Border.Effect>
+                            
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -168,7 +166,7 @@
                 CornerRadius="24"
                 BorderBrush="{StaticResource BorderSoft}"
                 BorderThickness="1"
-                Effect="{StaticResource CardShadow}"
+                
                 Margin="25">
 
             <Grid Margin="30">
@@ -224,7 +222,7 @@
                     Padding="30"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Effect="{StaticResource CardShadow}">
+                   >
                 <StackPanel HorizontalAlignment="Center">
                     <ProgressBar IsIndeterminate="True" Width="180" Height="6" Margin="0,0,0,15" BorderThickness="0" Foreground="{StaticResource PrimaryColor}"/>
                     <TextBlock x:Name="txtLoadingMsg" Text="جاري التحقق من البيانات..." HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource TextDark}"/>

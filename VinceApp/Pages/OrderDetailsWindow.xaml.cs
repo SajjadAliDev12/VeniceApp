@@ -40,7 +40,7 @@ namespace VinceApp
                         txtTitle.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3E2723"));
                     }
 
-                    // نوع الطلب
+                    // نوع الطلب (صالة / سفري)
                     if (order.TableId != null)
                     {
                         txtOrderType.Text = "🍽️ طلب صالة";
@@ -52,6 +52,20 @@ namespace VinceApp
                         txtOrderType.Text = "🛍️ سفري (Takeaway)";
                         borderType.Background = new SolidColorBrush(Color.FromRgb(225, 245, 254));
                         txtOrderType.Foreground = new SolidColorBrush(Color.FromRgb(1, 87, 155));
+                    }
+
+                    // ✅ إضافة: التحقق مما إذا كان الطلب ملحقاً
+                    if (order.ParentOrderId != null)
+                    {
+                        var parentOrderNum = context.Orders
+                            .Where(o => o.Id == order.ParentOrderId)
+                            .Select(o => o.OrderNumber)
+                            .FirstOrDefault();
+
+                        if (parentOrderNum > 0)
+                        {
+                            txtOrderType.Text += $" - (ملحق للطلب #{parentOrderNum})";
+                        }
                     }
 
                     // جلب التفاصيل
@@ -73,11 +87,11 @@ namespace VinceApp
                         })
                         .ToList();
 
-                    // === التعديل الجوهري هنا: الحسابات ===
+                    // === الحسابات ===
 
                     decimal subTotal = itemList.Sum(x => x.Total);
                     decimal discount = order.DiscountAmount; // جلب الخصم
-                    decimal finalTotal = subTotal - discount;     // الصافي
+                    decimal finalTotal = subTotal - discount;      // الصافي
 
                     // 1. إضافة سطر المجموع الفرعي (إذا كان هناك خصم فقط)
                     if (discount > 0)

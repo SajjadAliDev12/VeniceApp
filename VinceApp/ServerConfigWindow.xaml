@@ -133,9 +133,7 @@
                                         Padding="6"
                                         MinWidth="{Binding ActualWidth, ElementName=ToggleButton}"
                                         MaxHeight="200">
-                                    <Border.Effect>
-                                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.15"/>
-                                    </Border.Effect>
+                                   
                                     <ScrollViewer>
                                         <ItemsPresenter/>
                                     </ScrollViewer>
@@ -206,9 +204,7 @@
     </Window.Resources>
 
     <Border Background="White" CornerRadius="20" BorderBrush="#5D4037" BorderThickness="2">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.35"/>
-        </Border.Effect>
+        
 
         <Grid>
             <Grid Margin="25">
