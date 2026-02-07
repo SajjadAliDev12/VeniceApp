@@ -22,8 +22,8 @@ namespace VinceApp
             _userId = userId;
             _email = email;
 
-            // اختياري: إرسال الكود تلقائياً عند فتح النافذة
-            SendVerificationCode();
+            
+           // SendVerificationCode();
         }
 
         private async void SendVerificationCode()
@@ -58,9 +58,10 @@ namespace VinceApp
                         </div>";
 
                     var emailService = new EmailService();
-                    await emailService.SendEmailAsync(_email, "رمز تفعيل الحساب", emailBody);
+                   if( await emailService.SendEmailAsync(_email, "رمز تفعيل الحساب", emailBody))
+                        MessageBox.Show($"تم إرسال رمز التفعيل إلى {_email}");
 
-                    MessageBox.Show($"تم إرسال رمز التفعيل إلى {_email}");
+
                 }
             }
             catch (Exception ex)

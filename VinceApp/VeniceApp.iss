@@ -19,7 +19,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 OutputBaseFilename=VeniceSetup
-SetupIconFile=C:\Users\scorp\Downloads\Venice.ico
+SetupIconFile=C:\Users\scorp\Downloads\v1.ico
 SolidCompression=yes
 WizardStyle=modern
 

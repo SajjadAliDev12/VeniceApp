@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Venice.ico</ApplicationIcon>
+    <ApplicationIcon>Gemini_Generated_Image_qwla5bqwla5bqwla-removebg-preview.ico</ApplicationIcon>
     <AssemblyVersion>1.0.4.5</AssemblyVersion>
     <FileVersion>1.0.4.5</FileVersion>
     <Version>1.0.4.5</Version>
@@ -34,7 +34,7 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Venice.ico" />
+    <Content Include="Gemini_Generated_Image_qwla5bqwla5bqwla-removebg-preview.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,10 +53,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VinceApp.Data\VinceApp.Data.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="Sounds\notify.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -72,6 +68,10 @@
     <Content Include="Sounds\Windows Unlock.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VeniceApp.Application\VeniceApp.Logic.csproj" />
   </ItemGroup>
 
 </Project>

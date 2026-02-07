@@ -15,6 +15,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
+using System.Windows.Threading;
 
 namespace VinceApp
 {
@@ -60,11 +61,11 @@ namespace VinceApp
             _currentTableId = tableId;
             _parentOrderId = _ParentOrderId;
 
-            // ✅ تعديل 1: تعيين العنوان فوراً برقم الطاولة وحذف نص (جاري التحميل)
+           
             string baseTitle = "";
             if (_currentTableId.HasValue)
             {
-                // نعتمد على الاسم الممرر مبدئياً ليظهر الرقم فوراً
+                
                 baseTitle = TableName ?? "طاولة";
             }
             else
@@ -78,7 +79,8 @@ namespace VinceApp
             itemsControlProducts.ItemsSource = DisplayedProducts;
             icCategories.ItemsSource = CategoriesList;
 
-            ContentRendered += async (_, __) =>
+            // استخدام Dispatcher للسماح بتحديث الواجهة
+            Dispatcher.BeginInvoke(new Action(async () =>
             {
                 if (_initialized) return;
                 _initialized = true;
@@ -87,9 +89,12 @@ namespace VinceApp
                 {
                     Mouse.OverrideCursor = Cursors.Wait;
 
+                    UpdateLoadingHint("جاري تحميل بيانات الطلب...");
+
                     var loadedData = await Task.Run(async () =>
                     {
                         // 1. نجلب بيانات الطلب
+                        UpdateLoadingHint("جاري تحميل بيانات الطلب...");
                         var orderData = await FetchOrderInfoAsync(_currentOrderId);
 
                         // 2. معالجة الملحق (الطلب الأب)
@@ -102,6 +107,7 @@ namespace VinceApp
                         int parentOrderNumber = 0;
                         if (targetParentId.HasValue)
                         {
+                            UpdateLoadingHint("جاري جلب معلومات الطلب الأصل...");
                             using (var ctx = new VinceSweetsDbContext())
                             {
                                 parentOrderNumber = await ctx.Orders
@@ -112,6 +118,7 @@ namespace VinceApp
                         }
 
                         // ✅ تعديل 2: جلب رقم الطاولة الفعلي من قاعدة البيانات لضمان صحة العنوان
+                        UpdateLoadingHint("جاري جلب معلومات الطاولة...");
                         string realTableNameFromDb = null;
                         if (_currentTableId.HasValue)
                         {
@@ -127,7 +134,10 @@ namespace VinceApp
                         }
 
                         // 3. جلب المنتجات والتفاصيل
+                        UpdateLoadingHint("جاري تحميل المنتجات...");
                         var t1 = FetchProductsAndCategoriesAsync();
+
+                        UpdateLoadingHint("جاري تحميل تفاصيل الطلب...");
                         var t2 = FetchExistingOrderDetailsAsync(_currentOrderId);
 
                         await Task.WhenAll(t1, t2);
@@ -142,6 +152,7 @@ namespace VinceApp
                     });
 
                     // --- تحديث الواجهة ---
+                    UpdateLoadingHint("جاري تحديث الواجهة...");
 
                     // 1. المنتجات
                     AllProducts = loadedData.ProductsData.products;
@@ -181,6 +192,7 @@ namespace VinceApp
                         _isReadOnly = true;
                         EnableReadOnlyMode(order);
                     }
+
                 }
                 catch (Exception ex)
                 {
@@ -193,7 +205,8 @@ namespace VinceApp
                     Mouse.OverrideCursor = null;
                     ShowLoading(false);
                 }
-            };
+            }), DispatcherPriority.Background);
+
         }
 
         // ... (بقية الدوال المساعدة كما هي تماماً بدون تغيير) ...
@@ -291,7 +304,25 @@ namespace VinceApp
                 }
             }
         }
+        private void UpdateLoadingHint(string hint)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                txtLoadingHint.Text = hint;
+            });
+        }
 
+        private void ShowLoading(bool show, string? hint = null)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+                if (!string.IsNullOrWhiteSpace(hint)) txtLoadingHint.Text = hint;
+
+                // تحديث الواجهة فوراً
+                LoadingOverlay.UpdateLayout();
+            });
+        }
         private async void ConfirmOrder_Click(object sender, RoutedEventArgs e)
         {
             if (_isReadOnly) return;
@@ -361,7 +392,13 @@ namespace VinceApp
                 TicketPrinter Pr = new TicketPrinter(); Pr.Print(_currentOrderId, false);
                 ToastControl.Show("تم الدفع", "تم الدفع بنجاح", ToastControl.NotificationType.Success); PaymentOverlay.Visibility = Visibility.Collapsed; this.DialogResult = wasPaid; Close();
             }
-            catch (Exception ex) { Log.Error("Error in print MainWindow"); }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error printing receipt for OrderId={OrderId}", _currentOrderId);
+                ToastControl.Show("خطأ", "تم الدفع لكن الطباعة فشلت. يمكنك إعادة الطباعة من التقارير.", ToastControl.NotificationType.Error);
+                // لا تغلق النافذة مباشرة، أو اعرض زر إعادة المحاولة
+            }
+
         }
 
         private async void ExitButton_Click(object sender, RoutedEventArgs e)
@@ -394,7 +431,7 @@ namespace VinceApp
         }
 
         private void FilterProducts(string categoryName) { DisplayedProducts.Clear(); var filtered = (categoryName == "الكل" || string.IsNullOrWhiteSpace(categoryName)) ? AllProducts : AllProducts.Where(p => p.Category?.Name == categoryName); foreach (var p in filtered) DisplayedProducts.Add(p); }
-        private void ShowLoading(bool show, string? hint = null) { LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed; if (!string.IsNullOrWhiteSpace(hint)) txtLoadingHint.Text = hint; }
+       // private void ShowLoading(bool show, string? hint = null) { LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed; if (!string.IsNullOrWhiteSpace(hint)) txtLoadingHint.Text = hint; }
         private void Category_Click(object sender, RoutedEventArgs e) { if (sender is Button btn && btn.Tag is string c) FilterProducts(c); }
         private void CalculateTotal() { txtTotal.Text = $"{CartItems.Sum(i => i.TotalPrice):N0} د.ع"; }
         private void CloseOverlay_Click(object sender, RoutedEventArgs e) => PaymentOverlay.Visibility = Visibility.Collapsed;

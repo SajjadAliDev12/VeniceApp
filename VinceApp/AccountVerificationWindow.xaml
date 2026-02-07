@@ -242,7 +242,7 @@
 
                 <!-- Footer actions -->
                 <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,14,0,0">
-                    <Button Content="اعادة ارسال رمز التفعيل"
+                    <Button Content="ارسال رمز التفعيل"
                             Style="{StaticResource LinkButtonStyle}"
                             Click="ResendCode_Click"/>
 
