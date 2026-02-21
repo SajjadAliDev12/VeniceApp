@@ -1,6 +1,7 @@
 <item>
-    <version>2.0.0.1</version> <url>https://github.com/SajjadAliDev12/VeniceApp/releases/download/v2.0.0.1/VeniceSetup_Update.exe</url>
+    <version>2.0.0.1</version> <url>https://github.com/SajjadAliDev12/VeniceApp/releases/download/v2.0.0.1/VeniceSetup.exe</url>
         <mandatory>false</mandatory>
     <installerArgs>/SILENT /SP- /FORCECLOSEAPPLICATIONS</installerArgs>
 
 </item>
+
