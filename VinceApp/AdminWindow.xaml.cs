@@ -69,7 +69,9 @@ namespace VinceApp
         }
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
-            
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
             this.Close(); 
         }
     }

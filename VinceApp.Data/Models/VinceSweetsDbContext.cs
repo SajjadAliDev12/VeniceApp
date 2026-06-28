@@ -109,6 +109,7 @@ namespace VinceApp.Data.Models
             modelBuilder.Entity<Category>(e =>
             {
                 e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+                
             });
 
             // =======================
@@ -163,6 +164,10 @@ namespace VinceApp.Data.Models
                 e.Property(x => x.PrinterName).HasMaxLength(150);
                 e.Property(x => x.SmtpServer).HasMaxLength(150);
                 e.Property(x => x.SenderEmail).HasMaxLength(150);
+                e.Property(x => x.CloudBackupProvider).HasMaxLength(50);
+                e.Property(x => x.CloudUserEmail).HasMaxLength(150);
+                e.Property(x => x.CloudRefreshToken).HasMaxLength(2000);
+                e.Property(x => x.AutoCloudBackup).HasDefaultValue(false);
             });
 
             OnModelCreatingPartial(modelBuilder);
@@ -199,36 +204,58 @@ namespace VinceApp.Data.Models
         };
 
         // ---------------------------------------------------------
-        //  SaveChanges Overrides
+        //  SaveChanges Overrides (معدلة للحفظ على مرحلتين لحل الأرقام السالبة)
         // ---------------------------------------------------------
         public override int SaveChanges()
         {
-            OnBeforeSaveChanges();
-            return base.SaveChanges();
+            if (!_auditEnabled) return base.SaveChanges();
+
+            // 1. التقاط اللوجات المؤقتة قبل الحفظ
+            var pendingLogs = OnBeforeSaveChanges();
+
+            // 2. الحفظ الفعلي للبيانات (هنا تأخذ الكيانات الجديدة أرقام ID موجبة حقيقية)
+            int result = base.SaveChanges();
+
+            // 3. تحديث أرقام اللوجات وحفظها
+            OnAfterSaveChanges(pendingLogs);
+
+            return result;
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            OnBeforeSaveChanges();
-            return await base.SaveChangesAsync(cancellationToken);
+            if (!_auditEnabled) return await base.SaveChangesAsync(cancellationToken);
+
+            var pendingLogs = OnBeforeSaveChanges();
+            int result = await base.SaveChangesAsync(cancellationToken);
+            await OnAfterSaveChangesAsync(pendingLogs);
+
+            return result;
         }
 
         // ---------------------------------------------------------
         //  الدالة الرئيسية للتحقق قبل الحفظ
         // ---------------------------------------------------------
-        private void OnBeforeSaveChanges()
+
+        // كلاس مساعد لربط الإدخال باللوج لتحديثه لاحقاً
+        private class PendingAuditLog
         {
-            if (!_auditEnabled) return;
+            public EntityEntry Entry { get; set; }
+            public AuditLog Log { get; set; }
+        }
+
+        // تم تغيير نوع الإرجاع لإرجاع اللوجات المؤقتة
+        private List<PendingAuditLog> OnBeforeSaveChanges()
+        {
+            var pendingLogs = new List<PendingAuditLog>();
 
             var client = VinceApp.Services.AppConfigService.GetClient();
             bool isKitchenClient = client.Equals("KITCHEN", StringComparison.OrdinalIgnoreCase);
 
-            // إذا كان مطبخ ولا يوجد تغييرات مهمة، خروج
-            if (isKitchenClient && !HasImportantKitchenChanges()) return;
+            if (isKitchenClient && !HasImportantKitchenChanges()) return pendingLogs;
 
             ChangeTracker.DetectChanges();
 
-            // التحقق من عدد التغييرات الكبير
             int totalChanges = ChangeTracker.Entries()
                 .Count(e => e.State != EntityState.Unchanged &&
                            e.State != EntityState.Detached &&
@@ -236,7 +263,6 @@ namespace VinceApp.Data.Models
 
             if (totalChanges > 100)
             {
-                // تسجيل تحذير فقط بدلاً من كل التغييرات
                 var warningEntry = new AuditLog
                 {
                     TableName = "System",
@@ -251,13 +277,49 @@ namespace VinceApp.Data.Models
                     RecordId = "0"
                 };
                 AuditLogs.Add(warningEntry);
-
-                // سنسجل فقط التغييرات المهمة جداً
-                ProcessLimitedAudit(isKitchenClient);
-                return;
+                ProcessLimitedAudit(isKitchenClient, pendingLogs);
+                return pendingLogs;
             }
 
-            ProcessFullAudit(isKitchenClient);
+            ProcessFullAudit(isKitchenClient, pendingLogs);
+            return pendingLogs;
+        }
+
+        private void OnAfterSaveChanges(List<PendingAuditLog> pendingLogs)
+        {
+            if (pendingLogs == null || pendingLogs.Count == 0) return;
+
+            foreach (var item in pendingLogs)
+            {
+                // تحديث الـ RecordId للكيانات التي تم إضافتها حديثاً (وأخذت الآن رقم موجب)
+                if (item.Entry.State == EntityState.Added)
+                {
+                    item.Log.RecordId = GetRecordId(item.Entry);
+                }
+                AuditLogs.Add(item.Log);
+            }
+
+            _auditEnabled = false;
+            base.SaveChanges();
+            _auditEnabled = true;
+        }
+
+        private async Task OnAfterSaveChangesAsync(List<PendingAuditLog> pendingLogs)
+        {
+            if (pendingLogs == null || pendingLogs.Count == 0) return;
+
+            foreach (var item in pendingLogs)
+            {
+                if (item.Entry.State == EntityState.Added)
+                {
+                    item.Log.RecordId = GetRecordId(item.Entry);
+                }
+                AuditLogs.Add(item.Log);
+            }
+
+            _auditEnabled = false;
+            await base.SaveChangesAsync();
+            _auditEnabled = true;
         }
 
         // ---------------------------------------------------------
@@ -271,46 +333,30 @@ namespace VinceApp.Data.Models
                           e.Property(p => p.isServed).IsModified));
         }
 
-        private void ProcessLimitedAudit(bool isKitchenClient)
+        private void ProcessLimitedAudit(bool isKitchenClient, List<PendingAuditLog> pendingLogs)
         {
-            var auditEntries = new List<AuditLog>();
-            var batchId = Guid.NewGuid();
-
-            // فقط التغييرات المهمة جداً
             foreach (var entry in ChangeTracker.Entries())
             {
                 if (entry.Entity is AuditLog || entry.State == EntityState.Unchanged || entry.State == EntityState.Detached)
                     continue;
 
-                // فقط المستخدمين والإعدادات والمنتجات (إضافة/حذف)
                 if (entry.Entity is User || entry.Entity is AppSetting)
                 {
-                    var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
-                    if (auditEntry != null) auditEntries.Add(auditEntry);
+                    var auditEntry = BuildAuditEntry(entry, isKitchenClient);
+                    if (auditEntry != null) pendingLogs.Add(new PendingAuditLog { Entry = entry, Log = auditEntry });
                 }
                 else if (entry.Entity is Product &&
                         (entry.State == EntityState.Added || entry.State == EntityState.Deleted))
                 {
-                    var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
-                    if (auditEntry != null) auditEntries.Add(auditEntry);
+                    var auditEntry = BuildAuditEntry(entry, isKitchenClient);
+                    if (auditEntry != null) pendingLogs.Add(new PendingAuditLog { Entry = entry, Log = auditEntry });
                 }
-                else if (entry.Entity is Order && entry.State == EntityState.Added)
-                {
-                    var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
-                    if (auditEntry != null) auditEntries.Add(auditEntry);
-                }
+                // تم إزالة تسجيل (Order && EntityState.Added) نهائياً من هنا لعدم تسجيل الطلبات الجديدة
             }
-
-            if (auditEntries.Any())
-                AuditLogs.AddRange(auditEntries);
         }
 
-        private void ProcessFullAudit(bool isKitchenClient)
+        private void ProcessFullAudit(bool isKitchenClient, List<PendingAuditLog> pendingLogs)
         {
-            var auditEntries = new List<AuditLog>();
-            var batchId = Guid.NewGuid();
-
-            // جمع معلومات الحذف المنطقي للطلبات
             var softDeletedOrderIds = ChangeTracker.Entries<Order>()
                 .Where(e => e.State == EntityState.Modified &&
                            e.Property(p => p.isDeleted).IsModified &&
@@ -318,11 +364,9 @@ namespace VinceApp.Data.Models
                 .Select(e => e.Entity.Id)
                 .ToHashSet();
 
-            // تجميع الطلبات الموجودة في ChangeTracker
             var trackedOrders = ChangeTracker.Entries<Order>()
                 .ToDictionary(e => e.Entity.Id, e => e.Entity);
 
-            // جمع OrderIds التي نحتاجها من OrderDetails
             var neededOrderIds = ChangeTracker.Entries<OrderDetail>()
                 .Where(e => e.State != EntityState.Unchanged &&
                            e.State != EntityState.Detached)
@@ -331,7 +375,6 @@ namespace VinceApp.Data.Models
                 .Where(id => !trackedOrders.ContainsKey(id))
                 .ToList();
 
-            // جلب الطلبات المطلوبة من قاعدة البيانات
             if (neededOrderIds.Count > 0)
             {
                 var ordersFromDb = Orders.AsNoTracking()
@@ -349,29 +392,11 @@ namespace VinceApp.Data.Models
                 if (entry.Entity is AuditLog || entry.State == EntityState.Unchanged || entry.State == EntityState.Detached)
                     continue;
 
-                // التحقق مما إذا كان التسجيل ضرورياً
                 if (!ShouldAuditEntry(entry, isKitchenClient, softDeletedOrderIds, trackedOrders))
                     continue;
 
-                var auditEntry = BuildAuditEntry(entry, batchId, isKitchenClient);
-                if (auditEntry != null) auditEntries.Add(auditEntry);
-            }
-
-            if (auditEntries.Any())
-            {
-                // إضافة BatchId لتجميع الأحداث
-                foreach (var entry in auditEntries)
-                {
-                    try
-                    {
-                        var changes = JsonSerializer.Deserialize<Dictionary<string, object>>(entry.Changes);
-                        changes["_BatchId"] = batchId.ToString();
-                        entry.Changes = JsonSerializer.Serialize(changes);
-                    }
-                    catch { /* تجاهل إذا كان هناك مشكلة في التسلسل */ }
-                }
-
-                AuditLogs.AddRange(auditEntries);
+                var auditEntry = BuildAuditEntry(entry, isKitchenClient);
+                if (auditEntry != null) pendingLogs.Add(new PendingAuditLog { Entry = entry, Log = auditEntry });
             }
         }
 
@@ -379,13 +404,11 @@ namespace VinceApp.Data.Models
         //  دوال المساعدة
         // ---------------------------------------------------------
         private bool ShouldAuditEntry(EntityEntry entry, bool isKitchenClient,
-    HashSet<int> softDeletedOrderIds, Dictionary<int, Order> trackedOrders)
+            HashSet<int> softDeletedOrderIds, Dictionary<int, Order> trackedOrders)
         {
-            // المستخدمون والإعدادات مهمة دائماً
             if (entry.Entity is User || entry.Entity is AppSetting)
                 return true;
 
-            // المنتجات: فقط الإضافة والحذف وتغيير السعر أو الاسم
             if (entry.Entity is Product)
             {
                 if (entry.State == EntityState.Added || entry.State == EntityState.Deleted)
@@ -400,20 +423,19 @@ namespace VinceApp.Data.Models
                 return false;
             }
 
-            // الطلبات
             if (entry.Entity is Order order)
             {
+                // ✅ التعديل هنا: منع تسجيل إنشاء طلب جديد (الطلبات الفارغة)
                 if (entry.State == EntityState.Added)
-                    return !isKitchenClient; // المطبخ لا يضيف طلبات
+                    return false;
 
                 if (entry.State == EntityState.Deleted)
-                    return false; // الحذف الفعلي نادر، يمكن تجاهله
+                    return false;
 
                 if (entry.State == EntityState.Modified)
                 {
                     if (isKitchenClient)
                     {
-                        // المطبخ: فقط isReady و isServed
                         return entry.Properties.Any(p =>
                             p.IsModified &&
                             (p.Metadata.Name.Equals("isReady", StringComparison.OrdinalIgnoreCase) ||
@@ -421,22 +443,18 @@ namespace VinceApp.Data.Models
                     }
                     else
                     {
-                        // POS: الحقول المهمة فقط
                         return entry.Properties.Any(p =>
                             p.IsModified && _orderImportantProps.Contains(p.Metadata.Name));
                     }
                 }
             }
 
-            // تفاصيل الطلب
             if (entry.Entity is OrderDetail detail)
             {
                 if (isKitchenClient) return false;
 
-                // تجاهل إذا كان الطلب محذوفاً منطقياً
                 if (softDeletedOrderIds.Contains(detail.OrderId)) return false;
 
-                // التحقق مما إذا كان الطلب قد أرسل للمطبخ
                 bool isSentToKitchen = false;
                 if (trackedOrders.TryGetValue(detail.OrderId, out var or))
                 {
@@ -444,13 +462,11 @@ namespace VinceApp.Data.Models
                 }
                 else
                 {
-                    // إذا لم يكن الطلب موجوداً في trackedOrders، استعلم عنه من قاعدة البيانات
                     var orderFromDb = Orders.AsNoTracking()
                         .FirstOrDefault(o => o.Id == detail.OrderId);
                     isSentToKitchen = orderFromDb?.isSentToKitchen ?? false;
                 }
 
-                // يمكنك تغيير هذا الشرط حسب احتياجك
                 if (!isSentToKitchen) return false;
 
                 if (entry.State == EntityState.Added || entry.State == EntityState.Deleted)
@@ -458,13 +474,11 @@ namespace VinceApp.Data.Models
 
                 if (entry.State == EntityState.Modified)
                 {
-                    // التحقق من التغييرات المهمة فقط
                     var importantChanges = entry.Properties
                         .Count(p => p.IsModified &&
                                    _orderDetailImportantProps.Contains(p.Metadata.Name) &&
                                    !_infoOnlyProperties.Contains(p.Metadata.Name));
 
-                    // إذا كانت التغييرات فقط في الحقول التفسيرية، تجاهل
                     var allChanges = entry.Properties.Where(p => p.IsModified).ToList();
                     var onlyInfoChanges = allChanges.All(p =>
                         _infoOnlyProperties.Contains(p.Metadata.Name) ||
@@ -474,31 +488,23 @@ namespace VinceApp.Data.Models
                 }
             }
 
-            // الأنواع الأخرى: تجاهل (مثل Categories, RestaurantTables)
             return false;
         }
 
-        private AuditLog BuildAuditEntry(EntityEntry entry, Guid batchId, bool isKitchenClient)
+        private AuditLog BuildAuditEntry(EntityEntry entry, bool isKitchenClient)
         {
             string tableName = entry.Entity.GetType().Name;
-
-            // الحصول على اسم المستخدم
             string userName = GetCurrentUserName();
 
-            // التعامل مع الـ ID المؤقت
-            string recordId = GetRecordId(entry);
+            // ✅ يتم وضع كلمة مؤقتة، وسيتم استبدالها بالرقم الموجب لاحقاً
+            string recordId = entry.State == EntityState.Added ? "Pending" : GetRecordId(entry);
 
-            // تحديد الـ Action
             string action = GetAction(entry);
-
-            // بناء التغييرات
             var changesDict = BuildChangesDictionary(entry, tableName);
 
-            // إذا لم يكن هناك تغييرات مفيدة، تجاهل
             if (changesDict.Count <= 1 && changesDict.ContainsKey("_Info"))
                 return null;
 
-            // إضافة معلومات إضافية
             AddAdditionalInfo(entry, changesDict);
 
             return new AuditLog
@@ -527,22 +533,7 @@ namespace VinceApp.Data.Models
         private string GetRecordId(EntityEntry entry)
         {
             var primaryKey = entry.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey());
-            if (primaryKey?.CurrentValue == null) return "New";
-
-            // التعامل مع الـ IDs المؤقتة السالبة
-            if (entry.State == EntityState.Added)
-            {
-                if (primaryKey.CurrentValue is int intId && intId < 0)
-                    return $"TEMP_{Math.Abs(intId)}";
-
-                if (primaryKey.CurrentValue is long longId && longId < 0)
-                    return $"TEMP_{Math.Abs(longId)}";
-
-                if (primaryKey.CurrentValue is short shortId && shortId < 0)
-                    return $"TEMP_{Math.Abs(shortId)}";
-            }
-
-            return primaryKey.CurrentValue.ToString() ?? "New";
+            return primaryKey?.CurrentValue?.ToString() ?? "Unknown";
         }
 
         private string GetAction(EntityEntry entry)
@@ -577,7 +568,6 @@ namespace VinceApp.Data.Models
                 {
                     if (prop.IsTemporary || IsNoiseProperty(prop.Metadata.Name)) continue;
 
-                    // للمنتجات: فقط الاسم والسعر
                     if (entry.Entity is Product &&
                         !prop.Metadata.Name.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
                         !prop.Metadata.Name.Equals("Price", StringComparison.OrdinalIgnoreCase))
@@ -600,7 +590,6 @@ namespace VinceApp.Data.Models
                 {
                     if (!prop.IsModified || IsNoiseProperty(prop.Metadata.Name)) continue;
 
-                    // فلترة حسب نوع الكيان
                     if (entry.Entity is Product)
                     {
                         if (!prop.Metadata.Name.Equals("Price", StringComparison.OrdinalIgnoreCase) &&

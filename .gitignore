@@ -3,6 +3,9 @@
 .vs/
 *.user
 *.suo
+Output/
 appsettings.json
 !appsettings.Development.json
-desktop.iniVinceApp/Output/
+desktop.ini
+VinceApp/Output/
+Update.xml

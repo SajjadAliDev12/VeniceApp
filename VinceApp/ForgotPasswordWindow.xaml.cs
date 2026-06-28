@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 using System.Linq;
 using System.Windows;
@@ -37,7 +38,7 @@ namespace VinceApp
                 using (var context = new VinceSweetsDbContext())
                 {
                     // البحث عن المستخدم عن طريق الإيميل
-                    var user = context.Users.FirstOrDefault(u => u.EmailAddress == email);
+                    var user =await context.Users.FirstOrDefaultAsync(u => u.EmailAddress == email);
 
                     if (user != null)
                     {
@@ -47,7 +48,14 @@ namespace VinceApp
                             return;
                         }
                         _foundUserId = user.Id;
+                        var oldTokens = await context.UserTokens
+    .Where(t => t.UserId == user.Id && t.TokenType == "PasswordReset")
+    .ToListAsync();
 
+                        if (oldTokens.Any())
+                        {
+                            context.UserTokens.RemoveRange(oldTokens);
+                        }
                         // توليد رمز عشوائي (6 أرقام)
                         string tokenCode = new Random().Next(100000, 999999).ToString();
 
@@ -60,7 +68,7 @@ namespace VinceApp
                             ExpiryDate = DateTime.Now.AddMinutes(15) // صلاحية 15 دقيقة
                         };
 
-                        context.UserTokens.Add(newToken);
+                        await context.UserTokens.AddAsync(newToken);
                         await context.SaveChangesAsync();
 
                         // تنسيق رسالة الإيميل
@@ -118,8 +126,8 @@ namespace VinceApp
                 using (var context = new VinceSweetsDbContext())
                 {
                     // البحث عن التوكن الصالح(غير منتهي الصلاحية ويطابق المدخل)
-                    var validToken = context.UserTokens
-                        .FirstOrDefault(t => t.UserId == _foundUserId
+                    var validToken = await context.UserTokens
+                        .FirstOrDefaultAsync(t => t.UserId == _foundUserId
                                           && t.Token == enteredToken
                                           && t.TokenType == "PasswordReset"
                                           && t.ExpiryDate > DateTime.Now);
@@ -127,7 +135,7 @@ namespace VinceApp
                     if (validToken != null)
                     {
                         //1.تحديث الباسورد
-                       var user = context.Users.Find(_foundUserId);
+                       var user =await context.Users.FindAsync(_foundUserId);
                         if (user != null)
                         {
                             user.PasswordHash = AuthHelper.HashText(newPass);
@@ -196,9 +204,8 @@ namespace VinceApp
             }
             catch
             {
-                
-                MessageBox.Show("الإيميل غير صحيح");
-                textBox.Background = Brushes.Pink; // System.Windows.Media.Brushes
+
+                textBox.Background = new SolidColorBrush(Color.FromRgb(255, 235, 238));
             }
         }
         private void Close_Click(object sender, RoutedEventArgs e)

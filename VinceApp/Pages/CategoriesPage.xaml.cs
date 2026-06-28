@@ -3,102 +3,103 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using Microsoft.EntityFrameworkCore; // مهم جداً
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using VinceApp.Data;
 using VinceApp.Data.Models;
+using static VinceApp.Data.Enums.Enums; // تأكد من مسار الـ Enum في مشروعك
 
 namespace VinceApp.Pages
 {
     public partial class CategoriesPage : Page
     {
-        // إذا كان 0، يعني نحن نضيف جديداً
-        // إذا كان أكبر من 0، يعني نحن نعدل تصنيفاً موجوداً
         private int _selectedId = 0;
-        
+
         public CategoriesPage()
         {
             InitializeComponent();
-            LoadCategories();
         }
 
-        private void LoadCategories()
+        private async Task LoadCategories()
         {
             try
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    // جلب البيانات وعرضها في الجدول
-                    var list = context.Categories.ToList();
+                    var list = await context.Categories.AsNoTracking().ToListAsync();
                     dgCategories.ItemsSource = list;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "database connection error with categories page");
-                ToastControl.Show("خطأ", "خطأ في التحميل", ToastControl.NotificationType.Error);
-                
+                Log.Error(ex, "Error loading categories");
+                ToastControl.Show("خطأ", "فشل تحميل البيانات", ToastControl.NotificationType.Error);
             }
         }
 
-        private void Save_Click(object sender, RoutedEventArgs e)
+        private async void Save_Click(object sender, RoutedEventArgs e)
         {
             string name = txtName.Text.Trim();
-            
+
+            // منطق جلب القيمة من الكومبوبوكس
+            EnPrinter selectedPrinter = EnPrinter.EnNone;
+            if (cmbPrinters.SelectedValue != null)
+            {
+                selectedPrinter = (EnPrinter)int.Parse(cmbPrinters.SelectedValue.ToString());
+            }
+
             if (string.IsNullOrEmpty(name))
             {
-                ToastControl.Show("الاسم مطلوب", "يرجى كتابة الاسم", ToastControl.NotificationType.Info);
+                ToastControl.Show("تنبيه", "يرجى إدخال اسم التصنيف", ToastControl.NotificationType.Info);
                 return;
             }
 
             try
             {
-                
-                
                 using (var context = new VinceSweetsDbContext())
                 {
-                    bool exists = context.Categories.Any(c => c.Name == name && c.Id != _selectedId);
-
+                    bool exists = await context.Categories.AnyAsync(c => c.Name == name && c.Id != _selectedId);
                     if (exists)
                     {
                         ToastControl.Show("تنبيه", "هذا الاسم موجود مسبقاً", ToastControl.NotificationType.Warning);
-                        return; 
+                        return;
                     }
+
                     if (_selectedId == 0)
                     {
-                        
-                        var newCat = new Category { Name = name };
+                        var newCat = new Category
+                        {
+                            Name = name,
+                            Printer = selectedPrinter
+                        };
                         context.Categories.Add(newCat);
                     }
                     else
                     {
-                        
-                        var cat = context.Categories.Find(_selectedId);
+                        var cat = await context.Categories.FindAsync(_selectedId);
                         if (cat != null)
                         {
                             cat.Name = name;
+                            cat.Printer = selectedPrinter;
                         }
                     }
 
-                    context.SaveChanges();
+                    await context.SaveChangesAsync();
 
-                    // تنظيف الحقول وإعادة التحميل
                     ClearFields();
-                    LoadCategories();
-                    ToastControl.Show("نجاح", "تم الحفظ بنجاح ", ToastControl.NotificationType.Success);
+                    await LoadCategories();
+                    ToastControl.Show("نجاح", "تم حفظ التصنيف بنجاح", ToastControl.NotificationType.Success);
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "error with categories page");
-                ToastControl.Show("خطأ", "خطأ في التحميل", ToastControl.NotificationType.Error);
+                Log.Error(ex, "Error saving category");
+                ToastControl.Show("خطأ", "فشل في عملية الحفظ", ToastControl.NotificationType.Error);
             }
         }
 
         private void Edit_Click(object sender, RoutedEventArgs e)
         {
-            // عند الضغط على زر تعديل في الجدول
             if (sender is Button btn && btn.Tag is int id)
             {
                 using (var context = new VinceSweetsDbContext())
@@ -106,8 +107,11 @@ namespace VinceApp.Pages
                     var cat = context.Categories.Find(id);
                     if (cat != null)
                     {
+                        _selectedId = cat.Id;
                         txtName.Text = cat.Name;
-                        _selectedId = cat.Id; // وضعنا الـ ID لنعرف أننا في وضع التعديل
+
+                        // اختيار القيمة في الكومبوبوكس بناءً على القيمة المخزنة
+                        cmbPrinters.SelectedValue = ((int)cat.Printer).ToString();
                     }
                 }
             }
@@ -118,41 +122,35 @@ namespace VinceApp.Pages
             if (sender is Button btn && btn.Tag is int id)
             {
                 var parentWindow = Window.GetWindow(this) as AdminWindow;
-
                 if (parentWindow != null)
                 {
-                    if (await parentWindow.ShowConfirmMessage("تأكيد", "حذف التصنيف؟"))
+                    if (await parentWindow.ShowConfirmMessage("تأكيد", "هل تريد حذف هذا التصنيف؟"))
                     {
                         try
                         {
                             using (var context = new VinceSweetsDbContext())
                             {
-                                // 1. حماية: منع الحذف إذا كان التصنيف يحتوي منتجات
-                                // لأن حذف التصنيف سيجعل المنتجات يتيمة (أو يسبب خطأ FK)
-                                bool hasProducts = context.Products.Any(p => p.CategoryId == id);
-                                if (hasProducts)
+                                if (await context.Products.AnyAsync(p => p.CategoryId == id))
                                 {
-                                    ToastControl.Show("منع الحذف", "لا يمكن حذف هذا التصنيف لأنه يحتوي على منتجات.\nيرجى حذف المنتجات أو نقلها أولاً.", ToastControl.NotificationType.Warning);
-
+                                    ToastControl.Show("منع الحذف", "لا يمكن حذف تصنيف يحتوي على منتجات", ToastControl.NotificationType.Warning);
                                     return;
                                 }
 
-                                // 2. الحذف
-                                var cat = context.Categories.Find(id);
+                                var cat = await context.Categories.FindAsync(id);
                                 if (cat != null)
                                 {
                                     context.Categories.Remove(cat);
-                                    context.SaveChanges();
-                                    LoadCategories();
+                                    await context.SaveChangesAsync();
+                                    await LoadCategories();
                                     ClearFields();
-                                    ToastControl.Show("تم الحذف", "تم حذف التصنيف بنجاح", ToastControl.NotificationType.Success);
+                                    ToastControl.Show("نجاح", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            Log.Error(ex, "error with categories page");
-                            ToastControl.Show("خطأ", "لا يمكن الحذف", ToastControl.NotificationType.Error);
+                            Log.Error(ex, "Error deleting category");
+                            ToastControl.Show("خطأ", "فشل الحذف", ToastControl.NotificationType.Error);
                         }
                     }
                 }
@@ -166,8 +164,14 @@ namespace VinceApp.Pages
 
         private void ClearFields()
         {
-            txtName.Text = "";
-            _selectedId = 0; // العودة لوضع الإضافة
+            txtName.Text = string.Empty;
+            cmbPrinters.SelectedIndex = 0; // يعود لـ EnNone افتراضياً
+            _selectedId = 0;
+        }
+
+        private async void Page_Initialized(object sender, EventArgs e)
+        {
+            await LoadCategories();
         }
     }
 }

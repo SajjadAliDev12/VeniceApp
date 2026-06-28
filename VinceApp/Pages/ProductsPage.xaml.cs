@@ -19,12 +19,14 @@ namespace VinceApp.Pages
         private int _selectedId = 0;
         private string _selectedImageSourcePath = null; // مسار الصورة المختارة من جهاز المستخدم
         private string _currentDbImageName = null;      // اسم الصورة المحفوظة حالياً (للتعديل)
-
+        private bool _isLoading;
         public ProductsPage()
         {
             InitializeComponent();
-            Loaded +=async(_,__) =>
-            await LoadData();
+            Loaded += async (_, __) =>
+            { if (_isLoading) return; _isLoading = true;
+                await LoadData();
+            };
         }
         
         // 1. تحميل البيانات (تصنيفات + منتجات)
@@ -40,7 +42,7 @@ namespace VinceApp.Pages
                     cmbCategories.ItemsSource = categories;
 
                     // تحميل المنتجات للجدول (مع عمل Include للتصنيف)
-                    var products = await context.Products.Include(p => p.Category).ToListAsync();
+                    var products = await context.Products.AsNoTracking().Include(p => p.Category).ToListAsync();
                     dgProducts.ItemsSource = products;
                 }
             }
@@ -52,6 +54,7 @@ namespace VinceApp.Pages
             finally
             {
                 Mouse.OverrideCursor = null;
+                _isLoading = false;
             }
         }
 
@@ -72,7 +75,7 @@ namespace VinceApp.Pages
         }
 
         // 3. الحفظ (إضافة أو تعديل)
-        private void Save_Click(object sender, RoutedEventArgs e)
+        private async  void Save_Click(object sender, RoutedEventArgs e)
         {
             string name = txtName.Text.Trim();
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(txtPrice.Text) || cmbCategories.SelectedValue == null)
@@ -123,12 +126,12 @@ namespace VinceApp.Pages
                             IsKitchenItem = isKetchin, 
                             IsAvailable = isAvailable 
                         };
-                        context.Products.Add(newProd);
+                        await context.Products.AddAsync(newProd);
                     }
                     else
                     {
                         
-                        var prod = context.Products.Find(_selectedId);
+                        var prod =await context.Products.FindAsync(_selectedId);
                         if (prod != null)
                         {
                             prod.Name = name;
@@ -145,9 +148,9 @@ namespace VinceApp.Pages
                         }
                     }
 
-                    context.SaveChanges();
+                    await context.SaveChangesAsync();
                     ClearFields();
-                    LoadData();
+                    await LoadData();
                     ToastControl.Show("معلومات", "تم الحفظ بنجاح", ToastControl.NotificationType.Success);
                 }
             }
@@ -189,13 +192,13 @@ namespace VinceApp.Pages
 
 
         
-        private void Edit_Click(object sender, RoutedEventArgs e)
+        private async void Edit_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    var prod = context.Products.Find(id);
+                    var prod = await context.Products.FindAsync(id);
                     if (prod != null)
                     {
                         _selectedId = prod.Id;
@@ -245,7 +248,7 @@ namespace VinceApp.Pages
                     {
                         using (var context = new VinceSweetsDbContext())
                         {
-                            var prod = context.Products.Find(id);
+                            var prod =await context.Products.FindAsync(id);
                             if (prod != null)
                             {
                                 // قبل Remove
@@ -261,7 +264,7 @@ namespace VinceApp.Pages
                                 string imageNameToDelete = prod.ImagePath;
 
                                 context.Products.Remove(prod);
-                                context.SaveChanges();
+                                await context.SaveChangesAsync();
 
                                 ToastControl.Show("معلومات", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
                                 try
@@ -289,7 +292,7 @@ namespace VinceApp.Pages
                                 {
                                     Log.Error(ex, "error deleting product image file");
                                 }
-                                LoadData();
+                                await LoadData();
                                 ClearFields();
                             }
                         }
@@ -316,7 +319,8 @@ namespace VinceApp.Pages
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
-            e.Handled = !decimal.TryParse(e.Text, out _); // سماح بالأرقام فقط
+            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex("[^0-9.]+");
+            e.Handled = regex.IsMatch(e.Text);
         }
     }
 }

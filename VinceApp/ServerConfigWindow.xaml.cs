@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.IO;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,21 +22,19 @@ namespace VinceApp
         public ServerConfigWindow()
         {
             InitializeComponent();
-            LoadCurrentConfig();
-            
-
+            this.Loaded += async(s,e) => await LoadCurrentConfig();
         }
 
-        private void LoadCurrentConfig()
+        private async Task LoadCurrentConfig()
         {
             try
             {
                 // نقرأ أولاً من user config (إذا موجود) لأنه الأحدث
-                string connString = ReadConnectionStringFromJson(_userJsonPath);
+                string connString = await ReadConnectionStringFromJsonAsync(_userJsonPath);
 
                 // إذا ما موجود، نقرأ من الأساسي
                 if (string.IsNullOrWhiteSpace(connString))
-                    connString = ReadConnectionStringFromJson(_baseJsonPath);
+                    connString = await ReadConnectionStringFromJsonAsync(_baseJsonPath);
 
                 if (string.IsNullOrWhiteSpace(connString))
                     return;
@@ -63,13 +62,13 @@ namespace VinceApp
             }
         }
 
-        private string ReadConnectionStringFromJson(string path)
+        private async Task<string> ReadConnectionStringFromJsonAsync(string path)
         {
             try
             {
                 if (!File.Exists(path)) return "";
 
-                var json = File.ReadAllText(path);
+                var json = await  File.ReadAllTextAsync(path);
                 if (string.IsNullOrWhiteSpace(json)) return "";
 
                 var node = JsonNode.Parse(json);
@@ -90,16 +89,18 @@ namespace VinceApp
             txtPass.IsEnabled = isSqlAuth;
         }
 
-        private string BuildConnectionString()
+        private string BuildConnectionString(bool forTesting = false)
         {
             var builder = new SqlConnectionStringBuilder
             {
                 DataSource = txtServer.Text.Trim(),
                 InitialCatalog = txtDatabase.Text.Trim(),
-                TrustServerCertificate = true,
-                ConnectTimeout = 3
+                TrustServerCertificate = true
             };
-
+            if (forTesting)
+            {
+                builder.ConnectTimeout = 3;
+            }
             if (cmbAuthType.SelectedIndex == 0)
             {
                 builder.IntegratedSecurity = true;
@@ -116,7 +117,7 @@ namespace VinceApp
 
         private async void BtnTest_Click(object sender, RoutedEventArgs e)
         {
-            string connString = BuildConnectionString();
+            string connString = BuildConnectionString(true);
 
             try
             {

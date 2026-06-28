@@ -7,9 +7,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Gemini_Generated_Image_qwla5bqwla5bqwla-removebg-preview.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.4.5</AssemblyVersion>
-    <FileVersion>1.0.4.5</FileVersion>
-    <Version>1.0.4.5</Version>
+    <AssemblyVersion>2.0.7.5</AssemblyVersion>
+    <FileVersion>2.0.7.5</FileVersion>
+    <Version>2.0.7.5</Version>
+    <Product>VeniceApp</Product>
+    <Company>SajjadAlmosawy</Company>
+    <Authors>SajjadAlmosawy</Authors>
+    <Copyright>SajjadAlmosawy</Copyright>
+    <PackageIcon>ChatGPT_Image_Jan_30__2026__12_02_24_PM-removebg-preview.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,6 +44,7 @@
 
   <ItemGroup>
     <PackageReference Include="Autoupdater.NET.Official" Version="1.9.2" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.73.0.4045" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.22" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.22">
       <PrivateAssets>all</PrivateAssets>
@@ -71,7 +77,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\..\..\Downloads\ChatGPT_Image_Jan_30__2026__12_02_24_PM-removebg-preview.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\VeniceApp.Application\VeniceApp.Logic.csproj" />
+    <ProjectReference Include="..\VinceApp.Data\VinceApp.Data.csproj" />
   </ItemGroup>
 
 </Project>

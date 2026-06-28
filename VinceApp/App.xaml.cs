@@ -8,12 +8,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using VinceApp.Data.Models;
+using VinceApp.Services;
 
 namespace VinceApp
 {
     public partial class App : Application
     {
-        
+        private AutoBackupScheduler _backupScheduler;
         private static Mutex? _singleInstanceMutex;
 
         private const string MutexNameGlobal = @"Global\VenicePOS_SingleInstance_213C405F-29A4-469B-B7BA-0E3F07D6622A";
@@ -74,6 +75,8 @@ namespace VinceApp
             {
                 Shutdown();
             }
+            _backupScheduler = new AutoBackupScheduler();
+            _backupScheduler.Start();
         }
 
         private bool EnsureSingleInstance()
@@ -246,7 +249,7 @@ namespace VinceApp
                 _singleInstanceMutex?.Dispose();
             }
             catch { /* ignore */ }
-
+            _backupScheduler?.Stop();
             Log.CloseAndFlush();
             base.OnExit(e);
         }

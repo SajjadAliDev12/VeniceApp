@@ -14,6 +14,7 @@ using System.Windows.Media;
 using VinceApp.Data;
 using VinceApp.Data.Models;
 using VinceApp.Services;
+using VinceApp.Services.Cloud;
 
 namespace VinceApp.Pages
 {
@@ -42,15 +43,17 @@ namespace VinceApp.Pages
             try
             {
                 // 1. تعبئة قائمة الطابعات
-                cmbPrinters.Items.Clear();
+                cmbPrinters.Items.Clear();cmbKitchinPrinters.Items.Clear();cmbIceCreamPrinters.Items.Clear();
+                cmbIceCreamPrinters.Items.Add("None");
+                cmbKitchinPrinters.Items.Add("None");
+                cmbPrinters.Items.Add("None");
                 foreach (string printer in PrinterSettings.InstalledPrinters)
                 {
                     cmbPrinters.Items.Add(printer);
+                    cmbKitchinPrinters.Items.Add(printer);
+                    cmbIceCreamPrinters.Items.Add(printer);
                 }
-
-                // =========================================================
-                // 2. تحميل الإعدادات "المحلية" من ملف JSON (الخاصة بهذا الجهاز فقط)
-                // =========================================================
+                
                 var localConfig = AppConfigService.ReadUserConfig(); // دالة مساعدة تقرأ الـ JSON
 
                 // الطابعة المختارة لهذا الجهاز
@@ -60,7 +63,20 @@ namespace VinceApp.Pages
                     if (cmbPrinters.Items.Contains(savedPrinter))
                         cmbPrinters.SelectedItem = savedPrinter;
                 }
-
+                if (localConfig["KitchenPrinter"] != null)
+                {
+                    string savedPrinter = localConfig["KitchenPrinter"].ToString();
+                    // تأكد أنك تفحص وتحدد العنصر في قائمة طابعة المطبخ
+                    if (cmbKitchinPrinters.Items.Contains(savedPrinter))
+                        cmbKitchinPrinters.SelectedItem = savedPrinter;
+                }
+                if (localConfig["IceCreamPrinter"] != null)
+                {
+                    string savedPrinter = localConfig["IceCreamPrinter"].ToString();
+                    
+                    if (cmbIceCreamPrinters.Items.Contains(savedPrinter))
+                        cmbIceCreamPrinters.SelectedItem = savedPrinter;
+                }
                 // إعدادات الصوت لهذا الجهاز
                 if (localConfig["DisableSounds"] != null)
                 {
@@ -80,7 +96,7 @@ namespace VinceApp.Pages
                 {
                     if (context.Database.CanConnect())
                     {
-                        var dbSettings = context.AppSettings.FirstOrDefault();
+                        var dbSettings = context.AppSettings.FirstOrDefault(); 
                         if (dbSettings != null)
                         {
                             // بيانات المتجر
@@ -95,6 +111,36 @@ namespace VinceApp.Pages
                             txtPort.Text = dbSettings.Port.ToString();
                             txtSenderEmail.Text = dbSettings.SenderEmail;
                             txtSenderPass.Password = dbSettings.SenderPassword;
+                            if (!string.IsNullOrEmpty(dbSettings.CloudBackupProvider))
+                            {
+                                // تحديد العنصر في الكومبو
+                                foreach (ComboBoxItem item in cmbCloudProvider.Items)
+                                {
+                                    if (item.Content.ToString() == dbSettings.CloudBackupProvider)
+                                    {
+                                        cmbCloudProvider.SelectedItem = item;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            chkAutoCloudBackup.IsChecked = dbSettings.AutoCloudBackup;
+
+                            // عرض حالة الاتصال
+                            if (!string.IsNullOrEmpty(dbSettings.CloudRefreshToken))
+                            {
+                                txtCloudStatus.Text = $"متصل: {dbSettings.CloudUserEmail ?? "مستخدم"}";
+                                txtCloudStatus.Foreground = Brushes.Green;
+                                btnConnectCloud.Content = "فصل الحساب";
+                                btnConnectCloud.Background = Brushes.Firebrick;
+                            }
+                            else
+                            {
+                                txtCloudStatus.Text = "غير متصل";
+                                txtCloudStatus.Foreground = Brushes.Gray;
+                                btnConnectCloud.Content = "🔗 ربط الحساب";
+                                btnConnectCloud.Background = (Brush)new BrushConverter().ConvertFrom("#1976D2");
+                            }
                         }
                     }
                 }
@@ -105,12 +151,166 @@ namespace VinceApp.Pages
                 // لا تزعج المستخدم برسالة خطأ عند الفتح، فقط سجل الخطأ
             }
         }
+        
         private void Page_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 // هذا السطر سيمسك النافذة التي أنشأتها برمجياً ويحركها
                 Window.GetWindow(this)?.DragMove();
+            }
+        }
+        private async void BtnConnectCloud_Click(object sender, RoutedEventArgs e)
+        {
+            
+            if (btnConnectCloud.Content.ToString() == "فصل الحساب")
+            {
+                try
+                {
+                    var result = await MyConfirmDialog.ShowAsync("تأكيد فصل الحساب", "هل أنت متأكد من رغبتك في فصل الحساب السحابي؟ سيتوقف النسخ الاحتياطي التلقائي.");
+
+                    if (!result)
+                        return;
+
+                    
+
+                    
+                    using (var context = new VinceSweetsDbContext())
+                    {
+                        var dbSettings = context.AppSettings.FirstOrDefault();
+                        if (dbSettings != null)
+                        {
+                            dbSettings.CloudBackupProvider = null;
+                            dbSettings.CloudUserEmail = null;
+                            dbSettings.CloudRefreshToken = null; 
+
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                    try
+                    {
+                        string credPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VinceApp", "token_google");
+
+                        if (Directory.Exists(credPath))
+                        {
+                            // true تعني حذف المجلد ومحتوياته
+                            Directory.Delete(credPath, true);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "فشل حذف ملف التوكن المحلي");
+                        // لا نوقف العملية لأن الهدف الرئيسي تحقق (فصل قاعدة البيانات)
+                    }
+                    // إعادة تعيين الواجهة (Reset UI)
+                    txtCloudStatus.Text = "غير متصل";
+                    txtCloudStatus.Foreground = Brushes.Gray; // أو اللون الافتراضي لديك
+                    btnConnectCloud.Content = "🔗 ربط الحساب";
+                    btnConnectCloud.IsEnabled = true;
+
+                    OnNotificationReqested?.Invoke("تم", "تم فصل الحساب بنجاح.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error disconnecting cloud account");
+                    OnNotificationReqested?.Invoke("خطأ", "حدث خطأ أثناء فصل الحساب.");
+                }
+
+                // الخروج من الدالة حتى لا ينفذ كود الربط بالأسفل
+                return;
+            }
+            
+
+            // التأكد من اختيار جوجل درايف
+            if (cmbCloudProvider.SelectedItem is ComboBoxItem item && item.Content.ToString() != "Google Drive")
+            {
+                OnNotificationReqested?.Invoke("تنبيه", "الكود الحالي يدعم Google Drive فقط في هذه المرحلة.");
+                return;
+            }
+
+            try
+            {
+                // تغيير شكل الزر ليدل على التحميل
+                btnConnectCloud.Content = "جارِ الاتصال...";
+                btnConnectCloud.IsEnabled = false;
+
+                var googleService = new GoogleDriveService();
+
+                // هذه العملية ستفتح المتصفح وتنتظر المستخدم
+                var result = await googleService.AuthenticateAsync();
+
+                if (!string.IsNullOrEmpty(result.Email))
+                {
+                    // الحفظ في قاعدة البيانات
+                    using (var context = new VinceSweetsDbContext())
+                    {
+                        var dbSettings = context.AppSettings.FirstOrDefault();
+                        if (dbSettings == null)
+                        {
+                            dbSettings = new AppSetting();
+                            context.AppSettings.Add(dbSettings);
+                        }
+
+                        dbSettings.CloudBackupProvider = "Google Drive";
+                        dbSettings.CloudUserEmail = result.Email;
+
+                        // حفظ التوكن (مهم جداً للخدمة الخلفية لاحقاً)
+                        if (!string.IsNullOrEmpty(result.RefreshToken))
+                        {
+                            dbSettings.CloudRefreshToken = result.RefreshToken;
+                        }
+
+                        await context.SaveChangesAsync();
+                    }
+
+                    // تحديث الواجهة
+                    txtCloudStatus.Text = $"متصل: {result.Email}";
+                    txtCloudStatus.Foreground = Brushes.Green;
+                    btnConnectCloud.Content = "فصل الحساب";
+                    btnConnectCloud.Background = Brushes.Firebrick;
+                    btnConnectCloud.IsEnabled = true;
+
+                    OnNotificationReqested?.Invoke("نجاح", "تم ربط حساب Google Drive بنجاح!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Google Auth Error");
+                OnNotificationReqested?.Invoke("خطأ", "فشل الربط: " + ex.Message);
+
+                // إعادة الزر لحالته
+                btnConnectCloud.Content = "🔗 ربط الحساب";
+                btnConnectCloud.IsEnabled = true;
+            }
+        }
+
+        private void SaveCloudSettings_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                using (var context = new VinceSweetsDbContext())
+                {
+                    var dbSettings = context.AppSettings.FirstOrDefault();
+                    if (dbSettings == null)
+                    {
+                        dbSettings = new AppSetting();
+                        context.AppSettings.Add(dbSettings);
+                    }
+
+                    // حفظ الخيارات الظاهرة
+                    if (cmbCloudProvider.SelectedItem is ComboBoxItem selectedItem)
+                        dbSettings.CloudBackupProvider = selectedItem.Content.ToString();
+
+                    dbSettings.AutoCloudBackup = chkAutoCloudBackup.IsChecked == true;
+
+                    context.SaveChanges();
+                }
+                OnNotificationReqested?.Invoke("تم الحفظ", "تم حفظ خيارات النسخ السحابي");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error saving cloud settings");
+                OnNotificationReqested?.Invoke("خطأ", "فشل حفظ الإعدادات");
             }
         }
         private void Close_Click(object sender, RoutedEventArgs e)
@@ -144,8 +344,15 @@ namespace VinceApp.Pages
                         config["PrinterName"] = cmbPrinters.SelectedItem.ToString();
                     else
                         config["PrinterName"] = null;
+                    if (cmbKitchinPrinters.SelectedItem != null)
+                        config["KitchenPrinter"] = cmbKitchinPrinters.SelectedItem.ToString();
+                    else
+                        config["KitchenPrinter"] = null;
+                    if (cmbIceCreamPrinters.SelectedItem != null)
+                        config["IceCreamPrinter"] = cmbIceCreamPrinters.SelectedItem.ToString();
+                    else
+                        config["IceCreamPrinter"] = null;
 
-                    
                     bool disableSounds = chkdisableSounds.IsChecked == true;
                     config["DisableSounds"] = disableSounds;
 
@@ -273,24 +480,33 @@ namespace VinceApp.Pages
         }
 
         // --- النسخ الاحتياطي ---
-        private void Backup_Click(object sender, RoutedEventArgs e)
+        private async void Backup_Click(object sender, RoutedEventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "SQL Backup files (*.bak)|*.bak";
+            // اسم الملف يتضمن التاريخ والوقت
             saveFileDialog.FileName = $"VeniceSweets_Backup_{DateTime.Now:yyyyMMdd_HHmm}.bak";
 
             if (saveFileDialog.ShowDialog() == true)
             {
                 try
                 {
+                    ShowLoading(true, "جارِ إنشاء النسخة الاحتياطية ورفعها للسحابة..."); // جملة تدل على الرفع
+
                     var backupService = new BackupService();
-                    backupService.BackupDatabase(saveFileDialog.FileName);
-                    OnNotificationReqested?.Invoke("نجاح", "تم إنشاء نسخة احتياطية بنجاح");
+
+                    // ✅ استخدام await والدالة الجديدة Async
+                    await backupService.BackupDatabaseAsync(saveFileDialog.FileName);
+
+                    ShowLoading(false);
+                    OnNotificationReqested?.Invoke("نجاح", "تمت العملية بنجاح (محلي + سحابي)");
                 }
                 catch (Exception ex)
                 {
+                    ShowLoading(false);
                     Log.Error(ex, "Backup Failed");
-                    OnNotificationReqested?.Invoke("خطأ", "حصل خطأ تأكد من امتلاك الصلاحيات للكتابة على القرص");
+                    // نظهر رسالة الخطأ للمستخدم (قد تكون فشل الرفع السحابي)
+                    OnNotificationReqested?.Invoke("تنبيه", ex.Message);
                 }
             }
         }

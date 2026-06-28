@@ -1,0 +1,464 @@
+﻿@page "/users"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject Venice.Admin.Services.UsersApi UsersApi
+
+<style>
+    /* حاوية الصفحة */
+    .dashboard-container {
+        padding: 20px;
+        max-width: 600px;
+        margin: 0 auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        direction: rtl;
+    }
+
+    /* الترويسة */
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .page-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #333;
+        margin: 0;
+    }
+
+    /* الأزرار */
+    .btn-primary-custom {
+        background-color: #1976D2;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 5px;
+        color: #555;
+    }
+
+    /* كروت المستخدمين */
+    .users-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .user-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-right: 5px solid #1976D2; /* تمييز جمالي */
+    }
+
+    .user-info h4 {
+        margin: 0 0 5px 0;
+        font-size: 1.1rem;
+        color: #333;
+    }
+
+    .user-meta {
+        font-size: 0.85rem;
+        color: #777;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .role-badge {
+        background-color: #e3f2fd;
+        color: #1565c0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+        .role-badge.disabled {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+    /* المودال (النافذة المنبثقة) */
+    .modal-backdrop-custom {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-content-custom {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+        font-size: 0.9rem;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 1rem;
+    }
+
+        .form-input:focus {
+            border-color: #1976D2;
+            outline: none;
+        }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-secondary {
+        background: #f5f5f5;
+        color: #333;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .error-msg {
+        background-color: #ffebee;
+        color: #d32f2f;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="header-section">
+        <h2 class="page-title">المستخدمين</h2>
+        <button class="btn-primary-custom" @onclick="OpenCreate">
+            <span>+ إضافة</span>
+        </button>
+    </div>
+
+    @if (_loading)
+    {
+        <div style="text-align:center; color:#777; padding:20px;">جارِ التحميل...</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="error-msg">@_error</div>
+    }
+    else
+    {
+        <div class="users-list">
+            @foreach (var u in _rows)
+            {
+                <div class="user-card" style="@(IsDisabled(u) ? "opacity:0.6;" : "")">
+                    <div class="user-info">
+                        <h4>@u.FullName</h4>
+                        <div class="user-meta">
+                            <span class="role-badge @(IsDisabled(u) ? "disabled" : "")">
+                                @TranslateRole(u.Role)
+                            </span>
+                            <span>@u.Username</span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn-icon" @onclick="() => OpenEdit(u)" title="تعديل">✏️</button>
+                        @if (!IsDisabled(u))
+                        {
+                            <button class="btn-icon" @onclick="() => Disable(u)" title="تعطيل" style="color:#d32f2f;">🚫</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div style="text-align:center; margin-top:20px; font-size:0.8rem; color:#999;">
+            * التعطيل يوقف صلاحية الدخول دون حذف السجلات.
+        </div>
+    }
+</div>
+
+@if (_modalOpen)
+{
+    <div class="modal-backdrop-custom" @onclick="CloseModal">
+        <div class="modal-content-custom" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3 style="margin:0;">@_modalTitle</h3>
+                <button @onclick="CloseModal" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>
+            </div>
+
+            <div class="modal-body">
+                @* التعديل هنا: استخدام متغير خطأ خاص بالمودال *@
+                @if (!string.IsNullOrEmpty(_modalError))
+                {
+                    <div class="error-msg">@_modalError</div>
+                }
+
+                <div class="form-group">
+                    <label class="form-label">اسم المستخدم</label>
+                    <input class="form-input" @bind="_form.Username" disabled="@_editMode" dir="ltr" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">الاسم الكامل</label>
+                    <input class="form-input" @bind="_form.FullName" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني (اختياري)</label>
+                    <input class="form-input" @bind="_form.EmailAddress" dir="ltr" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">الصلاحية</label>
+                    <select class="form-select" @bind="_selectedRole">
+                        @foreach (var r in _rolesDisplay)
+                        {
+                            <option value="@r">@r</option>
+                        }
+                    </select>
+                </div>
+
+                @if (_showPassword)
+                {
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور</label>
+                        <input class="form-input" type="password" @bind="_form.Password" placeholder="@(_editMode ? "اتركها فارغة للإبقاء على القديمة" : "")" dir="ltr" />
+                    </div>
+                }
+
+                <div class="modal-actions">
+                    <button class="btn-secondary" @onclick="CloseModal">إلغاء</button>
+                    <button class="btn-primary-custom" @onclick="Save" disabled="@_saving">
+                        @(_saving ? "جارِ الحفظ..." : "حفظ")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _saving = false;
+    private string? _error;
+    private string? _modalError; // متغير جديد لحمل رسائل الخطأ داخل المودال
+
+    private List<Venice.Admin.Models.UserRow> _rows = new();
+
+    private readonly string[] _rolesDisplay = new[] {  "Disabled","Admin", "Manager", "Cashier" };
+    private string _selectedRole = "Cashier";
+
+    private bool _modalOpen;
+    private string _modalTitle = "مستخدم";
+    private bool _editMode = false;
+    private bool _showPassword = true;
+    private int? _editId;
+
+    private Venice.Admin.Models.UserUpsertDto _form = new();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task Reload() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _loading = true;
+            _error = null;
+            _rows = await UsersApi.GetAllAsync();
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+
+    private void OpenCreate()
+    {
+        _modalError = null; // تصفير الخطأ عند الفتح
+        _modalTitle = "إضافة مستخدم جديد";
+        _editMode = false;
+        _showPassword = true;
+        _editId = null;
+        _selectedRole = "Cashier";
+
+        _form = new Venice.Admin.Models.UserUpsertDto
+        {
+            Username = "",
+            FullName = "",
+            EmailAddress = "",
+            Password = ""
+        };
+
+        _modalOpen = true;
+    }
+
+    private void OpenEdit(Venice.Admin.Models.UserRow u)
+    {
+        _modalError = null; // تصفير الخطأ عند الفتح
+        _modalTitle = $"تعديل: {u.FullName}";
+        _editMode = true;
+        _showPassword = true;
+        _editId = u.Id;
+
+        _selectedRole = RoleIntToString(u.Role);
+
+        _form = new Venice.Admin.Models.UserUpsertDto
+        {
+            Username = u.Username,
+            FullName = u.FullName,
+            EmailAddress = u.EmailAddress,
+            Password = ""
+        };
+
+        _modalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        _modalOpen = false;
+        _saving = false;
+        _editId = null;
+        _modalError = null; // تصفير الخطأ عند الإغلاق
+        _form = new();
+    }
+
+    private bool IsDisabled(Venice.Admin.Models.UserRow u) => u.Role == 0;
+
+    private async Task Disable(Venice.Admin.Models.UserRow u)
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", "هل أنت متأكد من تعطيل هذا المستخدم؟")) return;
+        try
+        {
+            _error = null;
+            await UsersApi.DisableAsync(u.Id);
+            u.Role = 3;
+        }
+        catch (Exception ex) { _error = ex.Message; }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            _saving = true;
+            _modalError = null; // تصفير الخطأ الخاص بالمودال عند بدء الحفظ
+
+            _form.Role = RoleStringToInt(_selectedRole);
+
+            if (string.IsNullOrWhiteSpace(_form.Username)) throw new Exception("اسم المستخدم مطلوب.");
+
+            if (_editId is null)
+            {
+                if (string.IsNullOrWhiteSpace(_form.Password)) throw new Exception("كلمة المرور مطلوبة.");
+                await UsersApi.CreateAsync(_form);
+            }
+            else
+            {
+                await UsersApi.UpdateAsync(_editId.Value, _form);
+            }
+
+            await LoadAsync();
+            CloseModal(); // الإغلاق يتم فقط في حال النجاح
+        }
+        catch (Exception ex)
+        {
+            _modalError = ex.Message; // تخزين رسالة الخطأ لتظهر داخل المودال
+        }
+        finally { _saving = false; }
+    }
+
+    private string RoleIntToString(int role) => role switch
+    {
+        1 => "Admin",
+        2 => "Manager",
+        3 => "Cashier",
+        0 => "Disabled",
+        _ => "Cashier"
+    };
+
+    private int RoleStringToInt(string role) => role switch
+    {
+        "Admin" => 1,
+        "Manager" => 2,
+        "Cashier" => 3,
+        "Disabled" => 0,
+        _ => 3
+    };
+
+    private string TranslateRole(int role) => role switch
+    {
+        1 => "مدير نظام",
+        2 => "مشرف",
+        3 => "كاشير",
+        0 => "معطل",
+        _ => "غير معروف"
+    };
+
+    [Inject] IJSRuntime JSRuntime { get; set; } = default!;
+}

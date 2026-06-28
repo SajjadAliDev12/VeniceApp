@@ -24,7 +24,7 @@ public partial class Order
     public bool isPaid { get; set; }
     [Required]
     public bool isDeleted { get; set; } = false;
-    public decimal DiscountAmount { get; set; } = 0;
+    public decimal? DiscountAmount { get; set; } = 0;
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     [NotMapped]

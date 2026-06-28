@@ -30,6 +30,26 @@ namespace VinceApp.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AutoCloudBackup")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("BackupFrequencyHours")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CloudBackupProvider")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CloudRefreshToken")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("CloudUserEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<bool>("DisableSounds")
                         .HasColumnType("bit");
 
@@ -80,7 +100,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppSettings", (string)null);
+                    b.ToTable("AppSettings");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.AuditLog", b =>
@@ -120,7 +140,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Category", b =>
@@ -136,9 +156,12 @@ namespace VinceApp.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("Printer")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Order", b =>
@@ -149,7 +172,7 @@ namespace VinceApp.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("DiscountAmount")
+                    b.Property<decimal?>("DiscountAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -206,7 +229,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("RestaurantTableId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.OrderDetail", b =>
@@ -249,7 +272,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderDetails", (string)null);
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Product", b =>
@@ -287,7 +310,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.RestaurantTable", b =>
@@ -315,7 +338,7 @@ namespace VinceApp.Data.Migrations
                     b.HasIndex("TableNumber")
                         .IsUnique();
 
-                    b.ToTable("RestaurantTables", (string)null);
+                    b.ToTable("RestaurantTables");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.User", b =>
@@ -361,7 +384,7 @@ namespace VinceApp.Data.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.UserToken", b =>
@@ -392,7 +415,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserTokens", (string)null);
+                    b.ToTable("UserTokens");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Order", b =>

@@ -1,0 +1,42 @@
+﻿<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+
+                @* 1. تظهر هذه الواجهة أثناء محاولة النظام استعادة الجلسة من المتصفح عند الـ Refresh *@
+                <Authorizing>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; direction: rtl;">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p style="margin-top: 15px; color: #666;">جارِ التحقق من الهوية...</p>
+                    </div>
+                </Authorizing>
+
+                @* 2. في حال فشل التحقق أو لم يكن هناك مستخدم مسجل *@
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        @* التحويل التلقائي لصفحة تسجيل الدخول *@
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 50px; direction: rtl;">
+                            <h3 style="color: #d32f2f;">عذراً، لا تمتلك الصلاحية الكافية.</h3>
+                            <a href="/" class="btn btn-link">العودة للرئيسية</a>
+                        </div>
+                    }
+                </NotAuthorized>
+
+            </AuthorizeRouteView>
+        </Found>
+
+        <NotFound>
+            <PageTitle>الصفحة غير موجودة</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <div style="text-align: center; padding: 50px; direction: rtl;">
+                    <p role="alert">الصفحة التي تبحث عنها غير موجودة.</p>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

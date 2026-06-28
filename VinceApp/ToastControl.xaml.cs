@@ -13,7 +13,7 @@ namespace VinceApp
     public partial class ToastControl : UserControl
     {
         private DispatcherTimer _timer;
-
+        private static DateTime _lastSoundPlayedTime = DateTime.MinValue;
         // ✅ مدة التوست (ثواني) — خليها ثابتة هنا وتتحكم بها من مكان واحد
         private const int ToastDurationSeconds = 10;
 
@@ -50,12 +50,21 @@ namespace VinceApp
                 }
             }
 
-            if (File.Exists(soundFile))
+            if ((DateTime.Now - _lastSoundPlayedTime).TotalMilliseconds > 1000)
             {
-                using (var player = new System.Media.SoundPlayer(soundFile))
+                _lastSoundPlayedTime = DateTime.Now;
+
+                Task.Run(() =>
                 {
-                    player.Play();
-                }
+                    try
+                    {
+                        using (var player = new System.Media.SoundPlayer(soundFile))
+                        {
+                            player.PlaySync();
+                        }
+                    }
+                    catch { /* تجاهل أخطاء تشغيل الصوت */ }
+                });
             }
 
             Application.Current.Dispatcher.Invoke(() =>

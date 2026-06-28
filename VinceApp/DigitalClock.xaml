@@ -25,6 +25,11 @@
                        FontSize="18"
                        Margin="0,0,6,0"/>
 
+            <TextBlock x:Name="txtDay"
+Text="AM"
+FontSize="18"
+FontWeight="SemiBold"
+Foreground="#37474F" Margin="0,0,6,0"/>
             <TextBlock x:Name="txtHour"
                        Text="00"
                        FontSize="18"
@@ -43,6 +48,7 @@
                        FontSize="18"
                        FontWeight="SemiBold"
                        Foreground="#37474F"/>
+            
         </StackPanel>
 
     </Border>

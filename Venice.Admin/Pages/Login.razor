@@ -1,0 +1,179 @@
+﻿@page "/login"
+
+@inject Venice.Admin.Services.UsersApi UsersApi
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h3>البندقية</h3>
+            <p>تسجيل الدخول للمتابعة</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert-error">@_error</div>
+        }
+
+        <form @onsubmit="DoLogin">
+
+            <div class="form-group">
+                <label>اسم المستخدم</label>
+                <input @bind="_username" class="form-input" placeholder="Username" name="username" />
+            </div>
+
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input @bind="_password" type="password" class="form-input" placeholder="Password" name="password" />
+            </div>
+
+            <button type="submit" class="btn-login" disabled="@_loading">
+                @if (_loading)
+                {
+                    <span>جارِ الدخول...</span>
+                }
+                else
+                {
+                    <span>دخول</span>
+                }
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f2f5;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        direction: rtl;
+    }
+
+    .login-card {
+        background: white;
+        padding: 40px 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+        .login-header h3 {
+            margin: 0;
+            color: #1976D2;
+            font-weight: bold;
+        }
+
+        .login-header p {
+            margin: 5px 0 0;
+            color: #777;
+            font-size: 0.9rem;
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+        .form-input:focus {
+            border-color: #1976D2;
+        }
+
+    .btn-login {
+        width: 100%;
+        padding: 12px;
+        background-color: #1976D2;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+        .btn-login:disabled {
+            background-color: #ccc;
+        }
+
+    .alert-error {
+        background-color: #ffebee;
+        color: #c62828;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+</style>
+
+@code {
+    private string _username = "";
+    private string _password = "";
+    private string? _error;
+    private bool _loading = false;
+
+    private async Task DoLogin()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            // 1. استدعاء الـ API (سيقوم داخلياً بحفظ التوكن في AppSession)
+            var user = await UsersApi.LoginAsync(_username, _password);
+
+            if (user != null)
+            {
+                // 2. تحويل الـ Provider
+                var customAuthState = (Venice.Admin.Services.CustomAuthStateProvider)AuthStateProvider;
+
+                // 3. جلب التوكن الذي تم حفظه للتو في الخطوة السابقة
+                var token = Venice.Admin.Models.AppSession.CurrentToken;
+
+                // 4. تمرير المستخدم + التوكن لحفظهما في المتصفح
+                if (token != null)
+                {
+                    await customAuthState.MarkUserAsAuthenticated(user, token);
+                    Nav.NavigateTo("/"); // توجيه للرئيسية
+                }
+                else
+                {
+                    _error = "فشل في استلام مفتاح الدخول";
+                }
+            }
+            else
+            {
+                _error = "بيانات الدخول غير صحيحة";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = "حدث خطأ في الاتصال بالسيرفر";
+            Console.WriteLine(ex.Message); // للتشخيص
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

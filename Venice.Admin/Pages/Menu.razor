@@ -1,0 +1,463 @@
+﻿@page "/menu"
+@using Microsoft.AspNetCore.Authorization
+@using Venice.Admin.Services
+@attribute [Authorize]
+@inject ProductsApi ProductsApi
+@inject CategoriesApi CategoriesApi
+@inject IJSRuntime JSRuntime
+
+<style>
+    .page-container {
+        padding: 20px;
+        max-width: 600px;
+        margin: 0 auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        direction: rtl;
+    }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .page-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #333;
+        margin: 0;
+    }
+
+    .btn-action {
+        background-color: #1976D2;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+        .btn-action:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    .btn-cancel {
+        background-color: #757575;
+        margin-right: 5px;
+    }
+
+    .btn-save {
+        background-color: #388E3C;
+    }
+
+    /* تنسيق زر الحذف */
+    .btn-delete {
+        background: none;
+        color: #D32F2F;
+        border: 1px solid #D32F2F;
+        padding: 5px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        width: 100%;
+    }
+
+    .product-card {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #eee;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .product-view-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .product-name {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #333;
+    }
+
+    .product-category {
+        font-size: 0.85rem;
+        color: #888;
+        margin-bottom: 4px;
+    }
+
+    .product-price {
+        font-weight: bold;
+        color: #1976D2;
+        font-size: 1rem;
+    }
+
+    .product-status {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background-color: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .status-unavailable {
+        background-color: #FFEBEE;
+        color: #C62828;
+    }
+
+    .edit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .input-field, .form-select, .form-input {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #ddd;
+        padding: 8px;
+        border-radius: 8px;
+        background: #fff;
+        flex: 1;
+    }
+
+    /* المودال */
+    .modal-backdrop-custom {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-content-custom {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+        font-size: 0.9rem;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .error-msg {
+        background-color: #ffebee;
+        color: #d32f2f;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="page-container">
+    <div class="header-section">
+        <h2 class="page-title">قائمة المنتجات</h2>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-action" style="background-color: #388E3C;" @onclick="OpenAddModal">+ منتج جديد</button>
+            <button class="btn-action" @onclick="Reload" disabled="@_loading">تحديث</button>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div style="text-align:center; color:#666; margin-top:20px;">جارِ تحميل القائمة...</div>
+    }
+    else
+    {
+        <div class="products-list">
+            @foreach (var p in _rows)
+            {
+                var editing = _editId == p.Id;
+                <div class="product-card">
+                    @if (editing)
+                    {
+                        <div class="edit-form">
+                            <div>
+                                <label style="font-size:0.8rem; color:#666">الاسم</label>
+                                <input class="input-field" @bind="_editName" />
+                            </div>
+                            <div>
+                                <label style="font-size:0.8rem; color:#666">التصنيف</label>
+                                <select class="input-field" @bind="_editCategoryId">
+                                    @foreach (var cat in _categories)
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                                <div style="flex:1">
+                                    <label style="font-size:0.8rem; color:#666">السعر</label>
+                                    <input class="input-field" type="number" @bind="_editPrice" />
+                                </div>
+                                <div class="checkbox-group" style="margin-top: 22px;">
+                                    <input type="checkbox" @bind="_editAvailable" id="edit_avail" style="width:18px; height:18px;" />
+                                    <label for="edit_avail" style="font-size:0.85rem;">متاح</label>
+                                </div>
+                            </div>
+                            <div class="edit-actions">
+                                <button class="btn-action btn-cancel" @onclick="CancelEdit">إلغاء</button>
+                                <button class="btn-action btn-save" @onclick="() => Save(p)">حفظ</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="product-view-row">
+                            <div>
+                                <div class="product-category">@p.CategoryName</div>
+                                <div class="product-name">@p.Name</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; min-width: 80px;">
+                                <button class="btn-action" style="background:none; color:#1976D2; border:1px solid #1976D2; padding:5px;" @onclick="() => StartEdit(p)">تعديل</button>
+                                <button class="btn-delete" @onclick="() => DeleteProduct(p.Id)">حذف</button>
+                            </div>
+                        </div>
+                        <div class="product-view-row" style="margin-top:5px; border-top:1px dashed #eee; padding-top:10px;">
+                            <div class="product-price">@p.Price.ToString("N0") د.ع</div>
+                            <div style="display: flex; gap: 5px;">
+                                @if (p.IsKitchenItem)
+                                {
+                                    <span class="product-status" style="background-color:#FFF3E0; color:#E65100;">مطبخ</span>
+                                }
+                                <span class="product-status @(p.IsAvailable ? "" : "status-unavailable")">
+                                    @(p.IsAvailable ? "متاح" : "غير متاح")
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (_showAddModal)
+{
+    <div class="modal-backdrop-custom" @onclick="CloseAddModal">
+        <div class="modal-content-custom" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3 style="margin:0;">إضافة منتج جديد</h3>
+                <button @onclick="CloseAddModal" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(_modalError))
+                {
+                    <div class="error-msg">@_modalError</div>
+                }
+
+                <div class="form-group">
+                    <label class="form-label">اسم المنتج</label>
+                    <input class="form-input" @bind="_addForm.Name" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">التصنيف</label>
+                    <select class="form-select" @bind="_addForm.CategoryId">
+                        @foreach (var cat in _categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">السعر (د.ع)</label>
+                    <input class="form-input" type="number" @bind="_addForm.Price" />
+                </div>
+
+                @* الحقول المضافة حديثاً *@
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <div class="checkbox-group">
+                        <input type="checkbox" @bind="_addForm.IsAvailable" id="add_avail" />
+                        <label for="add_avail">متاح للبيع</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" @bind="_addForm.IsKitchenItem" id="add_kitchen" />
+                        <label for="add_kitchen">تجهيز مطبخ</label>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-secondary" @onclick="CloseAddModal">إلغاء</button>
+                    <button class="btn-action btn-save" style="border-radius: 8px;" @onclick="SaveNewProduct" disabled="@_saving">
+                        @(_saving ? "جارِ الحفظ..." : "إضافة المنتج")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _saving = false;
+    private string? _error;
+    private string? _modalError;
+    private bool _showAddModal = false;
+
+    private List<ProductRow> _rows = new();
+    private List<CategoryRow> _categories = new();
+
+    private int? _editId;
+    private string _editName = "";
+    private decimal _editPrice;
+    private bool _editAvailable;
+    private int _editCategoryId;
+
+    private ProductUpdateDto _addForm = new() { IsAvailable = true, IsKitchenItem = false };
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task Reload() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _loading = true; _error = null;
+            var productsTask = ProductsApi.GetAllAsync();
+            var categoriesTask = CategoriesApi.GetAllAsync();
+            await Task.WhenAll(productsTask, categoriesTask);
+            _rows = await productsTask;
+            _categories = await categoriesTask;
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+
+    private void StartEdit(ProductRow p)
+    {
+        _editId = p.Id; _editName = p.Name; _editPrice = p.Price;
+        _editAvailable = p.IsAvailable; _editCategoryId = p.CategoryId;
+    }
+
+    private void CancelEdit() => _editId = null;
+
+    private async Task Save(ProductRow p)
+    {
+        try
+        {
+            var dto = new ProductUpdateDto { Name = _editName, Price = _editPrice, IsAvailable = _editAvailable, CategoryId = _editCategoryId, IsKitchenItem = p.IsKitchenItem };
+            await ProductsApi.UpdateAsync(p.Id, dto);
+            p.Name = dto.Name; p.Price = dto.Price; p.IsAvailable = dto.IsAvailable; p.CategoryId = dto.CategoryId; p.IsKitchenItem = dto.IsKitchenItem;
+            p.CategoryName = _categories.FirstOrDefault(c => c.Id == dto.CategoryId)?.Name ?? p.CategoryName;
+            CancelEdit();
+        }
+        catch (Exception ex) { _error = ex.Message; }
+    }
+
+    private void OpenAddModal()
+    {
+        _modalError = null;
+        _addForm = new ProductUpdateDto { IsAvailable = true, IsKitchenItem = false, Price = 0 };
+        if (_categories.Any()) _addForm.CategoryId = _categories.First().Id;
+        _showAddModal = true;
+    }
+
+    private void CloseAddModal() { _showAddModal = false; _saving = false; }
+
+    private async Task SaveNewProduct()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_addForm.Name)) throw new Exception("اسم المنتج مطلوب.");
+            _saving = true; _modalError = null;
+            await ProductsApi.CreateAsync(_addForm);
+            await LoadAsync();
+            CloseAddModal();
+        }
+        catch (Exception ex) { _modalError = ex.Message; }
+        finally { _saving = false; }
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        // استدعاء التنبيه باستخدام الكائن المحقون JSRuntime
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "هل أنت متأكد من حذف/تعطيل هذا المنتج؟");
+
+        if (confirmed)
+        {
+            try
+            {
+                _error = null;
+                // استدعاء دالة الحذف من الـ API
+                await ProductsApi.DeleteAsync(id);
+
+                // إعادة تحميل البيانات لتحديث الواجهة
+                await LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                // عرض الخطأ في حال فشل الحذف (مثل قيود قاعدة البيانات)
+                _error = ex.Message;
+            }
+        }
+    }
+}

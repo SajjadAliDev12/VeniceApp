@@ -1,6 +1,8 @@
-﻿using Serilog;
+﻿using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using VinceApp.Data;
@@ -12,7 +14,7 @@ namespace VinceApp.Pages
     public partial class UsersPage : Page
     {
         private int _selectedId = 0;
-
+        private bool _loading = false;
         public UsersPage()
         {
             InitializeComponent();
@@ -20,18 +22,22 @@ namespace VinceApp.Pages
             // 1. تعبئة القائمة تلقائياً من الـ Enum لضمان تطابق القيم
             // يجب إزالة العناصر اليدوية من ملف XAML إذا كانت موجودة داخل الـ ComboBox
             cmbRole.ItemsSource = Enum.GetValues(typeof(UserRole));
-
-            LoadUsers();
+            this.Loaded += async (s, e) =>
+            {if (_loading) return;
+            _loading = true;
+               await LoadUsers();
+            };
+            
         }
 
-        private void LoadUsers()
+        private async Task LoadUsers()
         {
             try
             {
                 using (var context = new VinceSweetsDbContext())
                 {
                     
-                    dgUsers.ItemsSource = context.Users.ToList();
+                    dgUsers.ItemsSource =await  context.Users.ToListAsync();
                 }
             }
             catch (Exception ex)
@@ -39,9 +45,10 @@ namespace VinceApp.Pages
                 Log.Error(ex, "error with users page loading");
                 ToastControl.Show("Error", "حدث خطأ ", ToastControl.NotificationType.Error);
             }
+            finally { _loading = false; }
         }
 
-        private void Save_Click(object sender, RoutedEventArgs e)
+        private async void Save_Click(object sender, RoutedEventArgs e)
         {
             // 1. جلب البيانات الجديدة
             string username = txtUsername.Text.Trim();
@@ -96,11 +103,11 @@ namespace VinceApp.Pages
                             PasswordHash = AuthHelper.HashText(password),
                             IsEmailConfirmed = false 
                         };
-                        context.Users.Add(newUser);
+                        await context.Users.AddAsync(newUser);
                     }
                     else 
                     {
-                        var user = context.Users.Find(_selectedId);
+                        var user = await context.Users.FindAsync(_selectedId);
                         if (user != null)
                         {
                             user.Username = username;
@@ -119,9 +126,9 @@ namespace VinceApp.Pages
                         }
                     }
 
-                    context.SaveChanges();
+                    await context.SaveChangesAsync();
                     ClearFields();
-                    LoadUsers();
+                    await LoadUsers();
                     ToastControl.Show("تم الحفظ", "تم الحفظ بنجاح", ToastControl.NotificationType.Success);
                     
                 }
@@ -133,13 +140,13 @@ namespace VinceApp.Pages
             }
         }
 
-        private void Edit_Click(object sender, RoutedEventArgs e)
+        private async void Edit_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    var user = context.Users.Find(id);
+                    var user =await  context.Users.FindAsync(id);
                     if (user != null)
                     {
                         _selectedId = user.Id;
@@ -188,12 +195,12 @@ namespace VinceApp.Pages
                         using (var context = new VinceSweetsDbContext())
                         {
                             // ... كود الحذف القديم ...
-                            var user = context.Users.Find(id);
+                            var user = await context.Users.FindAsync(id);
                             if (user != null)
                             {
                                 context.Users.Remove(user);
-                                context.SaveChanges();
-                                LoadUsers();
+                                await context.SaveChangesAsync();
+                                await LoadUsers();
                                 ClearFields();
                                 ToastControl.Show("تم الحذف", "تم الحذف بنجاح", ToastControl.NotificationType.Success);
                             }

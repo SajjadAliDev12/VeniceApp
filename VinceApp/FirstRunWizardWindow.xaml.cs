@@ -29,7 +29,7 @@ namespace VinceApp
                 this.DragMove();
             }
         }
-        private void Finish_Click(object sender, RoutedEventArgs e)
+        private async void Finish_Click(object sender, RoutedEventArgs e)
         {
             txtStatus.Text = "";
 
@@ -53,59 +53,52 @@ namespace VinceApp
                 txtStatus.Text = "يرجى إدخال جميع بيانات الأدمن.";
                 return;
             }
-
-            // =========================================================
-            //  الخطوة الحاسمة: إنشاء قاعدة البيانات والجداول (Migration)
-            // =========================================================
             try
-            {
-                using var ctx = new VinceSweetsDbContext();
-
-                // هذا الأمر سينشئ الداتابيس إذا لم تكن موجودة + ينشئ الجداول
-                // إذا فشل الاتصال بالسيرفر، سيقع في الـ catch
-                ctx.Database.Migrate();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "FirstRunWizard: Migration failed");
-                txtStatus.Text = "فشل الاتصال بالسيرفر أو إنشاء قاعدة البيانات. تأكد من الإعدادات.";
-                return; // نخرج ولا نكمل
-            }
-
-            // =========================================================
-            //  إنشاء حساب الأدمن (الآن الجداول موجودة ومضمونة)
-            // =========================================================
-            try
-            {
-                using var ctx = new VinceSweetsDbContext();
-
-                // نتأكد لربما يوجد أدمن سابقاً (حالة نادرة)
-                bool hasAdmin = ctx.Users.Any(u => u.Role == UserRole.Admin);
-                if (!hasAdmin)
+            { Mouse.OverrideCursor = Cursors.Wait;
+                try
                 {
-                    var admin = new User
-                    {
-                        Username = adminUser,
-                        PasswordHash = AuthHelper.HashText(adminPass), // تأكد أن دالة التشفير تعمل
-                        Role = UserRole.Admin,
-                        FullName = adminName,
-                        EmailAddress = adminEmail,
-                        IsEmailConfirmed = true,
-                    };
+                   
+                    using var ctx = new VinceSweetsDbContext();
 
-                    ctx.Users.Add(admin);
-                    ctx.SaveChanges();
+
+                    await ctx.Database.MigrateAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "FirstRunWizard: Migration failed");
+                    txtStatus.Text = "فشل الاتصال بالسيرفر أو إنشاء قاعدة البيانات. تأكد من الإعدادات.";
+                    return;
+                }
+                try
+                {
+                    
+                    using var ctx = new VinceSweetsDbContext();
+                    bool hasAdmin = await ctx.Users.AnyAsync(u => u.Role == UserRole.Admin);
+                    if (!hasAdmin)
+                    {
+                        var admin = new User
+                        {
+                            Username = adminUser,
+                            PasswordHash = AuthHelper.HashText(adminPass),
+                            Role = UserRole.Admin,
+                            FullName = adminName,
+                            EmailAddress = adminEmail,
+                            IsEmailConfirmed = true,
+                        };
+
+                        await ctx.Users.AddAsync(admin);
+                        await ctx.SaveChangesAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to create initial admin");
+                    txtStatus.Text = "تم إنشاء قاعدة البيانات ولكن فشل إنشاء الأدمن.";
+                    return;
                 }
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to create initial admin");
-                txtStatus.Text = "تم إنشاء قاعدة البيانات ولكن فشل إنشاء الأدمن.";
-                return;
-            }
-
-            // 3. إنهاء العملية
-            AppConfigService.SetActivatedFlag(true); // حفظ أن البرنامج تم تفعيله
+            finally { Mouse.OverrideCursor = null; }
+            AppConfigService.SetActivatedFlag(true); 
 
             MessageBox.Show("تم إعداد النظام بنجاح! يمكنك تسجيل الدخول الآن.", "نجاح", MessageBoxButton.OK, MessageBoxImage.Information);
 

@@ -28,10 +28,10 @@ namespace VinceApp.Pages
         public AuditLogPage()
         {
             InitializeComponent();
-            LoadData();
+            
         }
 
-        private void LoadData()
+        private async Task LoadDataAsync()
         {
             try
             {
@@ -76,7 +76,7 @@ namespace VinceApp.Pages
                     }
 
                     // ✅ Count قبل Pagination
-                    int totalCount = query.Count();
+                    int totalCount = await query.CountAsync();
                     _totalPages = (int)Math.Ceiling((double)totalCount / _pageSize);
                     if (_totalPages == 0) _totalPages = 1;
 
@@ -85,7 +85,7 @@ namespace VinceApp.Pages
 
                     // ✅ Projection صحيح متوافق مع الـ XAML:
                     // XAML يحتاج: Id, Timestamp, UserFullName, Action, TableName, RecordId
-                    var list = query
+                    var list = await query
                         .OrderByDescending(x => x.Timestamp)
                         .Skip((_currentPage - 1) * _pageSize)
                         .Take(_pageSize)
@@ -98,9 +98,9 @@ namespace VinceApp.Pages
                             TableName = x.TableName,
                             RecordId = x.RecordId
                         })
-                        .ToList();
+                        .ToListAsync();
 
-                    dgLogs.ItemsSource = list;
+                    dgLogs.ItemsSource = (System.Collections.IEnumerable)list;
 
                     // تحديث الأزرار
                     txtPageInfo.Text = $"صفحة {_currentPage} من {_totalPages}";
@@ -114,37 +114,37 @@ namespace VinceApp.Pages
             }
         }
 
-        private void BtnSearch_Click(object sender, RoutedEventArgs e)
+        private async void BtnSearch_Click(object sender, RoutedEventArgs e)
         {
             _currentPage = 1;
-            LoadData();
+           await LoadDataAsync();
         }
 
-        private void BtnReset_Click(object sender, RoutedEventArgs e)
+        private async void BtnReset_Click(object sender, RoutedEventArgs e)
         {
             txtUserSearch.Text = "";
             dpFrom.SelectedDate = null;
             dpTo.SelectedDate = null;
             cmbAction.SelectedIndex = 0;
             _currentPage = 1;
-            LoadData();
+           await LoadDataAsync();
         }
 
-        private void BtnPrev_Click(object sender, RoutedEventArgs e)
+        private async void BtnPrev_Click(object sender, RoutedEventArgs e)
         {
             if (_currentPage > 1)
             {
                 _currentPage--;
-                LoadData();
+                await LoadDataAsync();
             }
         }
 
-        private void BtnNext_Click(object sender, RoutedEventArgs e)
+        private async void BtnNext_Click(object sender, RoutedEventArgs e)
         {
             if (_currentPage < _totalPages)
             {
                 _currentPage++;
-                LoadData();
+               await LoadDataAsync();
             }
         }
 
@@ -227,6 +227,11 @@ namespace VinceApp.Pages
             {
                 return json;
             }
+        }
+
+        private async void Page_Initialized(object sender, EventArgs e)
+        {
+           await LoadDataAsync();
         }
     }
 }

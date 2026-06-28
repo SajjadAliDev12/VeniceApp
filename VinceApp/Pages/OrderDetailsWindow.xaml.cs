@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic; // مهمة للقوائم
-using System.Drawing.Printing;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -12,121 +13,135 @@ namespace VinceApp
     public partial class OrderDetailsWindow : Window
     {
         private int _orderId;
+
         public OrderDetailsWindow(int orderId)
         {
             InitializeComponent();
-            LoadDetails(orderId);
             _orderId = orderId;
+
+            // ✅ الحل الصحيح: استدعاء الدالة عند تحميل النافذة على الـ UI Thread
+            this.Loaded += async (s, e) => await LoadDetailsAsync(_orderId);
         }
 
-        private void LoadDetails(int orderId)
+        // ✅ تم تحويل الدالة إلى Task لتكون غير متزامنة بشكل صحيح
+        private async Task LoadDetailsAsync(int orderId)
         {
-            using (var context = new VinceSweetsDbContext())
+            try
             {
-                var order = context.Orders.Find(orderId);
-                if (order != null)
+                using (var context = new VinceSweetsDbContext())
                 {
-                    txtTitle.Text = $"فاتورة رقم #{order.OrderNumber}";
-                    txtDate.Text = $"التاريخ: {order.OrderDate:yyyy/MM/dd hh:mm tt}";
+                    // ✅ استخدام FindAsync و AsNoTracking لتسريع الأداء (لأننا للعرض فقط)
+                    var order = await context.Orders.FindAsync(orderId);
 
-                    // معالجة حالة الإلغاء
-                    if (order.isDeleted)
+                    if (order != null)
                     {
-                        txtTitle.Text += " (ملغاة ❌)";
-                        txtTitle.Foreground = Brushes.Red;
-                    }
-                    else
-                    {
-                        txtTitle.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3E2723"));
-                    }
+                        txtTitle.Text = $"فاتورة رقم #{order.OrderNumber}";
+                        txtDate.Text = $"التاريخ: {order.OrderDate:yyyy/MM/dd hh:mm tt}";
 
-                    // نوع الطلب (صالة / سفري)
-                    if (order.TableId != null)
-                    {
-                        txtOrderType.Text = "🍽️ طلب صالة";
-                        borderType.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224));
-                        txtOrderType.Foreground = new SolidColorBrush(Color.FromRgb(230, 81, 0));
-                    }
-                    else
-                    {
-                        txtOrderType.Text = "🛍️ سفري (Takeaway)";
-                        borderType.Background = new SolidColorBrush(Color.FromRgb(225, 245, 254));
-                        txtOrderType.Foreground = new SolidColorBrush(Color.FromRgb(1, 87, 155));
-                    }
-
-                    // ✅ إضافة: التحقق مما إذا كان الطلب ملحقاً
-                    if (order.ParentOrderId != null)
-                    {
-                        var parentOrderNum = context.Orders
-                            .Where(o => o.Id == order.ParentOrderId)
-                            .Select(o => o.OrderNumber)
-                            .FirstOrDefault();
-
-                        if (parentOrderNum > 0)
+                        // معالجة حالة الإلغاء
+                        if (order.isDeleted)
                         {
-                            txtOrderType.Text += $" - (ملحق للطلب #{parentOrderNum})";
+                            txtTitle.Text += " (ملغاة ❌)";
+                            txtTitle.Foreground = Brushes.Red;
                         }
-                    }
-
-                    // جلب التفاصيل
-                    var query = context.OrderDetails.Where(d => d.OrderId == orderId);
-                    if (!order.isDeleted)
-                    {
-                        query = query.Where(d => d.isDeleted == false);
-                    }
-
-                    List<InvoiceItem> itemList = query
-                        .Select(d => new InvoiceItem
+                        else
                         {
-                            ProductName = d.ProductName,
-                            Price = d.Price,
-                            Quantity = d.Quantity,
-                            Total = d.Price * d.Quantity,
-                            IsTotalRow = false,
-                            RowColor = "Black" // اللون الافتراضي للنصوص العادية
-                        })
-                        .ToList();
+                            txtTitle.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3E2723"));
+                        }
 
-                    // === الحسابات ===
+                        // نوع الطلب (صالة / سفري)
+                        if (order.TableId != null)
+                        {
+                            txtOrderType.Text = "🍽️ طلب صالة";
+                            borderType.Background = new SolidColorBrush(Color.FromRgb(255, 243, 224));
+                            txtOrderType.Foreground = new SolidColorBrush(Color.FromRgb(230, 81, 0));
+                        }
+                        else
+                        {
+                            txtOrderType.Text = "🛍️ سفري (Takeaway)";
+                            borderType.Background = new SolidColorBrush(Color.FromRgb(225, 245, 254));
+                            txtOrderType.Foreground = new SolidColorBrush(Color.FromRgb(1, 87, 155));
+                        }
 
-                    decimal subTotal = itemList.Sum(x => x.Total);
-                    decimal discount = order.DiscountAmount; // جلب الخصم
-                    decimal finalTotal = subTotal - discount;      // الصافي
+                        // التحقق مما إذا كان الطلب ملحقاً
+                        if (order.ParentOrderId != null)
+                        {
+                            var parentOrderNum = await context.Orders
+                                .Where(o => o.Id == order.ParentOrderId)
+                                .Select(o => o.OrderNumber)
+                                .FirstOrDefaultAsync();
 
-                    // 1. إضافة سطر المجموع الفرعي (إذا كان هناك خصم فقط)
-                    if (discount > 0)
-                    {
+                            if (parentOrderNum > 0)
+                            {
+                                txtOrderType.Text += $" - (ملحق للطلب #{parentOrderNum})";
+                            }
+                        }
+
+                        // جلب التفاصيل
+                        var query = context.OrderDetails
+                            .AsNoTracking()
+                            .Where(d => d.OrderId == orderId);
+
+                        if (!order.isDeleted)
+                        {
+                            query = query.Where(d => d.isDeleted == false);
+                        }
+
+                        List<InvoiceItem> itemList = await query
+                            .Select(d => new InvoiceItem
+                            {
+                                ProductName = d.ProductName,
+                                Price = d.Price,
+                                Quantity = d.Quantity,
+                                Total = d.Price * d.Quantity,
+                                IsTotalRow = false,
+                                RowColor = "Black"
+                            })
+                            .ToListAsync();
+
+                        // === الحسابات ===
+                        decimal? subTotal = itemList.Sum(x => x.Total);
+                        decimal? discount = order.DiscountAmount;
+                        decimal? finalTotal = subTotal - discount;
+
+                        if (discount > 0)
+                        {
+                            itemList.Add(new InvoiceItem
+                            {
+                                ProductName = "المجموع الفرعي",
+                                Total = subTotal,
+                                IsTotalRow = true,
+                                RowColor = "Gray"
+                            });
+
+                            itemList.Add(new InvoiceItem
+                            {
+                                ProductName = "قيمة الخصم",
+                                Total = -discount,
+                                IsTotalRow = true,
+                                RowColor = "#D32F2F"
+                            });
+                        }
+
                         itemList.Add(new InvoiceItem
                         {
-                            ProductName = "المجموع الفرعي",
-                            Total = subTotal,
+                            ProductName = (discount > 0) ? "الصافي النهائي" : "المجموع الكلي",
+                            Total = finalTotal,
                             IsTotalRow = true,
-                            RowColor = "Gray"
+                            RowColor = "#00695C"
                         });
 
-                        // 2. إضافة سطر الخصم
-                        itemList.Add(new InvoiceItem
-                        {
-                            ProductName = "قيمة الخصم",
-                            Total = -discount, // بالسالب للتوضيح
-                            IsTotalRow = true,
-                            RowColor = "#D32F2F" // أحمر
-                        });
+                        dgDetails.ItemsSource = itemList;
                     }
-
-                    // 3. إضافة سطر الصافي النهائي
-                    itemList.Add(new InvoiceItem
-                    {
-                        ProductName = (discount > 0) ? "الصافي النهائي" : "المجموع الكلي",
-                        Total = finalTotal,
-                        IsTotalRow = true,
-                        RowColor = "#00695C" // أخضر
-                    });
-
-                    dgDetails.ItemsSource = itemList;
                 }
             }
+            catch (System.Exception ex)
+            {
+                Serilog.Log.Error(ex, "Error loading order details");
+                ToastControl.Show("خطأ", "فشل تحميل تفاصيل الطلب", ToastControl.NotificationType.Error);
+            }
         }
+
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed)
@@ -134,25 +149,37 @@ namespace VinceApp
                 this.DragMove();
             }
         }
+
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            TicketPrinter ticketPrinter = new TicketPrinter();
-            ticketPrinter.Print(_orderId, false);
+            bool printed = false;
+
+            // ✅ إضافة using لمنع تسرب الذاكرة
+            using (var ticketPrinter = new TicketPrinter())
+            {  
+                printed = await Task.Run(() => ticketPrinter.Print(_orderId));
+            }
+
+            if (printed)
+            {
+                ToastControl.Show("تمت الطباعة", "تمت طباعة الوصل بنجاح", ToastControl.NotificationType.Success);
+            }
+            else
+            {
+                ToastControl.Show("لم تتم الطباعة", "فشل طباعة الوصل !", ToastControl.NotificationType.Error);
+            }
         }
     }
 
-    // كلاس مساعد لترتيب البيانات داخل الجدول
     public class InvoiceItem
     {
         public string ProductName { get; set; }
         public decimal? Price { get; set; }
         public int? Quantity { get; set; }
-        public decimal Total { get; set; }
+        public decimal? Total { get; set; }
         public bool IsTotalRow { get; set; }
-
-        // خاصية جديدة للتحكم بلون السطر (أحمر للخصم، أخضر للمجموع)
         public string RowColor { get; set; }
     }
 }

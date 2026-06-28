@@ -1,28 +1,33 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 using System.IO;
+using System.IO.Compression; // ✅ ضروري للضغط
 using System.Linq;
+using System.Threading.Tasks;
 using VinceApp.Data;
 using VinceApp.Data.Models;
+using VinceApp.Services.Cloud;
 
 namespace VinceApp.Services
 {
     public class BackupService
     {
-        public void BackupDatabase(string userSelectedPath)
+        // تم تحويل الدالة إلى Async Task لدعم العمليات غير المتزامنة
+        public async Task BackupDatabaseAsync(string userSelectedPath)
         {
             if (string.IsNullOrWhiteSpace(userSelectedPath))
                 throw new Exception("مسار الحفظ غير صالح.");
 
-            // ✅ تأكد أن مجلد الوجهة موجود (برنامجك يملك صلاحية إنشائه عادة)
+            // ✅ تأكد أن مجلد الوجهة موجود
             string destDir = Path.GetDirectoryName(userSelectedPath);
             if (string.IsNullOrWhiteSpace(destDir))
                 throw new Exception("مسار الحفظ غير صالح.");
 
             Directory.CreateDirectory(destDir);
 
-            // ✅ تحقق أن المسار قابل للكتابة قبل ما تتعب SQL
+            // ✅ تحقق أن المسار قابل للكتابة
             EnsureCanWriteFile(userSelectedPath);
 
             using (var context = new VinceSweetsDbContext())
@@ -30,51 +35,166 @@ namespace VinceApp.Services
                 var connection = context.Database.GetDbConnection();
                 string dbName = connection.Database;
 
-                // ✅ 1. نطلب من SQL Server مساره الافتراضي (الأكثر أماناً للخدمة)
+                // ✅ 1. نطلب من SQL Server مساره الافتراضي
                 string safeBackupFolder = GetSqlDefaultBackupPath(context);
 
-                // اسم ملف مؤقت
+                // اسم ملف مؤقت لعملية SQL
                 string tempFileName = $"Temp_{Guid.NewGuid()}.bak";
                 string tempFilePath = Path.Combine(safeBackupFolder, tempFileName);
 
                 try
                 {
-                    // ✅ تأكد أن خدمة SQL تقدر تكتب في هذا المجلد (فحص عملي)
+                    // ✅ تأكد أن خدمة SQL تقدر تكتب في هذا المجلد
                     EnsureSqlCanWriteToFolder(context, safeBackupFolder);
 
                     // ✅ 2. الحفظ في المجلد الآمن الخاص بالسيرفر
-                    // (ESCAPE) لأن BACKUP يتعامل مع single quotes
                     string sqlSafeTempPath = EscapeSqlPath(tempFilePath);
 
-                    var command =
-                        $"BACKUP DATABASE [{dbName}] TO DISK = '{sqlSafeTempPath}' WITH FORMAT, INIT, NAME = 'Full Backup', STATS = 10;";
+                    // استخدام Async هنا لتحسين الأداء
+                    var command = $"BACKUP DATABASE [{dbName}] TO DISK = '{sqlSafeTempPath}' WITH FORMAT, INIT, NAME = 'Full Backup', STATS = 10;";
+                    await context.Database.ExecuteSqlRawAsync(command);
 
-                    context.Database.ExecuteSqlRaw(command);
-
-                    // ✅ 3. نقل الملف لمكانك المختار (برنامجك بصلاحيات المستخدم)
+                    // ✅ 3. نقل الملف لمكانك المختار (الملف الأصلي .bak)
                     if (File.Exists(tempFilePath))
                     {
-                        // لضمان عدم بقاء ملف مقفول: افتحه قراءة ثم انسخه عبر Stream
                         CopyFileRobust(tempFilePath, userSelectedPath);
                     }
                     else
                     {
                         throw new Exception("تمت عملية النسخ ولكن لم يتم العثور على الملف في المسار المؤقت.");
                     }
+
+                    // ==========================================
+                    // ✅ 4. الضغط ثم الرفع السحابي ☁️📦
+                    // ==========================================
+
+                    // نحدد مسار ملف الـ Zip
+                    string zipFilePath = Path.ChangeExtension(userSelectedPath, ".zip");
+
+                    try
+                    {
+                        // أ) ضغط الملف
+                        if (File.Exists(zipFilePath)) File.Delete(zipFilePath);
+
+                        // إنشاء ملف Zip يحتوي على ملف الـ bak
+                        using (var zip = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
+                        {
+                            zip.CreateEntryFromFile(userSelectedPath, Path.GetFileName(userSelectedPath));
+                        }
+
+                        // ب) رفع الملف المضغوط بدلاً من الأصلي
+                        await TryUploadToCloudAsync(context, zipFilePath);
+                    }
+                    catch (Exception zipEx)
+                    {
+                        // نسجل الخطأ ولكن لا نوقف العملية لأن النسخة المحلية نجحت
+                        Log.Error(zipEx, "فشل في عملية الضغط أو الرفع السحابي");
+                        // يمكنك تفعيل السطر التالي إذا أردت إظهار رسالة خطأ للمستخدم رغم نجاح النسخ المحلي
+                        // throw new Exception($"تم الحفظ محلياً، ولكن فشل الرفع: {zipEx.Message}");
+                    }
+                    finally
+                    {
+                        // ج) تنظيف: نحذف ملف الـ Zip المؤقت بعد الرفع
+                        try
+                        {
+                            if (File.Exists(zipFilePath)) File.Delete(zipFilePath);
+                        }
+                        catch { /* تجاهل أخطاء الحذف */ }
+                    }
+
+                    // ==========================================
+                    // ✅ 5. (جديد) تنظيف النسخ المحلية بذكاء 🧹
+                    // ==========================================
+                    try
+                    {
+                        // نستخرج بداية الاسم لمعرفة هل هو تلقائي أم يدوي
+                        string fileName = Path.GetFileName(userSelectedPath);
+                        string prefix = fileName.Split('_')[0]; // AutoBackup OR VeniceSweets
+
+                        // نكون نمط البحث: "AutoBackup_*.bak"
+                        string pattern = $"{prefix}_*.bak";
+
+                        // التلقائي نبقي 5 نسخ، اليدوي نبقي 10
+                        int keepCount = prefix.Contains("Auto") ? 5 : 10;
+
+                        CleanupLocalBackups(destDir, pattern, keepCount);
+                    }
+                    catch (Exception cleanEx)
+                    {
+                        Log.Error(cleanEx, "Error during local cleanup logic");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception($"خطأ أثناء النسخ: {ex.Message}");
+                    throw new Exception(ex.Message);
                 }
                 finally
                 {
-                    // ✅ 4. تنظيف الملف المؤقت
+                    // ✅ 6. تنظيف الملف المؤقت الخاص بـ SQL
                     try
                     {
                         if (File.Exists(tempFilePath)) File.Delete(tempFilePath);
                     }
                     catch { /* تجاهل أخطاء الحذف */ }
                 }
+            }
+        }
+
+        // دالة لفحص الإعدادات والرفع والتنظيف السحابي
+        private async Task TryUploadToCloudAsync(VinceSweetsDbContext context, string filePath)
+        {
+            try
+            {
+                var settings = await context.AppSettings.FirstOrDefaultAsync();
+
+                if (settings != null &&
+                    settings.AutoCloudBackup &&
+                    settings.CloudBackupProvider == "Google Drive" &&
+                    !string.IsNullOrEmpty(settings.CloudRefreshToken))
+                {
+                    var driveService = new GoogleDriveService();
+
+                    // 1. الرفع
+                    await driveService.UploadBackupAsync(filePath, settings.CloudRefreshToken);
+
+                    // 2. التنظيف السحابي (نبقي آخر 5 نسخ)
+                    await driveService.CleanupOldBackupsAsync(settings.CloudRefreshToken, 5);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "فشل الرفع السحابي التلقائي");
+                throw;
+            }
+        }
+
+        // دالة تنظيف النسخ المحلية (محدثة لتقبل النمط)
+        private void CleanupLocalBackups(string directoryPath, string searchPattern, int maxBackupsToKeep)
+        {
+            try
+            {
+                var dir = new DirectoryInfo(directoryPath);
+                if (!dir.Exists) return;
+
+                // البحث باستخدام النمط المرسل
+                var files = dir.GetFiles(searchPattern)
+                               .OrderByDescending(f => f.CreationTime) // الأحدث أولاً
+                               .Skip(maxBackupsToKeep) // تخطى العدد المطلوب
+                               .ToList();
+
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        file.Delete();
+                        Log.Information($"Deleted old local backup: {file.Name}");
+                    }
+                    catch { /* تجاهل */ }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error cleaning up local backups");
             }
         }
 
@@ -86,7 +206,6 @@ namespace VinceApp.Services
             if (!File.Exists(backupFilePath))
                 throw new Exception("ملف النسخة الاحتياطية غير موجود.");
 
-            // ✅ تأكد أن البرنامج يقدر يقرأ الملف (قبل ما نروح للـ SQL)
             EnsureCanReadFile(backupFilePath);
 
             string currentConnString = "";
@@ -108,25 +227,19 @@ namespace VinceApp.Services
             {
                 connection.Open();
 
-                // ✅ مهم: SQL Server هو اللي لازم يقرأ ملف الـ .bak
-                // لذلك نحتاج أن يكون الملف في مسار يستطيع SQL الوصول إليه.
-                // أبسط حل بدون تغييرات جذرية: ننقل ملف المستخدم مؤقتاً لمجلد SQL الآمن ثم نعمل Restore منه.
                 using (var context = new VinceSweetsDbContext())
                 {
                     string safeFolder = GetSqlDefaultBackupPath(context);
-                    EnsureSqlCanWriteToFolder(context, safeFolder); // إذا يكتب، غالباً يقرأ أيضاً
+                    EnsureSqlCanWriteToFolder(context, safeFolder);
 
                     string tempName = $"Restore_{Guid.NewGuid()}.bak";
                     string serverBakPath = Path.Combine(safeFolder, tempName);
 
                     try
                     {
-                        // انقل نسخة للـ Server folder (برنامجك يقرأ من مسار المستخدم ويكتب للمجلد الآمن)
                         CopyFileRobust(backupFilePath, serverBakPath);
 
                         string sqlSafeBakPath = EscapeSqlPath(serverBakPath);
-
-                        // ✅ حماية من quotes في اسم قاعدة البيانات (أقل احتمال، بس نؤمّن)
                         string safeDbName = targetDbName.Replace("]", "]]");
 
                         string sql = $@"
@@ -151,7 +264,6 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
                     }
                     finally
                     {
-                        // تنظيف نسخة السيرفر
                         try
                         {
                             if (File.Exists(serverBakPath)) File.Delete(serverBakPath);
@@ -164,7 +276,6 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
 
         // ================= Helpers =================
 
-        // جلب مسار الباك اب الافتراضي لخدمة SQL
         private string GetSqlDefaultBackupPath(VinceSweetsDbContext context)
         {
             try
@@ -183,14 +294,11 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
                 if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
                     return path;
 
-                // خطة بديلة: ProgramData غالباً متاح للخدمات
                 string publicPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
                 return publicPath;
             }
             catch
             {
-                // أسوأ الاحتمالات: لا نرجع C:\ مباشرة (صلاحيات خطرة/قد تفشل)
-                // نرجع ProgramData كخيار أكثر منطقية
                 return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
             }
             finally
@@ -199,7 +307,6 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
             }
         }
 
-        // فحص عملي: هل SQL Server قادر يكتب في المجلد (بدون الاعتماد على التخمين)
         private void EnsureSqlCanWriteToFolder(VinceSweetsDbContext context, string folderPath)
         {
             if (string.IsNullOrWhiteSpace(folderPath))
@@ -209,11 +316,9 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
                 throw new Exception("مجلد السيرفر غير موجود.");
 
             string testFile = Path.Combine(folderPath, $"_perm_{Guid.NewGuid()}.tmp");
-            string sqlSafeTestFile = EscapeSqlPath(testFile);
 
             try
             {
-                
                 using (var fs = new FileStream(testFile, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
                 {
                     fs.WriteByte(0);
@@ -231,7 +336,6 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
             {
                 using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    // مجرد فتح/إغلاق
                 }
             }
             catch (Exception ex)
@@ -244,10 +348,8 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
         {
             try
             {
-                // افتح أو أنشئ ثم اغلق فوراً
                 using (var fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
                 {
-                    // لا تكتب شيء لتجنب تغيير الملف إذا كان موجوداً
                 }
             }
             catch (Exception ex)
@@ -258,7 +360,6 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
 
         private void CopyFileRobust(string source, string destination)
         {
-            // نسخ عبر streams لتقليل مشاكل القفل/المشاركة
             using (var src = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var dst = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.Read))
             {
@@ -268,7 +369,6 @@ ALTER DATABASE [{safeDbName}] SET MULTI_USER;";
 
         private string EscapeSqlPath(string path)
         {
-            // SQL string literal escape for single quotes
             return (path ?? "").Replace("'", "''");
         }
 

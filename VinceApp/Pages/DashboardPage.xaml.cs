@@ -21,7 +21,6 @@ namespace VinceApp.Pages
         {
             try
             {
-                // تصحيح 2: فصل العمليات الحسابية
                 var stats = await Task.Run(async () =>
                 {
                     using var context = new VinceSweetsDbContext();
@@ -31,44 +30,48 @@ namespace VinceApp.Pages
                     DateTime startOfWeek = today.AddDays(-7);
                     DateTime startOfMonth = new DateTime(now.Year, now.Month, 1);
                     DateTime startOfYear = new DateTime(now.Year, 1, 1);
-                    var daily = await context.Orders
-                        .Where(o => o.OrderDate >= today && !o.isDeleted && o.isPaid)
-                        .SumAsync(o => (o.TotalAmount ?? 0) - o.DiscountAmount);
 
-                    var weekly = await context.Orders
-                        .Where(o => o.OrderDate >= startOfWeek && !o.isDeleted && o.isPaid)
-                        .SumAsync(o => (o.TotalAmount ?? 0) - o.DiscountAmount);
-
-                    var monthly = await context.Orders
-                        .Where(o => o.OrderDate >= startOfMonth && !o.isDeleted && o.isPaid)
-                        .SumAsync(o => (o.TotalAmount ?? 0) - o.DiscountAmount);
-
-                    var yearly = await context.Orders
+                    // 1. حساب جميع الإحصائيات (يومي، أسبوعي، شهري، سنوي) في استعلام واحد
+                    // قلصنا البحث ليبدأ من بداية السنة فقط لتسريع الفحص
+                    var salesStats = await context.Orders
+                        .AsNoTracking()
                         .Where(o => o.OrderDate >= startOfYear && !o.isDeleted && o.isPaid)
-                        .SumAsync(o => (o.TotalAmount ?? 0) - o.DiscountAmount);
+                        .GroupBy(x => 1) // تجميع كل النتائج في مجموعة واحدة
+                        .Select(g => new
+                        {
+                            Yearly = g.Sum(o => (o.TotalAmount ?? 0) - o.DiscountAmount),
+                            Monthly = g.Sum(o => o.OrderDate >= startOfMonth ? ((o.TotalAmount ?? 0) - o.DiscountAmount) : 0),
+                            Weekly = g.Sum(o => o.OrderDate >= startOfWeek ? ((o.TotalAmount ?? 0) - o.DiscountAmount) : 0),
+                            Daily = g.Sum(o => o.OrderDate >= today ? ((o.TotalAmount ?? 0) - o.DiscountAmount) : 0)
+                        })
+                        .FirstOrDefaultAsync();
 
-                    var bestSellers = await (from od in context.OrderDetails
-                                             join o in context.Orders on od.OrderId equals o.Id
-                                             where !od.isDeleted && !o.isDeleted && o.isPaid == true
-                                             select new
-                                             {
-                                                 od.ProductName,
-                                                 od.Quantity,
-                                                 RowTotal = od.Quantity * od.Price
-                                             })
-                                      .GroupBy(x => x.ProductName)
-                                      .Select(g => new
-                                      {
-                                          ProductName = g.Key,
-                                          Quantity = g.Sum(x => x.Quantity),
-                                          TotalAmount = g.Sum(x => x.RowTotal)
-                                      })
-                                      .OrderByDescending(x => x.Quantity)
-                                      .Take(5)
-                                      .ToListAsync();
+                    // 2. استعلام المنتجات الأكثر مبيعاً (مبسط وأسرع)
+                    var bestSellers = await context.OrderDetails
+                        .AsNoTracking()
+                        // استخدام Navigation Property (od.Order) بدلاً من الـ join اليدوي
+                        .Where(od => !od.isDeleted && !od.Order.isDeleted && od.Order.isPaid)
+                        .GroupBy(x => x.ProductName)
+                        .Select(g => new
+                        {
+                            ProductName = g.Key,
+                            Quantity = g.Sum(x => x.Quantity),
+                            TotalAmount = g.Sum(x => x.Quantity * x.Price)
+                        })
+                        .OrderByDescending(x => x.Quantity)
+                        .Take(5)
+                        .ToListAsync();
 
-                    return (Daily: daily, Weekly: weekly, Monthly: monthly, Yearly: yearly, BestSellers: bestSellers);
+                    return new
+                    {
+                        Daily = salesStats?.Daily ?? 0,
+                        Weekly = salesStats?.Weekly ?? 0,
+                        Monthly = salesStats?.Monthly ?? 0,
+                        Yearly = salesStats?.Yearly ?? 0,
+                        BestSellers = bestSellers
+                    };
                 });
+
                 txtDailySales.Text = $"{stats.Daily:N0} د.ع";
                 txtWeeklySales.Text = $"{stats.Weekly:N0} د.ع";
                 txtMonthlySales.Text = $"{stats.Monthly:N0} د.ع";

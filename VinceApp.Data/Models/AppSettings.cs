@@ -33,5 +33,10 @@ namespace VinceApp.Data.Models
         public string PrinterName { get; set; } = "Default";// اسم الطابعة الافتراضية
 
         public bool PrintReceiptAfterSave { get; set; } = true;
+        public string? CloudBackupProvider { get; set; } // "GoogleDrive" or "OneDrive"
+        public string? CloudRefreshToken { get; set; }   // التوكن طويل الأمد
+        public string? CloudUserEmail { get; set; }      // لعرض اسم الحساب المتصل
+        public bool AutoCloudBackup { get; set; }        // تفعيل/تعطيل
+        public int BackupFrequencyHours { get; set; }    // كل كم ساعة (اختياري)
     }
 }

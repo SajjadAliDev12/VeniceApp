@@ -1,6 +1,8 @@
-﻿using Serilog;
+﻿using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,20 +15,32 @@ namespace VinceApp.Pages
     {
         // متغير لتخزين معرف الطاولة التي يتم تعديلها (0 = وضع إضافة جديد)
         private int _editingId = 0;
+        private bool _isLoaded = false;
 
         public TablesPage()
         {
             InitializeComponent();
-            LoadTables();
+
+            // استدعاء التحميل في حدث Loaded أفضل من الـ Constructor
+            this.Loaded += async (s, e) =>
+            {
+                if (_isLoaded) return;
+                _isLoaded = true;
+                await LoadTablesAsync();
+            };
         }
 
-        private void LoadTables()
+        private async Task LoadTablesAsync()
         {
             try
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    dgTables.ItemsSource = context.RestaurantTables.OrderBy(t => t.TableNumber).ToList();
+                    // AsNoTracking لأننا نعرض البيانات فقط
+                    dgTables.ItemsSource = await context.RestaurantTables
+                        .AsNoTracking()
+                        .OrderBy(t => t.TableNumber)
+                        .ToListAsync();
                 }
             }
             catch (Exception ex)
@@ -36,13 +50,11 @@ namespace VinceApp.Pages
             }
         }
 
-        // هذا الزر يعمل للإضافة وللحفظ بعد التعديل
-        private void SaveTable_Click(object sender, RoutedEventArgs e)
+        private async void SaveTable_Click(object sender, RoutedEventArgs e)
         {
             string numberStr = txtTableNumber.Text.Trim();
             string name = txtTableName.Text.Trim();
 
-            // التحقق من الإدخال
             if (string.IsNullOrEmpty(numberStr) || !int.TryParse(numberStr, out int tableNumber))
             {
                 ToastControl.Show("معلومات", "يرجى إدخال رقم طاولة صحيح (أرقام فقط).", ToastControl.NotificationType.Error);
@@ -53,88 +65,77 @@ namespace VinceApp.Pages
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    // التحقق من عدم تكرار رقم الطاولة (مع استثناء الطاولة الحالية في حالة التعديل)
-                    bool exists = context.RestaurantTables.Any(t => t.TableNumber == tableNumber && t.Id != _editingId);
+                    // التحقق غير المتزامن
+                    bool exists = await context.RestaurantTables.AnyAsync(t => t.TableNumber == tableNumber && t.Id != _editingId);
                     if (exists)
                     {
                         ToastControl.Show("معلومات", $"رقم الطاولة {tableNumber} مستخدم بالفعل!", ToastControl.NotificationType.Error);
-                        
                         return;
                     }
 
                     if (_editingId == 0)
                     {
-                        // === حالة إضافة جديدة ===
+                        // إضافة جديدة
                         var newTable = new RestaurantTable
                         {
                             TableNumber = tableNumber,
                             TableName = name,
                             Status = 0
                         };
-                        context.RestaurantTables.Add(newTable);
-                        
+                        await context.RestaurantTables.AddAsync(newTable);
                         ToastControl.Show("معلومات", "تمت الإضافة بنجاح", ToastControl.NotificationType.Success);
                     }
                     else
                     {
-                        // === حالة حفظ التعديل ===
-                        var tableToEdit = context.RestaurantTables.Find(_editingId);
+                        // تعديل (استخدام FindAsync)
+                        var tableToEdit = await context.RestaurantTables.FindAsync(_editingId);
                         if (tableToEdit != null)
                         {
                             tableToEdit.TableNumber = tableNumber;
                             tableToEdit.TableName = name;
-                            // لا نعدل الـ Status هنا
                         }
                         ToastControl.Show("معلومات", "تم تعديل البيانات بنجاح", ToastControl.NotificationType.Success);
-                        
                     }
 
-                    context.SaveChanges();
-                    ResetForm(); // تنظيف الحقول والعودة للوضع الافتراضي
-                    LoadTables(); // تحديث الجدول
+                    await context.SaveChangesAsync();
+
+                    ResetForm();
+                    await LoadTablesAsync();
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "error with tables page saving");
                 ToastControl.Show("معلومات", "فشل حفظ الطاولة", ToastControl.NotificationType.Error);
-                
             }
         }
 
-        // حدث عند الضغط على زر القلم (تعديل)
-        private void EditTable_Click(object sender, RoutedEventArgs e)
+        private async void EditTable_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
                 using (var context = new VinceSweetsDbContext())
                 {
-                    var table = context.RestaurantTables.Find(id);
+                    var table = await context.RestaurantTables.FindAsync(id);
                     if (table != null)
                     {
-                        // تعبئة البيانات في الحقول
                         txtTableNumber.Text = table.TableNumber.ToString();
                         txtTableName.Text = table.TableName;
-
-                        // تفعيل وضع التعديل
                         _editingId = id;
 
-                        // تغيير شكل الزر ليدل على التعديل
                         btnSave.Content = "💾 حفظ التعديل";
-                        btnSave.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0)); // لون برتقالي
-                        btnCancel.Visibility = Visibility.Visible; // إظهار زر الإلغاء
+                        btnSave.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                        btnCancel.Visibility = Visibility.Visible;
                     }
                 }
             }
         }
 
-        // زر إلغاء التعديل
         private void CancelEdit_Click(object sender, RoutedEventArgs e)
         {
             ResetForm();
         }
 
-        // دالة لإعادة الصفحة للوضع الافتراضي
         private void ResetForm()
         {
             txtTableNumber.Clear();
@@ -142,7 +143,7 @@ namespace VinceApp.Pages
             _editingId = 0;
 
             btnSave.Content = "➕ إضافة";
-            btnSave.Background = new SolidColorBrush(Color.FromRgb(76, 175, 80)); // العودة للأخضر
+            btnSave.Background = new SolidColorBrush(Color.FromRgb(76, 175, 80));
             btnCancel.Visibility = Visibility.Collapsed;
         }
 
@@ -160,7 +161,7 @@ namespace VinceApp.Pages
                         {
                             using (var context = new VinceSweetsDbContext())
                             {
-                                var table = context.RestaurantTables.Find(id);
+                                var table = await context.RestaurantTables.FindAsync(id);
                                 if (table != null)
                                 {
                                     if (table.Status != 0)
@@ -170,12 +171,11 @@ namespace VinceApp.Pages
                                     }
 
                                     context.RestaurantTables.Remove(table);
-                                    context.SaveChanges();
+                                    await context.SaveChangesAsync();
 
-                                    // إذا كنا نعدل نفس الطاولة التي قمنا بحذفها، يجب تصفية الحقول
                                     if (_editingId == id) ResetForm();
 
-                                    LoadTables();
+                                    await LoadTablesAsync();
                                 }
                             }
                         }

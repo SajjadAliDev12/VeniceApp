@@ -333,7 +333,68 @@
                                         </Grid>
                                     </StackPanel>
                                 </GroupBox>
+                                <GroupBox Header="النسخ السحابي (Cloud Backup)" Style="{StaticResource CardGroupStyle}">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="15"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
 
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="مزد الخدمة:" Style="{StaticResource SectionTitleStyle}"/>
+                                                <ComboBox x:Name="cmbCloudProvider" Style="{StaticResource InputComboStyle}">
+                                                    <ComboBoxItem Content="Google Drive"/>
+                                                    <ComboBoxItem Content="Microsoft OneDrive"/>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                                                <Button x:Name="btnConnectCloud" 
+                        Content="🔗 ربط الحساب" 
+                        Background="#1976D2" 
+                        Style="{StaticResource TouchButtonStyle}" 
+                        Height="42"
+                        Click="BtnConnectCloud_Click"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Border Background="#E3F2FD" BorderBrush="#BBDEFB" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,15">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="الحالة: " FontWeight="Bold" Foreground="#0D47A1"/>
+                                                <TextBlock x:Name="txtCloudStatus" Text="غير متصل" Foreground="#546E7A"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <CheckBox x:Name="chkAutoCloudBackup" 
+          Content="رفع نسخة احتياطية تلقائياً عند الإغلاق"
+          FontSize="14" FontWeight="SemiBold"
+          Foreground="#455A64" Margin="0,0,0,15"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button Grid.Column="0"
+            Content="📥 إنشاء نسخة احتياطية" 
+            Background="#00897B" 
+            Style="{StaticResource TouchButtonStyle}" 
+            Width="200"
+            Click="Backup_Click"/>
+
+                                            <Button Grid.Column="2"
+            Content="حفظ إعدادات السحابة" 
+            Background="{StaticResource PrimaryColor}" 
+            Style="{StaticResource TouchButtonStyle}" 
+            Width="180"
+            Click="SaveCloudSettings_Click"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </GroupBox>
                                 <GroupBox Header="إعدادات البريد (SMTP)" Style="{StaticResource CardGroupStyle}">
                                     <StackPanel>
                                         <Grid>
@@ -408,8 +469,17 @@
                                 <GroupBox Header="إعدادات الطباعة" Style="{StaticResource CardGroupStyle}">
                                     <StackPanel>
                                         <TextBlock Text="الطابعة الافتراضية للفواتير:" Style="{StaticResource SectionTitleStyle}"/>
-                                        <ComboBox x:Name="cmbPrinters" Style="{StaticResource InputComboStyle}" Margin="0,0,0,15"/>
-
+                                        <ComboBox x:Name="cmbPrinters" Style="{StaticResource InputComboStyle}" Margin="0,0,0,15">
+                                        <ComboBoxItem Content="لا يوجد" Tag="0"/>
+                                        </ComboBox>
+                                        <TextBlock Text="طابعة المطبخ:" Style="{StaticResource SectionTitleStyle}"/>
+                                        <ComboBox x:Name="cmbKitchinPrinters" Style="{StaticResource InputComboStyle}" Margin="0,0,0,15">
+                                            <ComboBoxItem Content="لا يوجد" Tag="0"/>
+                                        </ComboBox>
+                                        <TextBlock Text="طابعة الآيس كريم:" Style="{StaticResource SectionTitleStyle}"/>
+                                        <ComboBox x:Name="cmbIceCreamPrinters" Style="{StaticResource InputComboStyle}" Margin="0,0,0,15">
+                                        <ComboBoxItem Content="لا يوجد" Tag="0"/>
+                                        </ComboBox>
                                         <Border Background="#FAFAFA"
                                                 CornerRadius="10"
                                                 BorderBrush="#EEEEEE"

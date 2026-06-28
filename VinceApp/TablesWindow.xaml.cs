@@ -30,15 +30,18 @@ namespace VinceApp
             InitializeComponent();
             ToastControl.Show("Welcome", $"تم تسجيل الدخول بأسم : {CurrentUser.FullName}", ToastControl.NotificationType.Success);
         }
-
+        public class BusyTable
+        {
+            public int? tableID { get; set; }
+            public decimal? TotalPrice { get; set; }
+        }
         private async Task LoadTables()
         {
             if (_isLoading) return;
             _isLoading = true;
 
             TablesPanel.Children.Clear();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+           
             if (TakeawayPanel != null) TakeawayPanel.Children.Clear();
 
             try
@@ -53,7 +56,11 @@ namespace VinceApp
                     // ✅ 1) الطاولات المشغولة
                     var busyTableIds = await context.Orders
                         .Where(o => o.TableId != null && !o.isPaid && !o.isServed && !o.isDeleted)
-                        .Select(o => o.TableId!.Value)
+                        .Select(o => new BusyTable
+                        {
+                            tableID = o.TableId,
+                            TotalPrice = o.TotalAmount,
+                        } )
                         .Distinct()
                         .ToListAsync();
 
@@ -61,17 +68,21 @@ namespace VinceApp
                     var paidTableIds = await context.Orders
                         .Where(o => o.TableId != null && o.isPaid && !o.isDeleted && !o.isDone)
                         .GroupBy(o => o.TableId!.Value)
-                        .Select(g => g.Key)
+                        .Select(g => new BusyTable
+                        {
+                            tableID = g.Key,
+                            TotalPrice =g.Sum(x => x.TotalAmount)
+                        })
                         .ToListAsync();
 
-                    var busySet = busyTableIds.ToHashSet();
-                    var paidSet = paidTableIds.ToHashSet();
+                    var busySet = busyTableIds.ToDictionary(x => x.tableID,x=> x.TotalPrice);
+                    var paidSet = paidTableIds.ToDictionary(x => x.tableID,x=> x.TotalPrice);
 
                     foreach (var table in tables)
                     {
                         int computedStatus =
-                            busySet.Contains(table.Id) ? TABLE_BUSY :
-                            paidSet.Contains(table.Id) ? TABLE_PAID :
+                            busySet.ContainsKey(table.Id) ? TABLE_BUSY :
+                            paidSet.ContainsKey(table.Id) ? TABLE_PAID :
                             TABLE_FREE;
 
                         // تحديث الحالة لضمان عمل الكليك بشكل صحيح
@@ -79,8 +90,8 @@ namespace VinceApp
 
                         Button btnTable = new Button
                         {
-                            Width = 180,
-                            Height = 160,
+                            Width = 220,
+                            Height = 200,
                             Margin = new Thickness(8),
                             Tag = table,
                             Cursor = Cursors.Hand,
@@ -108,6 +119,7 @@ namespace VinceApp
                         var txtIcon = new TextBlock { FontSize = 30, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 5) };
                         var txtNumber = new TextBlock { Text = $"طاولة {table.TableNumber}", FontSize = 18, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
                         var txtStatus = new TextBlock { FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
+                        var txtPrice = new TextBlock {FontSize = 16,FontWeight = FontWeights.Bold,HorizontalAlignment = HorizontalAlignment.Center,Margin = new Thickness(0, 5, 0, 0)};
 
                         // --- الألوان والحالات (عاد للطبيعي بدون ذكر الملحق) ---
                         if (computedStatus == TABLE_FREE)
@@ -125,6 +137,7 @@ namespace VinceApp
                             txtStatus.Text = "(مشغولة)";
                             txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(229, 57, 53));
                             txtNumber.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40));
+                            txtPrice.Text = $"{busySet[table.Id]:N0} د.ع";
                         }
                         else // TABLE_PAID
                         {
@@ -133,11 +146,14 @@ namespace VinceApp
                             txtStatus.Text = "(مدفوع)";
                             txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(239, 108, 0));
                             txtNumber.Foreground = new SolidColorBrush(Color.FromRgb(239, 108, 0));
+                            txtPrice.Text = $"{paidSet[table.Id]:N0} د.ع";
                         }
 
                         stack.Children.Add(txtIcon);
                         stack.Children.Add(txtNumber);
                         stack.Children.Add(txtStatus);
+                        if (computedStatus != TABLE_FREE)
+                            stack.Children.Add(txtPrice);
                         btnTable.Content = stack;
 
                         TablesPanel.Children.Add(btnTable);
@@ -205,6 +221,7 @@ namespace VinceApp
 
                             var infoStack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
                             infoStack.Children.Add(new TextBlock { Text = $"#{order.OrderNumber} {statusText}", FontWeight = FontWeights.Bold, FontSize = 20, Foreground = Brushes.Black, Margin = new Thickness(0, 0, 10, 0) });
+                            infoStack.Children.Add(new TextBlock{Text = $"{order.TotalAmount:N0} د.ع",FontWeight = FontWeights.Bold,FontSize = 18,Foreground = Brushes.DarkGreen,Margin = new Thickness(0, 0, 10, 0)});
                             infoStack.Children.Add(new TextBlock { Text = statusIcon, FontSize = 18, VerticalAlignment = VerticalAlignment.Center });
 
                             var timeBlock = new TextBlock
@@ -365,7 +382,7 @@ namespace VinceApp
 
                             if (paidOrder != null)
                             {
-                                OpenCashierWindow(paidOrder.Id, table.Id, table.TableName, null);
+                                await OpenCashierWindow(paidOrder.Id, table.Id, table.TableName, null);
                             }
                             else
                             {
@@ -479,7 +496,7 @@ namespace VinceApp
                     }
                 }
 
-                OpenCashierWindow(orderId, table.Id, table.TableName, _ParentOrderID);
+                await OpenCashierWindow(orderId, table.Id, table.TableName, _ParentOrderID);
             }
             catch (Exception ex)
             {
@@ -528,7 +545,7 @@ namespace VinceApp
                     orderId = newOrder.Id;
                 }
 
-                OpenCashierWindow(orderId, null, null, null);
+                await OpenCashierWindow(orderId, null, null, null);
             }
             catch (Exception ex)
             {
@@ -546,11 +563,46 @@ namespace VinceApp
         {
             await LoadTables();
         }
-
+        private bool _isRealExit = false;
         private async void ExitButton_Click(object sender, RoutedEventArgs e)
         {
-            if(await MyConfirmDialog.ShowAsync("خروج","هل تود اغلاق البرنامج؟"))
-            Application.Current.Shutdown();
+            // 1. طلب التأكيد
+            if (await MyConfirmDialog.ShowAsync("خروج", "هل تود اغلاق البرنامج؟"))
+            {
+                try
+                {
+                    // ✅ التحقق الذكي: هل توجد نسخة تلقائية لهذا اليوم؟
+                    string docsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                    string backupFolder = System.IO.Path.Combine(docsPath, "VinceApp_AutoBackups");
+                    string todayPattern = $"AutoBackup_{DateTime.Now:yyyyMMdd}_*.bak";
+
+                    // إذا المجلد موجود + فيه ملف بنفس تاريخ اليوم = لا داعي للنسخ
+                    if (System.IO.Directory.Exists(backupFolder) &&
+                        System.IO.Directory.GetFiles(backupFolder, todayPattern).Any())
+                    {
+                        // إغلاق فوري
+                        _isRealExit = true;
+                        Application.Current.Shutdown();
+                        return;
+                    }
+
+
+                    ShowLoading(true, "جاري النسخ الاحتياطي والرفع السحابي ...");
+
+                    var scheduler = new VinceApp.Services.AutoBackupScheduler();
+                    await scheduler.PerformAutoBackup();
+                }
+                catch (Exception ex)
+                {
+                    Serilog.Log.Error(ex, "فشل النسخ عند الإغلاق");
+                }
+                finally
+                {
+                    ShowLoading(false);
+                    _isRealExit = true;
+                    Application.Current.Shutdown();
+                }
+            }
         }
         private void OpenAdmin_Click(object sender, RoutedEventArgs e)
         {
@@ -565,9 +617,7 @@ namespace VinceApp
             admin.ShowDialog();
             ApplyPermissions();
         }
-        // ============================
-        // أدوات مساعدة
-        // ============================
+       
         private async Task OpenCashierWindow(int orderId, int? tableId, string? tableName, int? parentOrderId = null)
         {
             MainWindow cashier = null;
@@ -587,9 +637,12 @@ namespace VinceApp
             }
             finally
             {
-                // نضمن رجوع نافذة الطاولات حتى لو صار استثناء
-                this.Show();
-                this.Activate();
+                cashier = null;
+
+                
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
                 await Task.Delay(100);
                 await LoadTables();
             }
@@ -615,8 +668,7 @@ namespace VinceApp
             if (_initialized) return;
             _initialized = true;
 
-            AutoUpdater.RunUpdateAsAdmin = true;
-            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/update.xml");
+            
             try
             {
                 ShowLoading(true, "جاري تحميل الطاولات...");
@@ -634,7 +686,11 @@ namespace VinceApp
             finally
             {
                 ShowLoading(false);
+                
             }
+
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.Start("https://raw.githubusercontent.com/SajjadAliDev12/VeniceApp/refs/heads/main/update.xml");
         }
 
 
@@ -645,7 +701,7 @@ namespace VinceApp
             // ربط حدث التنبيهات
             settingPage.OnNotificationReqested += (title, body) =>
             {
-                ToastControl.Show(title, body, ToastControl.NotificationType.Info);
+                ToastControl.Show(title, body, ToastControl.NotificationType.Success);
             };
 
             Window window = new Window

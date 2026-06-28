@@ -1,0 +1,213 @@
+﻿@page "/"
+@page "/index"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using Venice.Admin.Models
+@inject Venice.Admin.Services.ReportsApi ReportsApi
+
+@* نستخدم Scoped CSS هنا لضمان أن هذه التنسيقات تنطبق فقط على هذه الصفحة
+    ولا تؤثر على باقي الموقع. هذا يطابق التصميم المطلوب بدقة.
+*@
+<style>
+    .dashboard-container {
+        padding: 20px;
+        max-width: 500px; /* عرض مناسب للموبايل والتابلت */
+        margin: 0 auto; /* توسيط في الشاشات الكبيرة */
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        /* لدعم العربية بشكل صحيح في العنوان */
+        direction: rtl;
+    }
+
+    .page-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #333;
+        margin: 0;
+    }
+
+    /* تنسيق حاوية الكروت لتكون فوق بعضها */
+    .cards-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 15px; /* المسافة بين الكروت */
+    }
+
+    /* التنسيق الأساسي للكارت */
+    .kpi-card {
+        border-radius: 15px; /* زوايا دائرية ناعمة */
+        padding: 25px 20px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+
+        .kpi-card:active {
+            transform: scale(0.98); /* تأثير بسيط عند الضغط */
+        }
+
+    /* الألوان المحددة حسب التصميم */
+    .card-blue {
+        background-color: #1976D2;
+    }
+    /* لون أزرق مشابه للصورة */
+    .card-green {
+        background-color: #388E3C;
+    }
+    /* لون أخضر مشابه للصورة */
+    .card-orange {
+        background-color: #F57C00;
+    }
+    /* لون برتقالي مشابه للصورة */
+
+    /* تنسيق النصوص داخل الكارت */
+    .card-label {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    .card-value-box {
+        font-size: 2.2rem;
+        font-weight: 800;
+        /* لضمان ظهور الأرقام والعملة بشكل صحيح حتى لو الواجهة عربية */
+        direction: ltr;
+        display: inline-block;
+    }
+
+    .currency {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-right: 5px; /* مسافة صغيرة بين العملة والرقم */
+    }
+
+    /* زر التحديث */
+    .btn-refresh {
+        background: none;
+        border: 1px solid #ccc;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: #555;
+    }
+
+        .btn-refresh:hover:not(:disabled) {
+            background-color: #f0f0f0;
+        }
+
+        .btn-refresh:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+    /* حالات التحميل والخطأ */
+    .state-message {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+
+    .error-message {
+        color: #D32F2F;
+        font-weight: bold;
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="header-section">
+        <h2 class="page-title">لوحة التحكم</h2>
+        <button class="btn-refresh" @onclick="Reload" disabled="@_loading">تحديث</button>
+    </div>
+
+    <div class="dashboard-body">
+        @if (_loading)
+        {
+            <div class="state-message">جارِ التحميل...</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="state-message error-message">
+                خطأ في تحميل البيانات: <br /> @_error
+            </div>
+        }
+        else if (_summary is null)
+        {
+            <div class="state-message">لا توجد بيانات لعرضها.</div>
+        }
+        else
+        {
+            <div class="cards-stack">
+
+                <div class="kpi-card card-blue">
+                    <div class="card-label">مبيعات اليوم</div>
+                    <div class="card-value-box">
+                        @Money(_summary.Today) <span class="currency">د.ع</span>
+                    </div>
+                    @* لقد قمت بإخفاء عدد الطلبات لمطابقة بساطة التصميم في الصورة. يمكنك إعادته إذا أردت *@
+                    @* <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 5px;">@_summary.TodayOrders طلبات</div> *@
+                </div>
+
+                <div class="kpi-card card-green">
+                    <div class="card-label">مبيعات الأسبوع</div>
+                    <div class="card-value-box">
+                        @Money(_summary.Week) <span class="currency">د.ع</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card card-orange">
+                    <div class="card-label">مبيعات الشهر</div>
+                    <div class="card-value-box">
+                        @Money(_summary.Month) <span class="currency">د.ع</span>
+                    </div>
+                </div>
+
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    // =================================================================================
+    // لم يتم تغيير أي شيء في كود الـ C# الخلفي لضمان استمرار عمل المنطق كما هو
+    // =================================================================================
+
+    private SalesSummaryDto? _summary;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+        => await LoadAsync();
+
+    private async Task Reload()
+        => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _loading = true;
+            _error = null;
+            // هنا يتم استدعاء البيانات الحقيقية
+            _summary = await ReportsApi.GetSalesSummaryAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Money(decimal value) => value.ToString("N0");
+}

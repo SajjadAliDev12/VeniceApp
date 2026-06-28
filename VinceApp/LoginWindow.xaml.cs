@@ -17,8 +17,6 @@ namespace VinceApp
         {
             InitializeComponent();
             txtUser.Focus();
-            
-
         }
 
         private async void Login_Click(object sender, RoutedEventArgs e)

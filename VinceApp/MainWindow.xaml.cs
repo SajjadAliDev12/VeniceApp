@@ -52,171 +52,132 @@ namespace VinceApp
         {
             InitializeComponent();
 
-            if (Application.Current.Properties["DisableSounds"] as bool? != true)
-            {
-                Task.Run(() => { try { string soundFile = FIlePathFinder.GetPath("Windows Navigation Start.wav"); if (System.IO.File.Exists(soundFile)) { using (var player = new System.Media.SoundPlayer(soundFile)) { player.PlaySync(); } } } catch { } });
-            }
-
             _currentOrderId = orderId;
             _currentTableId = tableId;
             _parentOrderId = _ParentOrderId;
 
-           
-            string baseTitle = "";
-            if (_currentTableId.HasValue)
-            {
-                
-                baseTitle = TableName ?? "طاولة";
-            }
-            else
-            {
-                baseTitle = "طلب سفري";
-            }
+            // إعداد العناوين والبيانات الأساسية فقط
+            string baseTitle = _currentTableId.HasValue ? (TableName ?? "طاولة") : "طلب سفري";
             Title.Text = baseTitle;
 
-            ShowLoading(true, "جاري تحميل الطلبات......");
+            // ربط القوائم (Binding)
             lstCart.ItemsSource = CartItems;
             itemsControlProducts.ItemsSource = DisplayedProducts;
             icCategories.ItemsSource = CategoriesList;
 
-            // استخدام Dispatcher للسماح بتحديث الواجهة
-            Dispatcher.BeginInvoke(new Action(async () =>
+            // تشغيل الصوت (في الخلفية لعدم التعطيل)
+            if (Application.Current.Properties["DisableSounds"] as bool? != true)
             {
-                if (_initialized) return;
-                _initialized = true;
+                Task.Run(() => { try { string p = FIlePathFinder.GetPath("Windows Navigation Start.wav"); if (System.IO.File.Exists(p)) using (var pl = new System.Media.SoundPlayer(p)) pl.PlaySync(); } catch { } });
+            }
 
-                try
-                {
-                    Mouse.OverrideCursor = Cursors.Wait;
-
-                    UpdateLoadingHint("جاري تحميل بيانات الطلب...");
-
-                    var loadedData = await Task.Run(async () =>
-                    {
-                        // 1. نجلب بيانات الطلب
-                        UpdateLoadingHint("جاري تحميل بيانات الطلب...");
-                        var orderData = await FetchOrderInfoAsync(_currentOrderId);
-
-                        // 2. معالجة الملحق (الطلب الأب)
-                        int? targetParentId = _parentOrderId;
-                        if (targetParentId == null && orderData != null)
-                        {
-                            targetParentId = orderData.ParentOrderId;
-                        }
-
-                        int parentOrderNumber = 0;
-                        if (targetParentId.HasValue)
-                        {
-                            UpdateLoadingHint("جاري جلب معلومات الطلب الأصل...");
-                            using (var ctx = new VinceSweetsDbContext())
-                            {
-                                parentOrderNumber = await ctx.Orders
-                                    .Where(o => o.Id == targetParentId.Value)
-                                    .Select(o => o.OrderNumber)
-                                    .FirstOrDefaultAsync();
-                            }
-                        }
-
-                        // ✅ تعديل 2: جلب رقم الطاولة الفعلي من قاعدة البيانات لضمان صحة العنوان
-                        UpdateLoadingHint("جاري جلب معلومات الطاولة...");
-                        string realTableNameFromDb = null;
-                        if (_currentTableId.HasValue)
-                        {
-                            using (var ctx = new VinceSweetsDbContext())
-                            {
-                                var tbl = await ctx.RestaurantTables
-                                    .Where(t => t.Id == _currentTableId.Value)
-                                    .Select(t => t.TableNumber)
-                                    .FirstOrDefaultAsync();
-
-                                if (tbl > 0) realTableNameFromDb = $"طاولة {tbl}";
-                            }
-                        }
-
-                        // 3. جلب المنتجات والتفاصيل
-                        UpdateLoadingHint("جاري تحميل المنتجات...");
-                        var t1 = FetchProductsAndCategoriesAsync();
-
-                        UpdateLoadingHint("جاري تحميل تفاصيل الطلب...");
-                        var t2 = FetchExistingOrderDetailsAsync(_currentOrderId);
-
-                        await Task.WhenAll(t1, t2);
-
-                        return (
-                            ProductsData: t1.Result,
-                            CartData: t2.Result,
-                            OrderData: orderData,
-                            ParentOrderNum: parentOrderNumber,
-                            RealTableName: realTableNameFromDb // الاسم المؤكد من القاعدة
-                        );
-                    });
-
-                    // --- تحديث الواجهة ---
-                    UpdateLoadingHint("جاري تحديث الواجهة...");
-
-                    // 1. المنتجات
-                    AllProducts = loadedData.ProductsData.products;
-                    CategoriesList.Clear();
-                    CategoriesList.Add(new CategoryViewModel { Name = "الكل" });
-                    foreach (var cat in loadedData.ProductsData.categories) CategoriesList.Add(new CategoryViewModel { Name = cat.Name });
-                    FilterProducts("الكل");
-
-                    // 2. السلة
-                    CartItems.Clear();
-                    foreach (var item in loadedData.CartData) CartItems.Add(item);
-                    CalculateTotal();
-                    _isDirty = false;
-
-                    // ✅ تعديل 3: تحديث العنوان النهائي (اسم الطاولة المؤكد + الملحق إن وجد)
-                    string finalBaseTitle = baseTitle;
-
-                    // اذا جلبنا الاسم من القاعدة نستخدمه لأنه أدق
-                    if (!string.IsNullOrEmpty(loadedData.RealTableName))
-                    {
-                        finalBaseTitle = loadedData.RealTableName;
-                    }
-
-                    if (loadedData.ParentOrderNum > 0)
-                    {
-                        Title.Text = $"{finalBaseTitle} - ملحق لطلب رقم {loadedData.ParentOrderNum}";
-                    }
-                    else
-                    {
-                        Title.Text = finalBaseTitle;
-                    }
-
-                    // 4. وضع القراءة فقط
-                    var order = loadedData.OrderData;
-                    if (order != null && (order.isPaid || order.isServed || order.isReady))
-                    {
-                        _isReadOnly = true;
-                        EnableReadOnlyMode(order);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    ToastControl.Show("error", "خطأ في التحميل", ToastControl.NotificationType.Error);
-                    Log.Error(ex, "failed to obtain data from database");
-                    Close();
-                }
-                finally
-                {
-                    Mouse.OverrideCursor = null;
-                    ShowLoading(false);
-                }
-            }), DispatcherPriority.Background);
-
+            // ✅ ربط حدث التحميل هنا
+            this.Loaded += MainWindow_Loaded;
         }
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // منع التكرار (حماية)
+            if (_initialized) return;
+            _initialized = true;
 
-        // ... (بقية الدوال المساعدة كما هي تماماً بدون تغيير) ...
+            try
+            {
+                Mouse.OverrideCursor = Cursors.Wait;
+                ShowLoading(true, "جاري تحميل بيانات الطلب...");
 
-        // دالة تجلب المنتجات والأقسام
+                // ✅ هنا يبدأ العمل الثقيل في الخلفية (Task.Run) لمنع تجميد الواجهة
+                var loadedData = await Task.Run(async () =>
+                {
+                    // 1. جلب بيانات الطلب
+                    
+                    var orderData = await FetchOrderInfoAsync(_currentOrderId);
+                    int? targetParentId = _parentOrderId ?? orderData?.ParentOrderId;
+                    int parentOrderNumber = 0;
+
+                    if (targetParentId.HasValue)
+                    {
+                        
+                        using (var ctx = new VinceSweetsDbContext())
+                        {
+                            parentOrderNumber = await ctx.Orders
+                                .Where(o => o.Id == targetParentId.Value)
+                                .Select(o => o.OrderNumber)
+                                .FirstOrDefaultAsync();
+                        }
+                    }
+                    string realTableNameFromDb = null;
+                    if (_currentTableId.HasValue)
+                    {  
+                        using (var ctx = new VinceSweetsDbContext())
+                        {
+                            var tbl = await ctx.RestaurantTables
+                                .Where(t => t.Id == _currentTableId.Value)
+                                .Select(t => t.TableNumber)
+                                .FirstOrDefaultAsync();
+                            if (tbl > 0) realTableNameFromDb = $"طاولة {tbl}";
+                        }
+                    }
+ 
+                    var t1 = FetchProductsAndCategoriesAsync();
+
+                    var t2 = FetchExistingOrderDetailsAsync(_currentOrderId);
+
+                    await Task.WhenAll(t1, t2);
+
+                    return new
+                    {
+                        ProductsData = t1.Result,
+                        CartData = t2.Result,
+                        OrderData = orderData,
+                        ParentOrderNum = parentOrderNumber,
+                        RealTableName = realTableNameFromDb
+                    };
+                });
+                AllProducts = loadedData.ProductsData.products;
+                CategoriesList.Clear();
+                CategoriesList.Add(new CategoryViewModel { Name = "الكل" });
+                foreach (var cat in loadedData.ProductsData.categories)
+                    CategoriesList.Add(new CategoryViewModel { Name = cat.Name });
+                FilterProducts("الكل");
+
+                // 2. تعبئة السلة
+                CartItems.Clear();
+                foreach (var item in loadedData.CartData) CartItems.Add(item);
+                CalculateTotal();
+                _isDirty = false;
+
+                // 3. تحديث العنوان
+                string finalTitle = loadedData.RealTableName ?? Title.Text;
+                if (loadedData.ParentOrderNum > 0)
+                    Title.Text = $"{finalTitle} - ملحق لطلب رقم {loadedData.ParentOrderNum}";
+                else
+                    Title.Text = finalTitle;
+
+                // 4. وضع القراءة فقط
+                var order = loadedData.OrderData;
+                if (order != null && (order.isPaid || order.isServed || order.isReady))
+                {
+                    _isReadOnly = true;
+                    EnableReadOnlyMode(order);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to load data in MainWindow");
+                ToastControl.Show("خطأ", "فشل تحميل البيانات", ToastControl.NotificationType.Error);
+                Close();
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+                ShowLoading(false);
+            }
+        }
         private async Task<(List<Product> products, List<Category> categories)> FetchProductsAndCategoriesAsync()
         {
             await using var context = new VinceSweetsDbContext();
-            var products = await context.Products.Include(p => p.Category).ToListAsync();
-            var categories = await context.Categories.OrderBy(c => c.Id).ToListAsync();
+            var products = await context.Products.AsNoTracking().Include(p => p.Category).ToListAsync();
+            var categories = await context.Categories.AsNoTracking().OrderBy(c => c.Id).ToListAsync();
             return (products, categories);
         }
 
@@ -224,7 +185,7 @@ namespace VinceApp
         private async Task<List<CartItemViewModel>> FetchExistingOrderDetailsAsync(int orderId)
         {
             await using var context = new VinceSweetsDbContext();
-            return await context.OrderDetails
+            return await context.OrderDetails.AsNoTracking()
                 .Where(d => d.OrderId == orderId && !d.isDeleted)
                 .Select(d => new CartItemViewModel
                 {
@@ -260,15 +221,14 @@ namespace VinceApp
             }
         }
 
-        // ... (Product_Click, IncreaseQty_Click, DecreaseQty_Click, ConfirmOrder_Click, SaveChanges, PayButton, Print, ExitButton, Helpers...)
-        // (انسخ بقية الدوال كما كانت في الكود السابق، التغيير فقط كان في الكونستركتور والـ ContentRendered أعلاه)
+      
 
         private void Product_Click(object sender, RoutedEventArgs e)
         {
             if (_isReadOnly) return;
             if (sender is not Button b || b.DataContext is not Product product) return;
             if (product.IsAvailable == false) { ToastControl.Show("المنتج غير متوفر", "لا يمكن اضافة المنتج الى الطلب حالياً", ToastControl.NotificationType.Success); return; }
-            var item = CartItems.FirstOrDefault(i => i.ProductId == product.Id);
+            var item =CartItems.FirstOrDefault(i => i.ProductId == product.Id);
             if (item != null) { item.Quantity++; item.TotalPrice = item.Price * item.Quantity; }
             else
             {
@@ -304,13 +264,6 @@ namespace VinceApp
                 }
             }
         }
-        private void UpdateLoadingHint(string hint)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                txtLoadingHint.Text = hint;
-            });
-        }
 
         private void ShowLoading(bool show, string? hint = null)
         {
@@ -327,14 +280,29 @@ namespace VinceApp
         {
             if (_isReadOnly) return;
             if (!CartItems.Any() && !_deletedDetailsIds.Any()) return;
+
             await SaveChangesToDatabaseAsync();
+
             using (var context = new VinceSweetsDbContext())
             {
                 var order = await context.Orders.FindAsync(_currentOrderId);
-                if (order != null) { order.isSentToKitchen = true; await context.SaveChangesAsync(); }
-                ToastControl.Show("تم الحفظ", " تم حفظ الطلب بنجاح وارساله الى المطبخ", ToastControl.NotificationType.Success);
-                var details = context.OrderDetails.Where(d => d.OrderId == _currentOrderId).Select(d => d.Product.IsKitchenItem).ToList();
-                if (details.Any()) { foreach (var item in details) { if (item != false) return; } order.isReady = true; await context.SaveChangesAsync(); }
+                if (order != null)
+                {
+                    order.isSentToKitchen = true;
+
+                    // ✅ فحص عناصر المطبخ من الذاكرة (AllProducts) بدلاً من الاستعلام من قاعدة البيانات
+                    bool hasKitchenItems = CartItems.Any(cartItem =>
+                        AllProducts.FirstOrDefault(p => p.Id == cartItem.ProductId)?.IsKitchenItem == true);
+
+                    // إذا لم يكن هناك أي عنصر يحتاج مطبخ (مثلاً كلها بيبسي أو حلويات جاهزة)
+                    if (!hasKitchenItems)
+                    {
+                        order.isReady = true;
+                    }
+
+                    await context.SaveChangesAsync();
+                }
+                ToastControl.Show("تم الحفظ", "تم حفظ الطلب بنجاح", ToastControl.NotificationType.Success);
             }
         }
 
@@ -348,7 +316,7 @@ namespace VinceApp
                     if (_deletedDetailsIds.Any()) { var toDelete = await context.OrderDetails.Where(d => _deletedDetailsIds.Contains(d.Id)).ToListAsync(); foreach (var item in toDelete) item.isDeleted = true; }
                     foreach (var item in CartItems)
                     {
-                        if (item.OrderDetailId == 0) { context.OrderDetails.Add(new OrderDetail { OrderId = _currentOrderId, ProductId = item.ProductId, ProductName = item.Name, Price = item.Price, Quantity = item.Quantity, isDeleted = false }); }
+                        if (item.OrderDetailId == 0) {context.OrderDetails.Add(new OrderDetail { OrderId = _currentOrderId, ProductId = item.ProductId, ProductName = item.Name, Price = item.Price, Quantity = item.Quantity, isDeleted = false }); }
                         else { var existing = await context.OrderDetails.FindAsync(item.OrderDetailId); if (existing != null) { existing.Quantity = item.Quantity; existing.isDeleted = false; } }
                     }
                     var order = await context.Orders.FindAsync(_currentOrderId);
@@ -367,7 +335,7 @@ namespace VinceApp
             }
         }
 
-        private async void PayButton_Click(object sender, RoutedEventArgs e)
+        private void PayButton_Click(object sender, RoutedEventArgs e)
         {
             if (btnPay.Content.ToString() == "إغلاق") { Close(); return; }
             if (!CartItems.Any()) return;
@@ -376,31 +344,86 @@ namespace VinceApp
 
         private async void PrintReceipt_Click(object sender, RoutedEventArgs e)
         {
-            decimal.TryParse(_currentInput, out var paid);
-            if (paid < _totalAmountToPay) { ToastControl.Show("خطأ", "المبلغ غير كافي", ToastControl.NotificationType.Error); return; }
-            if (_discountAmount > (_totalAmountToPay * (decimal)0.15) && CurrentUser.Role == (int)UserRole.Cashier) { ToastControl.Show("تنبيه", "مبلغ الخصم كبير!", ToastControl.NotificationType.Warning); return; }
+            if (!decimal.TryParse(_currentInput, out var paid) || paid < _totalAmountToPay)
+            {
+                ToastControl.Show("خطأ", "المبلغ غير كافي", ToastControl.NotificationType.Error);
+                return;
+            }
+
+            if (_discountAmount > (_totalAmountToPay * 0.15m) && CurrentUser.Role == (int)UserRole.Cashier)
+            {
+                ToastControl.Show("تنبيه", "مبلغ الخصم كبير!", ToastControl.NotificationType.Warning);
+                return;
+            }
+
             try
             {
                 await SaveChangesToDatabaseAsync();
+
                 using (var context = new VinceSweetsDbContext())
                 {
                     var order = await context.Orders.FindAsync(_currentOrderId);
-                    if (order != null) { order.isPaid = true; wasPaid = true; order.isSentToKitchen = true; order.DiscountAmount = _discountAmount; }
-                    if (_currentTableId.HasValue) { var table = await context.RestaurantTables.FindAsync(_currentTableId.Value); if (table != null) table.Status = 2; }
+                    if (order != null)
+                    {
+                        order.isPaid = true;
+                        wasPaid = true;
+                        order.isSentToKitchen = true;
+                        order.DiscountAmount = _discountAmount;
+                    }
+
+                    if (_currentTableId.HasValue)
+                    {
+                        var table = await context.RestaurantTables.FindAsync(_currentTableId.Value);
+                        if (table != null) table.Status = 2;
+                    }
+
                     await context.SaveChangesAsync();
                 }
-                TicketPrinter Pr = new TicketPrinter(); Pr.Print(_currentOrderId, false);
-                ToastControl.Show("تم الدفع", "تم الدفع بنجاح", ToastControl.NotificationType.Success); PaymentOverlay.Visibility = Visibility.Collapsed; this.DialogResult = wasPaid; Close();
+
+                bool customerPrintSuccess = false;
+                bool kitchenPrintSuccess = false;
+                bool iceCreamPrintSuccess = false; // إضافة متغير لنجاح طباعة الآيسكريم
+
+                using (var printer = new TicketPrinter())
+                {
+                    // 1. طباعة وصل الزبون (تشمل كل الأصناف)
+                    customerPrintSuccess = await Task.Run(() => printer.Print(_currentOrderId, TicketPrinter.PrintMode.Customer));
+
+                    // 2. طباعة المطبخ (تفلتر أصناف المطبخ فقط)
+                    kitchenPrintSuccess = await Task.Run(() => printer.Print(_currentOrderId, TicketPrinter.PrintMode.Kitchen));
+
+                    // 3. طباعة الآيسكريم (تفلتر أصناف الآيسكريم فقط)
+                    iceCreamPrintSuccess = await Task.Run(() => printer.Print(_currentOrderId, TicketPrinter.PrintMode.IceCream));
+                }
+
+                // التحقق من نجاح جميع عمليات الطباعة
+                if (customerPrintSuccess && kitchenPrintSuccess && iceCreamPrintSuccess)
+                {
+                    ToastControl.Show("تمت العملية", "تم الحفظ وإرسال الفواتير لجميع الأقسام", ToastControl.NotificationType.Success);
+                }
+                else
+                {
+                    // بناء رسالة خطأ تفصيلية بناءً على الفشل
+                    List<string> failedPrinters = new List<string>();
+                    if (!customerPrintSuccess) failedPrinters.Add("وصل الزبون");
+                    if (!kitchenPrintSuccess) failedPrinters.Add("قسم المطبخ");
+                    if (!iceCreamPrintSuccess) failedPrinters.Add("قسم الآيسكريم");
+
+                    string msg = "تم الحفظ، ولكن فشلت طباعة: " + string.Join("، ", failedPrinters);
+                    ToastControl.Show("تنبيه طباعة", msg + ". تأكد من إعدادات الطابعات.", ToastControl.NotificationType.Warning);
+                }
+
+                PaymentOverlay.Visibility = Visibility.Collapsed;
+                this.DialogResult = true;
+                Close();
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error printing receipt for OrderId={OrderId}", _currentOrderId);
-                ToastControl.Show("خطأ", "تم الدفع لكن الطباعة فشلت. يمكنك إعادة الطباعة من التقارير.", ToastControl.NotificationType.Error);
-                // لا تغلق النافذة مباشرة، أو اعرض زر إعادة المحاولة
+                Log.Error(ex, "Critical Error in Payment");
+                ToastControl.Show("خطأ", "حدثت مشكلة أثناء الحفظ", ToastControl.NotificationType.Error);
             }
-
+        
         }
-
         private async void ExitButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isReadOnly) { Close(); return; }
@@ -438,7 +461,32 @@ namespace VinceApp
         private void Numpad_Click(object sender, RoutedEventArgs e) { if (sender is Button b) { _currentInput = _currentInput == "0" ? b.Content.ToString() : _currentInput + b.Content.ToString(); UpdatePaymentCalculations(); } }
         private void Numpad_Clear_Click(object sender, RoutedEventArgs e) { _currentInput = "0"; UpdatePaymentCalculations(); }
         private void Numpad_Backspace_Click(object sender, RoutedEventArgs e) { _currentInput = _currentInput.Length > 1 ? _currentInput[..^1] : "0"; UpdatePaymentCalculations(); }
-        private void UpdatePaymentCalculations() { _totalAmountToPay = _subTotalAmount - _discountAmount; if (_totalAmountToPay < 0) _totalAmountToPay = 0; txtSubTotal.Text = _subTotalAmount.ToString("N0"); txtDiscountDisplay.Text = _discountAmount.ToString("N0"); txtOverlayTotal.Text = _totalAmountToPay.ToString("N0"); decimal.TryParse(_currentInput, out var paid); txtPaidAmount.Text = paid.ToString("N0"); var change = paid - _totalAmountToPay; txtChangeAmount.Text = change < 0 ? "غير كافٍ" : change.ToString("N0"); txtChangeAmount.Foreground = change < 0 ? Brushes.Red : Brushes.Green; }
+        private void UpdatePaymentCalculations() 
+        {
+            _totalAmountToPay = _subTotalAmount - _discountAmount;
+            if (_totalAmountToPay < 0) _totalAmountToPay = 0;
+            txtSubTotal.Text = _subTotalAmount.ToString("N0");
+            txtDiscountDisplay.Text = _discountAmount.ToString("N0");
+            txtOverlayTotal.Text = _totalAmountToPay.ToString("N0");
+            decimal.TryParse(_currentInput, out var paid);
+            txtPaidAmount.Text = paid.ToString("N0"); var change = paid - _totalAmountToPay;
+            txtChangeAmount.Text = change < 0 ? "غير كافٍ" : change.ToString("N0");
+            txtChangeAmount.Foreground = change < 0 ? Brushes.Red : Brushes.Green; 
+        }
+        protected override void OnClosed(EventArgs e)
+        {
+            // 1. تفريغ القوائم الكبيرة من الذاكرة
+            CartItems?.Clear();
+            DisplayedProducts?.Clear();
+            CategoriesList?.Clear();
+            AllProducts?.Clear();
+            _deletedDetailsIds?.Clear();
+
+            // 2. إلغاء الاشتراك في الحدث (زيادة في الأمان)
+            this.Loaded -= MainWindow_Loaded;
+
+            base.OnClosed(e);
+        }
         private void BtnEditDiscount_Click(object sender, RoutedEventArgs e) { var touchWindow = new DiscountInputWindow(_subTotalAmount); this.Opacity = 0.5; if (touchWindow.ShowDialog() == true) { _discountAmount = touchWindow.DiscountValue; UpdatePaymentCalculations(); } this.Opacity = 1; }
     }
 
@@ -453,4 +501,6 @@ namespace VinceApp
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
+
+
 }
