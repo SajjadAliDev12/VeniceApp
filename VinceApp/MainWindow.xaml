@@ -100,7 +100,7 @@
             <Border Grid.Row="0" Grid.ColumnSpan="3" Background="White"  Panel.ZIndex="10">
                 <Grid Margin="24,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <local:DigitalClock Width="120" Height="50" Foreground="#546E7A"/>
+                        <local:DigitalClock Width="161" Height="50" Foreground="#546E7A"/>
 
                         <Button Click="ExitButton_Click" 
                                 Width="50" Height="50"
