@@ -9,3 +9,4 @@ appsettings.json
 desktop.ini
 VinceApp/Output/
 Update.xml
+*.iss
