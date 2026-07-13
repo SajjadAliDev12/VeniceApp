@@ -48,7 +48,7 @@ namespace VinceApp
 
         private List<Product> AllProducts = new();
 
-        public MainWindow(int orderId, int? tableId, string? TableName, int? _ParentOrderId = null)
+        public MainWindow(int orderId, int? tableId, string? TableName, int? _ParentOrderId = null,bool IsToters = false)
         {
             InitializeComponent();
 
@@ -56,9 +56,13 @@ namespace VinceApp
             _currentTableId = tableId;
             _parentOrderId = _ParentOrderId;
 
-            // إعداد العناوين والبيانات الأساسية فقط
-            string baseTitle = _currentTableId.HasValue ? (TableName ?? "طاولة") : "طلب سفري";
-            Title.Text = baseTitle;
+            if (IsToters)
+                Title.Text = "طلب سفري توترز";
+            else
+            {
+                string baseTitle = _currentTableId.HasValue ? (TableName ?? "طاولة") : "طلب سفري";
+                Title.Text = baseTitle;
+            }
 
             // ربط القوائم (Binding)
             lstCart.ItemsSource = CartItems;
@@ -155,11 +159,16 @@ namespace VinceApp
 
                 // 4. وضع القراءة فقط
                 var order = loadedData.OrderData;
-                if (order != null && (order.isPaid || order.isServed || order.isReady))
+                if(order!= null && order.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
+                {
+                   btnConfirm.IsEnabled = false;btnConfirm.Visibility = Visibility.Hidden;
+                }
+                else if (order != null && (order.isPaid || order.isServed || order.isReady))
                 {
                     _isReadOnly = true;
                     EnableReadOnlyMode(order);
                 }
+                else {_isReadOnly = false;}
             }
             catch (Exception ex)
             {
@@ -212,6 +221,7 @@ namespace VinceApp
             btnConfirm.Visibility = Visibility.Collapsed;
             if (order != null)
             {
+
                 if (order.isPaid || order.isServed)
                 {
                     Title.Text += " (للعرض فقط)";

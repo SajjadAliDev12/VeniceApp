@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using VinceApp.Data;
+using VinceApp.Data.Enums;
 using VinceApp.Data.Models;
 using VinceApp.Pages;
 using VinceApp.Toters_Feature;
@@ -164,7 +165,7 @@ namespace VinceApp
                     if (TakeawayPanel != null)
                     {
                         var takeawayOrders = await context.Orders
-                            .Where(o => o.TableId == null && !o.isServed && !o.isDone && !o.isDeleted)
+                            .Where(o => o.TableId == null && !o.isServed && !o.isDone && !o.isDeleted && o.OrderSource != Enums.OrderSource.EnToters)
                             .OrderByDescending(o => o.OrderDate)
                             .ToListAsync();
 

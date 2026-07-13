@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VinceApp.Data.Models;
 
@@ -11,9 +12,11 @@ using VinceApp.Data.Models;
 namespace VinceApp.Data.Migrations
 {
     [DbContext(typeof(VinceSweetsDbContext))]
-    partial class VinceSweetsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713160229_TotersOrderNumberAdded")]
+    partial class TotersOrderNumberAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,7 +103,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppSettings", (string)null);
+                    b.ToTable("AppSettings");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.AuditLog", b =>
@@ -140,7 +143,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Category", b =>
@@ -161,7 +164,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Order", b =>
@@ -238,7 +241,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("RestaurantTableId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.OrderDetail", b =>
@@ -281,7 +284,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderDetails", (string)null);
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Product", b =>
@@ -319,7 +322,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.RestaurantTable", b =>
@@ -347,7 +350,7 @@ namespace VinceApp.Data.Migrations
                     b.HasIndex("TableNumber")
                         .IsUnique();
 
-                    b.ToTable("RestaurantTables", (string)null);
+                    b.ToTable("RestaurantTables");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.User", b =>
@@ -393,7 +396,7 @@ namespace VinceApp.Data.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.UserToken", b =>
@@ -424,7 +427,7 @@ namespace VinceApp.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserTokens", (string)null);
+                    b.ToTable("UserTokens");
                 });
 
             modelBuilder.Entity("VinceApp.Data.Models.Order", b =>

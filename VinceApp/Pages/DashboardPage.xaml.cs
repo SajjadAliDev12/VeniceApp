@@ -35,7 +35,7 @@ namespace VinceApp.Pages
                     // قلصنا البحث ليبدأ من بداية السنة فقط لتسريع الفحص
                     var salesStats = await context.Orders
                         .AsNoTracking()
-                        .Where(o => o.OrderDate >= startOfYear && !o.isDeleted && o.isPaid)
+                        .Where(o => o.OrderDate >= startOfYear && !o.isDeleted && o.isPaid && o.OrderSource != Data.Enums.Enums.OrderSource.EnToters)
                         .GroupBy(x => 1) // تجميع كل النتائج في مجموعة واحدة
                         .Select(g => new
                         {
@@ -50,7 +50,7 @@ namespace VinceApp.Pages
                     var bestSellers = await context.OrderDetails
                         .AsNoTracking()
                         // استخدام Navigation Property (od.Order) بدلاً من الـ join اليدوي
-                        .Where(od => !od.isDeleted && !od.Order.isDeleted && od.Order.isPaid)
+                        .Where(od => !od.isDeleted && !od.Order.isDeleted && od.Order.isPaid && od.Order.OrderSource != Data.Enums.Enums.OrderSource.EnToters)
                         .GroupBy(x => x.ProductName)
                         .Select(g => new
                         {

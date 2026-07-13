@@ -11,7 +11,7 @@ public partial class Order
     public int Id { get; set; }
 
     public int OrderNumber { get; set; }
-
+    public string? TotersOrderNumber { get; set; } = null;
     public DateTime? OrderDate { get; set; }
 
     public decimal? TotalAmount { get; set; }
