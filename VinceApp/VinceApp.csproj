@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Gemini_Generated_Image_qwla5bqwla5bqwla-removebg-preview.ico</ApplicationIcon>
+    <ApplicationIcon>v1.ico</ApplicationIcon>
     <AssemblyVersion>2.0.7.5</AssemblyVersion>
     <FileVersion>2.0.7.5</FileVersion>
     <Version>2.0.7.5</Version>
@@ -39,7 +39,7 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Gemini_Generated_Image_qwla5bqwla5bqwla-removebg-preview.ico" />
+    <Content Include="v1.ico" />
   </ItemGroup>
 
   <ItemGroup>
