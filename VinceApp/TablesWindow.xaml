@@ -186,7 +186,7 @@
             Background="#2ECC71"
             FontSize="18"
             Style="{StaticResource TouchButtonStyle}"
-            />
+            Click="Toters_click"/>
 
                 <Button x:Name="btnNewTakeaway"
 Content="🛍️ طلب سفري جديد"

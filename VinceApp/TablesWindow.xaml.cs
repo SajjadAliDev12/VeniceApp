@@ -13,6 +13,7 @@ using System.Windows.Navigation;
 using VinceApp.Data;
 using VinceApp.Data.Models;
 using VinceApp.Pages;
+using VinceApp.Toters_Feature;
 
 namespace VinceApp
 {
@@ -617,7 +618,12 @@ namespace VinceApp
             admin.ShowDialog();
             ApplyPermissions();
         }
-       
+       private void Toters_click(object sender, RoutedEventArgs e)
+        {
+            TotersWindow toters = new TotersWindow();
+            toters.Owner = this;
+            toters.ShowDialog();
+        }
         private async Task OpenCashierWindow(int orderId, int? tableId, string? tableName, int? parentOrderId = null)
         {
             MainWindow cashier = null;

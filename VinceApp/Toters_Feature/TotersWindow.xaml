@@ -1,0 +1,194 @@
+﻿<Window x:Class="VinceApp.Toters_Feature.TotersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:VinceApp"
+        Title="إدارة طلبات توترز" Height="700" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized" FlowDirection="RightToLeft" WindowStyle="None"
+        Background="#F2F5F8">
+
+    <Window.Resources>
+        <!-- قوالب الألوان الثابتة للمشروع -->
+        <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="TitleBrush" Color="#37474F"/>
+
+        <!-- الستايل الموحد للأزرار الكبيرة لتناسب اللمس -->
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="60"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="6,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="12"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#CFD8DC"/>
+                                <Setter Property="Foreground" Value="#90A4AE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ستايل الكروت البيضاء الموحد -->
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- الارتفاع الإجمالي لكتلة الأعمدة يمثل 3 أرباع الشاشة المتبقية والربع الأخير للأزرار -->
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 1. شريط العنوان العلوي والساعة الرقمية -->
+            <Border Grid.Row="0"
+                    Background="#FFFFFF"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderBrushSoft}"
+                    BorderThickness="1"
+                    Padding="18,12"
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🛵" FontSize="26" Margin="0,0,10,0"/>
+                        <TextBlock Text="قسم توترز" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TitleBrush}"/>
+                        <TextBlock Text=" | إدارة ومتابعة الطلبات " FontSize="24" Foreground="#78909C" Margin="5,0,0,0"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                        <local:DigitalClock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#455A64"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- 2. منطقة الأعمدة الثلاثة الديناميكية (تأخذ 3/4 من المساحة المتبقية) -->
+            <Grid Grid.Row="1" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- العمود الأول: الطلبات الحالية -->
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,8,0" Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Background="#2196F3" CornerRadius="10" Padding="10" Margin="0,0,0,10">
+                            <TextBlock Text="⏳ الطلبات الحالية" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
+                            <!-- حاوية ديناميكية لبطاقات طلبات توترز النشطة وقيد التحضير -->
+                            <StackPanel x:Name="ActiveTotersOrdersPanel"/>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- العمود الثاني: الطلبات المكتملة -->
+                <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Margin="4,0,4,0" Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Background="#2ECC71" CornerRadius="10" Padding="10" Margin="0,0,0,10">
+                            <TextBlock Text="✅ الطلبات المكتملة" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
+                            <!-- حاوية ديناميكية للطلبات التي تم تسليمها بنجاح ومحاسبة الشركة عليها -->
+                            <StackPanel x:Name="CompletedTotersOrdersPanel"/>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- العمود الثالث: الطلبات الملغية -->
+                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Margin="8,0,0,0" Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Background="#E57373" CornerRadius="10" Padding="10" Margin="0,0,0,10">
+                            <TextBlock Text="❌ الطلبات الملغية" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
+                            <!-- حاوية ديناميكية للطلبات التالفة أو المرفوضة لتوثيق المواد المستهلكة -->
+                            <StackPanel x:Name="CanceledTotersOrdersPanel"/>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 3. شريط أزرار التحكم السفلي (الربع الأخير) -->
+            <Grid Grid.Row="2" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+
+                    <Button x:Name="btnNewTotersOrder"
+                            Content="🛵 إضافة طلب جديد"
+                            Width="220"
+                            Background="#2ECC71"
+                            Style="{StaticResource TouchButtonStyle}"
+                            />
+
+                    <Button x:Name="btnTotersStats"
+                            Content="📊 عرض الإحصائيات"
+                            Width="200"
+                            Background="#7E57C2"
+                            Style="{StaticResource TouchButtonStyle}"
+                            />
+
+                    <Button x:Name="btnBack"
+                            Content="↩️ رجوع للصفحة الرئيسية"
+                            Width="240"
+                            Background="#607D8B"
+                            Style="{StaticResource TouchButtonStyle}"
+                            Click="Back_Click"/>
+
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
