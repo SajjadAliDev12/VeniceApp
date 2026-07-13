@@ -45,6 +45,7 @@ namespace VinceApp.Toters_Feature
                                 order.isDone = true;
                                 order.isPaid = true;
                                 order.isServed = true;
+                                order.isReady = true;
                             }
                             await context.SaveChangesAsync();
                         }
@@ -53,15 +54,30 @@ namespace VinceApp.Toters_Feature
             }catch(Exception ex) { Log.Error("error with completing toters order"); }
             finally { this.Close(); }
         }
-        private void btnEdit_Click(object sender, RoutedEventArgs e)
+        private async void btnEdit_Click(object sender, RoutedEventArgs e)
         {
-            if (_orderID > 0)
+            try
             {
-                MainWindow mainWindow = new MainWindow(_orderID, null, null, null, true);
-                this.Close();
-                mainWindow.ShowDialog();
+                if (_orderID > 0)
+                {
+                    using (var context = new VinceSweetsDbContext())
+                    {
+                        var order = await context.Orders.FirstOrDefaultAsync(o => o.Id == _orderID);
+                        if (order != null && order.isPaid && !order.isDeleted && !order.isDone)
+                        {
+                            order.isPaid = false;
+                        }
+                        await context.SaveChangesAsync();
+                    }
+                }
+                
+                    MainWindow mainWindow = new MainWindow(_orderID, null, null, null, true);
+                    this.Close();
+                    mainWindow.ShowDialog();
             }
-        }
+            catch (Exception ex) { Log.Error("error in editing toters order"); }
+            finally { this.Close(); }
+            }
 
         private async void BtnCancelOrder_Click(object sender, RoutedEventArgs e)
         {
@@ -77,13 +93,15 @@ namespace VinceApp.Toters_Feature
                             if (order != null)
                             {
                                 order.isDeleted = true;
+                                order.isPaid = true; order.isServed = true;
+                                order.isReady = true;
                             }
                             await context.SaveChangesAsync();
                         }
                     }
                 }
             }
-            catch (Exception ex) { Log.Error("error with completing toters order"); }
+            catch (Exception ex) { Log.Error("error with deleting toters order"); }
             finally { this.Close(); }
         }
     }

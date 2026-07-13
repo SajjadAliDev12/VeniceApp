@@ -123,7 +123,7 @@ namespace VinceApp.Toters_Feature
                              && o.TableId == null
                              && !o.isDeleted
                              && !o.isDone
-                             && o.isPaid)
+                             && (o.isPaid || !o.isPaid) &&  o.OrderDate >= DateTime.Now.AddDays(-2))
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
 
@@ -145,7 +145,7 @@ namespace VinceApp.Toters_Feature
                              && o.TableId == null
                              && !o.isDeleted
                              && o.isDone
-                             && o.isPaid)
+                             && o.isPaid && o.OrderDate >= DateTime.Now.AddDays(-2))
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
 
@@ -165,7 +165,7 @@ namespace VinceApp.Toters_Feature
                 var canceledOrders = await context.Orders
                     .Where(o => o.OrderSource == Data.Enums.Enums.OrderSource.EnToters
                              && o.TableId == null
-                             && o.isDeleted)
+                             && o.isDeleted && o.OrderDate >= DateTime.Now.AddDays(-2))
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
 

@@ -163,12 +163,12 @@ namespace VinceApp
                 {
                    btnConfirm.IsEnabled = false;btnConfirm.Visibility = Visibility.Hidden;
                 }
-                else if (order != null && (order.isPaid || order.isServed || order.isReady))
+                if (order != null && (order.isPaid || order.isServed || order.isReady))
                 {
                     _isReadOnly = true;
                     EnableReadOnlyMode(order);
                 }
-                else {_isReadOnly = false;}
+                
             }
             catch (Exception ex)
             {
