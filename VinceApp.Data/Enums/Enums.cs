@@ -9,5 +9,7 @@ namespace VinceApp.Data.Enums
     public class Enums
     {
         public enum EnPrinter { EnNone,enKitchen , enIceCream};
+        public enum PaymentMethod { EnCash,EnPost};
+        public enum OrderSource { EnPOS,EnToters};
     }
 }

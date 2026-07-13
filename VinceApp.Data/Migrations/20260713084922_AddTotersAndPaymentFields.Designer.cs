@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VinceApp.Data.Models;
 
@@ -11,9 +12,11 @@ using VinceApp.Data.Models;
 namespace VinceApp.Data.Migrations
 {
     [DbContext(typeof(VinceSweetsDbContext))]
-    partial class VinceSweetsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713084922_AddTotersAndPaymentFields")]
+    partial class AddTotersAndPaymentFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

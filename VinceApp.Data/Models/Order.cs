@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using VinceApp.Data.Enums;
 
 namespace VinceApp.Data.Models;
 
@@ -25,6 +26,8 @@ public partial class Order
     [Required]
     public bool isDeleted { get; set; } = false;
     public decimal? DiscountAmount { get; set; } = 0;
+    public Enums.Enums.OrderSource OrderSource { get; set; } = Enums.Enums.OrderSource.EnPOS;
+    public Enums.Enums.PaymentMethod PaymentMethod { get; set; } = Enums.Enums.PaymentMethod.EnCash;
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     [NotMapped]
