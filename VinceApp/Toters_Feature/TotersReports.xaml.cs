@@ -1,22 +1,32 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Serilog;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using VinceApp.Data.Models;
+using Serilog;
+using Microsoft.EntityFrameworkCore;
 
-namespace VinceApp.Pages
+namespace VinceApp.Toters_Feature
 {
-    public partial class DashboardPage : Page
+    /// <summary>
+    /// Interaction logic for TotersReports.xaml
+    /// </summary>
+    public partial class TotersReports : Window
     {
-        public DashboardPage()
+        public TotersReports()
         {
             InitializeComponent();
             this.Loaded += async (s, e) => await LoadStatisticsAsync();
         }
-
         private async Task LoadStatisticsAsync()
         {
             try
@@ -35,7 +45,7 @@ namespace VinceApp.Pages
                     // قلصنا البحث ليبدأ من بداية السنة فقط لتسريع الفحص
                     var salesStats = await context.Orders
                         .AsNoTracking()
-                        .Where(o => o.OrderDate >= startOfYear && !o.isDeleted && o.isPaid && o.OrderSource != Data.Enums.Enums.OrderSource.EnToters)
+                        .Where(o => o.OrderDate >= startOfYear && !o.isDeleted && o.isPaid && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
                         .GroupBy(x => 1) // تجميع كل النتائج في مجموعة واحدة
                         .Select(g => new
                         {
@@ -50,7 +60,7 @@ namespace VinceApp.Pages
                     var bestSellers = await context.OrderDetails
                         .AsNoTracking()
                         // استخدام Navigation Property (od.Order) بدلاً من الـ join اليدوي
-                        .Where(od => !od.isDeleted && !od.Order.isDeleted && od.Order.isPaid && od.Order.OrderSource != Data.Enums.Enums.OrderSource.EnToters)
+                        .Where(od => !od.isDeleted && !od.Order.isDeleted && od.Order.isPaid && od.Order.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
                         .GroupBy(x => x.ProductName)
                         .Select(g => new
                         {
@@ -76,7 +86,10 @@ namespace VinceApp.Pages
                 txtWeeklySales.Text = $"{stats.Weekly:N0} د.ع";
                 txtMonthlySales.Text = $"{stats.Monthly:N0} د.ع";
                 txtYearlySales.Text = $"{stats.Yearly:N0} د.ع";
-
+                txtDailyNetSales.Text = $"{stats.Daily * 0.75m:N0} د.ع";
+                txtWeeklyNetSales.Text = $"{stats.Weekly * 0.75m:N0} د.ع";
+                txtMonthlyNetSales.Text = $"{stats.Monthly * 0.75m:N0} د.ع";
+                txtYearlyNetSales.Text = $"{stats.Yearly * 0.75m:N0} د.ع";
                 dgBestSellers.ItemsSource = stats.BestSellers;
             }
             catch (Exception ex)
@@ -89,6 +102,11 @@ namespace VinceApp.Pages
         private async void Refresh_Click(object sender, RoutedEventArgs e)
         {
             await LoadStatisticsAsync();
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

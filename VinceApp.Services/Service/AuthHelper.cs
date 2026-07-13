@@ -8,7 +8,11 @@ namespace VinceApp.Services.Service
     {
         // 🔐 Pepper ثابتة للتطبيق (لا تُخزن في قاعدة البيانات)
         // غيرها عند النشر النهائي، ولا تغيرها بعد ذلك
-        private static readonly string AppPepper = Environment.GetEnvironmentVariable("PepperForVenice") ?? throw new Exception("Pepper not found in environment variable");
+        private static readonly string AppPepper =
+    !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PepperForVenice"))
+        ? Environment.GetEnvironmentVariable("PepperForVenice")!
+        : throw new InvalidOperationException(
+            "Environment variable 'PepperForVenice' is missing or empty.");
 
         // دالة لتشفير النص باستخدام SHA256 + Pepper
         public static string HashText(string text)

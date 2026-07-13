@@ -1,0 +1,295 @@
+﻿<Window x:Class="VinceApp.Toters_Feature.TotersReports"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VinceApp.Toters_Feature"
+        mc:Ignorable="d"
+        Title="TotersReports" WindowState="Maximized" Width="700" Height="500" ResizeMode="NoResize" WindowStyle="None" FlowDirection="RightToLeft">
+    <Window.Resources>
+
+
+
+        <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#CFD8DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#37474F"/>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#7E57C2"/>
+
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="12"
+                                Padding="{TemplateBinding Padding}">
+
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#CFD8DC"/>
+                                <Setter Property="Foreground" Value="#90A4AE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BaseDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="RowHeight" Value="48"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#F5F5F5"/>
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
+        </Style>
+
+        <Style x:Key="BaseHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#37474F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Setter Property="BorderBrush" Value="#455A64"/>
+        </Style>
+
+        <Style x:Key="BaseRowStyle" TargetType="DataGridRow">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#EDE7F6"/>
+                    <Setter Property="Foreground" Value="#4527A0"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F5F5F5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                Background="{StaticResource CardBrush}"
+                CornerRadius="16"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                Padding="20"
+                Margin="0,0,72,20"
+                >
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Column="0">
+                        <TextBlock Text="📊" FontSize="24" Margin="0,0,10,0"/>
+                        <TextBlock Text="الإحصائيات "
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextDark}"
+                               VerticalAlignment="Center"/>
+
+                        <TextBlock Text="ملخص أداء مبيعات توترز"
+                               FontSize="14"
+                               Foreground="#78909C"
+                               VerticalAlignment="Center"
+                               Margin="15,6,0,0"/>
+                    </StackPanel>
+
+                    <Button Content="تحديث البيانات 🔄"
+                        Grid.Column="1"
+                        Background="#607D8B"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Click="Refresh_Click"/>
+                </Grid>
+            </Border>
+
+            <UniformGrid Grid.Row="1" Rows="1" Columns="4" Margin="0,0,0,20">
+
+                <Border Background="#66BB6A" CornerRadius="16" Margin="0,0,10,0" Padding="20" >
+                    <StackPanel>
+                        <TextBlock Text="📅 مبيعات اليوم" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtDailySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                        <TextBlock/>
+                        <TextBlock Text="📅 الصافي" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtDailyNetSales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#29B6F6" CornerRadius="16" Margin="10,0" Padding="20" >
+                    <StackPanel>
+                        <TextBlock Text="📅 آخر 7 أيام" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtWeeklySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                        <TextBlock/>
+                        <TextBlock Text="📅 الصافي" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtWeeklyNetSales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#7E57C2" CornerRadius="16" Margin="10,0" Padding="20" >
+                    <StackPanel>
+                        <TextBlock Text="📅 الشهر الحالي" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtMonthlySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                        <TextBlock/>
+                        <TextBlock Text="📅 الصافي" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtMonthlyNetSales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#FFA726" CornerRadius="16" Margin="10,0,0,0" Padding="20" >
+                    <StackPanel>
+                        <TextBlock Text="📅 السنة الحالية" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtYearlySales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                        <TextBlock/>
+                        <TextBlock Text="📅 الصافي" Foreground="White" Opacity="0.9" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="txtYearlyNetSales" Text="0 د.ع" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+            </UniformGrid>
+
+            <Border Grid.Row="2"
+                Background="{StaticResource CardBrush}"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="1"
+                >
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Background="#FAFAFA"
+                        CornerRadius="16,16,0,0"
+                        Padding="20,15"
+                        BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="0,0,0,1">
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔥" FontSize="18" Margin="0,0,8,0"/>
+                            <TextBlock Text="المواد الأكثر مبيعاً (Top 10)"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource TextDark}"
+                                   FontSize="16"/>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid x:Name="dgBestSellers"
+                          Grid.Row="1"
+                          Style="{StaticResource BaseDataGridStyle}"
+                          ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                          RowStyle="{StaticResource BaseRowStyle}"
+                          BorderThickness="0"
+                          Margin="0,0,0,10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="اسم المادة"
+                                            Binding="{Binding ProductName}"
+                                            Width="*"
+                                            FontWeight="SemiBold"/>
+
+                            <DataGridTextColumn Header="العدد المباع"
+                                            Binding="{Binding Quantity}"
+                                            Width="160"/>
+
+                            <DataGridTextColumn Header="إجمالي العائدات"
+                                            Binding="{Binding TotalAmount, StringFormat={}{0:N0} د.ع}"
+                                            Width="200"
+                                            Foreground="#2E7D32" 
+                                            FontWeight="Bold"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </Grid>
+            </Border>
+            <Button Click="ExitButton_Click"
+        Background="#FFEBEE"
+        Width="40"
+        Height="40"
+        HorizontalAlignment="Right"
+        VerticalAlignment="Top"
+        Margin="15"
+        Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <!-- جعل الـ CornerRadius مساوياً لنصف الارتفاع والعرض ليعطي شكلاً دائرياً مثقوباً بدقة -->
+                        <Border x:Name="b" 
+                    Background="{TemplateBinding Background}" 
+                    CornerRadius="20"
+                    RenderTransformOrigin="0.5,0.5">
+
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+
+                            <TextBlock Text="✕" 
+                           Foreground="#E53935" 
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center" 
+                           FontSize="16" 
+                           FontWeight="Bold"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#FFCDD2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="b" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.92" ScaleY="0.92"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+
+        </Grid>
+    </Grid>
+</Window>

@@ -177,7 +177,7 @@
                             Content="📊 عرض الإحصائيات"
                             Width="200"
                             Background="#7E57C2"
-                            Style="{StaticResource TouchButtonStyle}"
+                            Style="{StaticResource TouchButtonStyle}" Click="btnTotersStats_Click"
                             />
                     <Button x:Name="btnRefresh"
 Content="🔄 تحديث"

@@ -279,5 +279,14 @@ namespace VinceApp.Toters_Feature
         {
             LoadData();
         }
+
+        private void btnTotersStats_Click(object sender, RoutedEventArgs e)
+        {
+            TotersReports totersReports = new TotersReports()
+            {
+                Owner = this
+            };
+            totersReports.ShowDialog();
+        }
     }
 }
