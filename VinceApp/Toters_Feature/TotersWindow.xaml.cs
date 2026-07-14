@@ -123,7 +123,7 @@ namespace VinceApp.Toters_Feature
                              && o.TableId == null
                              && !o.isDeleted
                              && !o.isDone
-                             && (o.isPaid || !o.isPaid) &&  o.OrderDate >= DateTime.Now.AddDays(-2))
+                             && (o.isPaid || !o.isPaid))
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
 

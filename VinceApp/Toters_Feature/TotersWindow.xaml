@@ -135,7 +135,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <Border Background="#2ECC71" CornerRadius="10" Padding="10" Margin="0,0,0,10">
-                            <TextBlock Text="✅ الطلبات المكتملة" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock Text="✅ الطلبات المكتملة خلال يومين" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </Border>
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
                             <!-- حاوية ديناميكية للطلبات التي تم تسليمها بنجاح ومحاسبة الشركة عليها -->
@@ -152,7 +152,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <Border Background="#E57373" CornerRadius="10" Padding="10" Margin="0,0,0,10">
-                            <TextBlock Text="❌ الطلبات الملغية" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock Text="❌ الطلبات الملغية خلال يومين" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
                         </Border>
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
                             <!-- حاوية ديناميكية للطلبات التالفة أو المرفوضة لتوثيق المواد المستهلكة -->

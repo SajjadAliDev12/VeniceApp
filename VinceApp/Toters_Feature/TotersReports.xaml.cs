@@ -45,7 +45,7 @@ namespace VinceApp.Toters_Feature
                     // قلصنا البحث ليبدأ من بداية السنة فقط لتسريع الفحص
                     var salesStats = await context.Orders
                         .AsNoTracking()
-                        .Where(o => o.OrderDate >= startOfYear && !o.isDeleted && o.isPaid && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
+                        .Where(o => o.OrderDate >= startOfYear && !o.isDeleted && o.isDone && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
                         .GroupBy(x => 1) // تجميع كل النتائج في مجموعة واحدة
                         .Select(g => new
                         {
@@ -60,7 +60,7 @@ namespace VinceApp.Toters_Feature
                     var bestSellers = await context.OrderDetails
                         .AsNoTracking()
                         // استخدام Navigation Property (od.Order) بدلاً من الـ join اليدوي
-                        .Where(od => !od.isDeleted && !od.Order.isDeleted && od.Order.isPaid && od.Order.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
+                        .Where(od => !od.isDeleted && !od.Order.isDeleted && od.Order.isDone && od.Order.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
                         .GroupBy(x => x.ProductName)
                         .Select(g => new
                         {
@@ -94,7 +94,7 @@ namespace VinceApp.Toters_Feature
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "error with Dashboard page");
+                Log.Error(ex, "error with toters Dashboard page");
                 ToastControl.Show("خطأ", "حدث خطأ أثناء تحميل الإحصائيات", ToastControl.NotificationType.Error);
             }
         }
