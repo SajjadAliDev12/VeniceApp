@@ -83,7 +83,7 @@ namespace VinceApp.Toters_Feature
         {
             try
             {
-                if (await MyConfirmDialog.ShowAsync("تأكيد", "هل تود نقل الطلب الى الطلبات الملغية؟"))
+                if (await MyConfirmDialog.ShowAsync("تحذير", "هل تود نقل الطلب الى الطلبات الملغية؟\n هذا الامر لايمكن التراجع عنه لاحقاً"))
                 {
                     if (_orderID > 0)
                     {

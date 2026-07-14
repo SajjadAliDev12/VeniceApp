@@ -288,7 +288,13 @@
                     </ControlTemplate>
                 </Button.Template>
             </Button>
-            <Grid x:Name="ToastOverlay" IsHitTestVisible="True" Panel.ZIndex="9999" Background="{x:Null}"></Grid>
+            <Grid x:Name="TotersReportsToastOverlay" IsHitTestVisible="True" Panel.ZIndex="9999" Background="{x:Null}">
+                <StackPanel x:Name="NotificationArea"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"
+        Margin="20"
+        Width="360"/>
+            </Grid>
 
         </Grid>
     </Grid>

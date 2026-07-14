@@ -261,6 +261,18 @@ namespace VinceApp.Toters_Feature
             if (sender is Button clickedButton && clickedButton.Tag is int orderId)
             {
                 ActiveOrderStatus os =  new ActiveOrderStatus(orderId);
+                if (clickedButton.Parent == CompletedTotersOrdersPanel)
+                {
+                    os.btnServe.Visibility = Visibility.Collapsed;
+                    os.btnServe.IsEnabled = false;
+                }
+                if (clickedButton.Parent == CanceledTotersOrdersPanel)
+                {
+                    os.btnServe.Visibility = Visibility.Collapsed;
+                    os.btnServe.IsEnabled = false;
+                    os.btnAdd.Visibility = Visibility.Collapsed;
+                    os.btnAdd.IsEnabled = false;
+                }
                 os.ShowDialog();
                 LoadData();
             }
