@@ -95,7 +95,7 @@ namespace VinceApp.Toters_Feature
             catch (Exception ex)
             {
                 Log.Error(ex, "error with toters Dashboard page");
-                TotersReportsToastOverlay.show("خطأ", "حدث خطأ أثناء تحميل الإحصائيات", ToastControl.NotificationType.Error);
+                ToastControl.Show("خطأ", "حدث خطأ أثناء تحميل الإحصائيات", ToastControl.NotificationType.Error);
             }
         }
 

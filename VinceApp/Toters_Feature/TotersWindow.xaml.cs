@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using VinceApp.Data.Models;
 using Serilog;
+using VinceApp.Data;
 
 namespace VinceApp.Toters_Feature
 {
@@ -263,14 +264,11 @@ namespace VinceApp.Toters_Feature
                 ActiveOrderStatus os =  new ActiveOrderStatus(orderId);
                 if (clickedButton.Parent == CompletedTotersOrdersPanel)
                 {
-                    os.btnServe.Visibility = Visibility.Collapsed;
                     os.btnServe.IsEnabled = false;
                 }
                 if (clickedButton.Parent == CanceledTotersOrdersPanel)
                 {
-                    os.btnServe.Visibility = Visibility.Collapsed;
                     os.btnServe.IsEnabled = false;
-                    os.btnAdd.Visibility = Visibility.Collapsed;
                     os.btnAdd.IsEnabled = false;
                 }
                 os.ShowDialog();
@@ -281,6 +279,11 @@ namespace VinceApp.Toters_Feature
         {
             if (_isLoading) return;
             _isLoading = true;
+            if (CurrentUser.Role == (int)UserRole.Cashier)
+            {
+                btnOrders.IsEnabled = false;
+                btnTotersStats.IsEnabled = false;
+            }
             await LoadActiveOrders();
             await LoadCompletedOrders();
             await LoadCanceledOrders();
@@ -294,11 +297,30 @@ namespace VinceApp.Toters_Feature
 
         private void btnTotersStats_Click(object sender, RoutedEventArgs e)
         {
+            if (CurrentUser.Role == (int)UserRole.Cashier || CurrentUser.Role == (int)UserRole.Disabled)
+            {
+                ToastControl.Show("تنبيه", "عذراً ليس لديك الصلاحية للوصول الى هذه الصفحة!", ToastControl.NotificationType.Info);
+                return;
+            }
             TotersReports totersReports = new TotersReports()
             {
                 Owner = this
             };
             totersReports.ShowDialog();
+        }
+
+        private void TotersOrdersWindow_Click(object sender, RoutedEventArgs e)
+        {
+            if(CurrentUser.Role == (int)UserRole.Cashier || CurrentUser.Role == (int)UserRole.Disabled)
+            {
+                ToastControl.Show("تنبيه", "عذراً ليس لديك الصلاحية للوصول الى هذه الصفحة!",ToastControl.NotificationType.Info);
+                return;
+            }
+            TotersOrdersWindow to = new TotersOrdersWindow()
+            {
+                Owner = this
+            };
+            to.ShowDialog();
         }
     }
 }

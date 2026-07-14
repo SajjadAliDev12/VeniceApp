@@ -168,7 +168,7 @@
 
                     <Button x:Name="btnNewTotersOrder"
                             Content="🛵 إضافة طلب جديد"
-                            Width="220"
+                            Width="210"
                             Background="#2ECC71"
                             Style="{StaticResource TouchButtonStyle}" Click="btnNewTotersOrder_Click"
                             />
@@ -181,15 +181,20 @@
                             />
                     <Button x:Name="btnRefresh"
 Content="🔄 تحديث"
-Width="240"
+Width="150"
 Background="#607D8B"
 Style="{StaticResource TouchButtonStyle}"
 Click="RefreshButton_Click"/>
-
+                    <Button x:Name="btnOrders"
+Content="🧾 تقارير المبيعات"
+Width="180"
+Background="#2196F3"
+Style="{StaticResource TouchButtonStyle}"
+Click="TotersOrdersWindow_Click"/>
                     <Button x:Name="btnBack"
                             Content=" رجوع للصفحة الرئيسية"
-                            Width="240"
-                            Background="#607D8B"
+                            Width="220"
+                            Background="#E57373"
                             Style="{StaticResource TouchButtonStyle}"
                             Click="Back_Click"/>
 

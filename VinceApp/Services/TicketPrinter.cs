@@ -103,7 +103,8 @@ namespace VinceApp.Services
                         .FirstOrDefault(o => o.Id == orderId);
 
                     if (order == null) return false;
-
+                    if (order.OrderSource == OrderSource.EnToters)
+                        return true;
                     var data = new ReceiptData
                     {
                         TargetPrinterName = pName,

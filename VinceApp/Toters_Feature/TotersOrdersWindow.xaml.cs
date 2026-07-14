@@ -1,28 +1,35 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Serilog;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
-using VinceApp.Data;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using VinceApp.Data.Models;
+using Serilog;
+using Microsoft.EntityFrameworkCore;
+using VinceApp.Data;
 
-namespace VinceApp.Pages
+namespace VinceApp.Toters_Feature
 {
-    public partial class OrdersPage : Page
+    /// <summary>
+    /// Interaction logic for TotersOrdersWindow.xaml
+    /// </summary>
+    public partial class TotersOrdersWindow : Window
     {
         private int _currentPage = 1;
         private int _pageSize = 20;
         private int _totalPages = 0;
-        private bool _isLoaded = false; // ✅ لمنع تكرار التحميل
-
-        public OrdersPage()
+        private bool _isLoaded = false;
+        public TotersOrdersWindow()
         {
             InitializeComponent();
-
-            // ✅ استخدام Flag لمنع التنفيذ المزدوج
             this.Loaded += async (s, e) =>
             {
                 if (_isLoaded) return;
@@ -30,7 +37,6 @@ namespace VinceApp.Pages
                 await LoadOrders();
             };
         }
-
         private async Task LoadOrders()
         {
             try
@@ -42,12 +48,12 @@ namespace VinceApp.Pages
 
                     if (showVoided)
                     {
-                        query = query.Where(o => o.isDeleted == true && o.OrderSource != Data.Enums.Enums.OrderSource.EnToters);
+                        query = query.Where(o => o.isDeleted == true && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters);
                         txtPageTitle.Text = "أرشيف الفواتير الملغاة";
                     }
                     else
                     {
-                        query = query.Where(o => o.isDeleted == false && o.OrderSource != Data.Enums.Enums.OrderSource.EnToters);
+                        query = query.Where(o => o.isDeleted == false && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters);
                         txtPageTitle.Text = "سجل الطلبات";
                     }
 
@@ -118,7 +124,7 @@ namespace VinceApp.Pages
                 {
                     var result = await context.Orders
                         .AsNoTracking()
-                        .Where(o => o.OrderNumber == orderNum && o.isPaid == true && o.OrderSource != Data.Enums.Enums.OrderSource.EnToters)
+                        .Where(o => o.OrderNumber == orderNum && o.isPaid == true && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
                         .Select(o => new
                         {
                             o.Id,
@@ -202,7 +208,7 @@ namespace VinceApp.Pages
                             using (var context = new VinceSweetsDbContext())
                             {
                                 // ✅ تعديل: استخدام FirstOrDefaultAsync
-                                var order = await context.Orders.Where(o => o.OrderSource != Data.Enums.Enums.OrderSource.EnToters)
+                                var order = await context.Orders.Where(o => o.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
                                     .Include(o => o.OrderDetails)
                                     .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -237,6 +243,11 @@ namespace VinceApp.Pages
                     }
                 }
             }
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

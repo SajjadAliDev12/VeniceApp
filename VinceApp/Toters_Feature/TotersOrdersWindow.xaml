@@ -1,0 +1,363 @@
+﻿<Window x:Class="VinceApp.Toters_Feature.TotersOrdersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VinceApp.Toters_Feature"
+        mc:Ignorable="d" WindowStyle="None" WindowState="Maximized" ResizeMode="NoResize" FlowDirection="RightToLeft"
+        Title="شاشة فواتير طلبات توترز" Height="450" Width="800">
+    <Window.Resources>
+
+
+
+        <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#CFD8DC"/>
+        <SolidColorBrush x:Key="TextDark" Color="#37474F"/>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#7E57C2"/>
+
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryColor}"/>
+                                <Setter TargetName="border" Property="Background" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TouchButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="12"
+                            Padding="{TemplateBinding Padding}">
+
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.96" ScaleY="0.96"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#CFD8DC"/>
+                                <Setter Property="Foreground" Value="#90A4AE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GridActionButtonStyle" TargetType="Button" BasedOn="{StaticResource TouchButtonStyle}">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Width" Value="90"/>
+        </Style>
+
+        <Style x:Key="BaseDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="RowHeight" Value="48"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#F5F5F5"/>
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
+        </Style>
+
+        <Style x:Key="BaseHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#37474F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Setter Property="BorderBrush" Value="#455A64"/>
+        </Style>
+
+        <Style x:Key="BaseRowStyle" TargetType="DataGridRow">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#EDE7F6"/>
+                    <Setter Property="Foreground" Value="#4527A0"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F5F5F5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BgBrush}">
+        <Grid Margin="22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                Background="{StaticResource CardBrush}"
+                Padding="16"
+                CornerRadius="16"
+                Margin="10,0,70,14"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                >
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                    <TextBlock x:Name="txtPageTitle"
+                           Text="سجل الطلبات"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextDark}"
+                           Margin="0,0,20,0"/>
+
+                    <Rectangle Width="1" Fill="{StaticResource BorderSoft}" Margin="0,6,16,6"/>
+
+                    <TextBlock Text="رقم الفاتورة:"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Foreground="#546E7A"
+                           Margin="0,0,10,0"/>
+
+                    <TextBox x:Name="txtSearch"
+                         Width="200"
+                         Style="{StaticResource InputTextBoxStyle}"
+                         KeyDown="TxtSearch_KeyDown"/>
+
+                    <Button Content="🔍 بحث"
+                        Width="90"
+                        Margin="10,0"
+                        Background="#1976D2"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Click="Search_Click"/>
+
+                    <Button Content="🔄 تحديث"
+                        Width="90"
+                        Background="#607D8B"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Click="Refresh_Click"/>
+
+                    <CheckBox x:Name="chkShowVoided"
+                          Content="عرض الفواتير الملغاة"
+                          FontSize="14"
+                          FontWeight="SemiBold"
+                          Foreground="#455A64"
+                          VerticalAlignment="Center"
+                          Margin="20,0,0,0"
+                          Checked="chkShowVoided_Checked"
+                          Unchecked="chkShowVoided_Unchecked"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="1"
+                Background="{StaticResource CardBrush}"
+                CornerRadius="16"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                Padding="1"
+                >
+
+                <Border CornerRadius="16" ClipToBounds="True">
+                    <DataGrid x:Name="dgOrders"
+                          Style="{StaticResource BaseDataGridStyle}"
+                          ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                          RowStyle="{StaticResource BaseRowStyle}">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="رقم الفاتورة"
+                                            Binding="{Binding OrderNumber}"
+                                            Width="120"
+                                            FontWeight="Bold"/>
+
+                            <DataGridTextColumn Header="التاريخ والوقت"
+                                            Binding="{Binding OrderDate, StringFormat='yyyy/MM/dd hh:mm tt'}"
+                                            Width="180"/>
+
+                            <DataGridTextColumn Header="المبلغ"
+                                            Binding="{Binding OriginalTotal, StringFormat={}{0:N0}}"
+                                            Width="110"/>
+
+                            <DataGridTextColumn Header="الخصم"
+                                            Binding="{Binding Discount, StringFormat={}{0:N0}}"
+                                            Width="100"
+                                            Foreground="#D32F2F"/>
+                            <DataGridTextColumn Header="الصافي"
+                                            Binding="{Binding FinalTotal, StringFormat={}{0:N0} د.ع}"
+                                            Width="130"
+                                            FontWeight="Bold"
+                                            Foreground="#2E7D32"/>
+                            <DataGridTextColumn Header="الحالة"
+                                            Binding="{Binding StatusText}"
+                                            Width="120"/>
+
+                            <DataGridTemplateColumn Header="العمليات" Width="220">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Content="👁️ تفاصيل"
+                                                Margin="4,0"
+                                                Background="#FB8C00"
+                                                Style="{StaticResource GridActionButtonStyle}"
+                                                Click="ViewDetails_Click"
+                                                Tag="{Binding Id}"/>
+
+                                            <Button Content="🚫 إلغاء"
+                                                Margin="4,0"
+                                                Background="#E53935"
+                                                Click="DeleteOrder_Click"
+                                                Tag="{Binding Id}">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource GridActionButtonStyle}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding isDeleted}" Value="True">
+                                                                <Setter Property="IsEnabled" Value="False"/>
+                                                                <Setter Property="Opacity" Value="0.3"/>
+                                                                <Setter Property="Content" Value="مؤرشف"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Border>
+
+            <Border Grid.Row="2" Background="{x:Null}" Margin="0,14,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button x:Name="btnPrev"
+                        Content="السابق"
+                        Width="120"
+                        Background="#ECEFF1"
+                        Foreground="#455A64"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Click="PrevPage_Click"/>
+
+                    <Border Background="#FFFFFF"
+                        CornerRadius="12"
+                        BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="1"
+                        Padding="20,10"
+                        Margin="14,0"
+                        >
+                        <TextBlock x:Name="txtPageInfo"
+                               Text="صفحة 1"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextDark}"/>
+                    </Border>
+
+                    <Button x:Name="btnNext"
+                        Content="التالي"
+                        Width="120"
+                        Background="#ECEFF1"
+                        Foreground="#455A64"
+                        Style="{StaticResource TouchButtonStyle}"
+                        Click="NextPage_Click"/>
+                </StackPanel>
+            </Border>
+            <Button Click="ExitButton_Click"
+                Background="#FFEBEE"
+                Width="40"
+                Height="40"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="706,17,0,0"
+                Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <!-- جعل الـ CornerRadius مساوياً لنصف الارتفاع والعرض ليعطي شكلاً دائرياً مثقوباً بدقة -->
+                        <Border x:Name="b" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="20"
+                            RenderTransformOrigin="0.5,0.5">
+
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+
+                            <TextBlock Text="✕" 
+                                Foreground="#E53935" 
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center" 
+                                FontSize="16" 
+                                FontWeight="Bold"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#FFCDD2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="b" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.92" ScaleY="0.92"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+        </Grid>
+
+    </Grid>
+</Window>

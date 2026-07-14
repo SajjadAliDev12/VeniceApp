@@ -409,7 +409,7 @@ namespace VinceApp
                 // التحقق من نجاح جميع عمليات الطباعة
                 if (customerPrintSuccess && kitchenPrintSuccess && iceCreamPrintSuccess)
                 {
-                    ToastControl.Show("تمت العملية", "تم الحفظ وإرسال الفواتير لجميع الأقسام", ToastControl.NotificationType.Success);
+                    //ToastControl.Show("تمت العملية", "تم الحفظ وإرسال الفواتير لجميع الأقسام", ToastControl.NotificationType.Success);
                 }
                 else
                 {
