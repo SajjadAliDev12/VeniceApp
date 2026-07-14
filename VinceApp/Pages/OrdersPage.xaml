@@ -213,7 +213,7 @@
 
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="رقم الفاتورة"
-                                                Binding="{Binding OrderNumber}"
+                                                Binding="{Binding Id}"
                                                 Width="120"
                                                 FontWeight="Bold"/>
 

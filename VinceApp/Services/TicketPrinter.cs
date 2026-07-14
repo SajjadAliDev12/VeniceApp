@@ -103,8 +103,6 @@ namespace VinceApp.Services
                         .FirstOrDefault(o => o.Id == orderId);
 
                     if (order == null) return false;
-                    if (order.OrderSource == OrderSource.EnToters)
-                        return true;
                     var data = new ReceiptData
                     {
                         TargetPrinterName = pName,
@@ -112,7 +110,7 @@ namespace VinceApp.Services
                         StoreAddress = settings?.StoreAddress ?? "", 
                         StorePhone = settings?.StorePhone ?? "",
                         Footer = settings?.ReceiptFooter ?? "شكراً لزيارتكم",
-                        OrderNumber = $"#{order.OrderNumber}",
+                        OrderNumber = $"#{order.Id}",
                         Date = order.OrderDate ?? DateTime.Now,
                         Total = order.TotalAmount ?? 0,
                         Discount = order.DiscountAmount ?? 0,
@@ -156,7 +154,7 @@ namespace VinceApp.Services
 
                     if (order.ParentOrderId.HasValue)
                     {
-                        var parentNum = context.Orders.Where(o => o.Id == order.ParentOrderId.Value).Select(o => o.OrderNumber).FirstOrDefault();
+                        var parentNum = context.Orders.Where(o => o.Id == order.ParentOrderId.Value).Select(o => o.Id).FirstOrDefault();
                         if (parentNum > 0) data.ParentOrderText = $"ملحق للطلب رقم {parentNum}";
                     }
 

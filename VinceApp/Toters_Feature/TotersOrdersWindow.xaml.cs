@@ -124,7 +124,7 @@ namespace VinceApp.Toters_Feature
                 {
                     var result = await context.Orders
                         .AsNoTracking()
-                        .Where(o => o.OrderNumber == orderNum && o.isPaid == true && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
+                        .Where(o => o.Id == orderNum && o.isPaid == true && o.OrderSource == Data.Enums.Enums.OrderSource.EnToters)
                         .Select(o => new
                         {
                             o.Id,

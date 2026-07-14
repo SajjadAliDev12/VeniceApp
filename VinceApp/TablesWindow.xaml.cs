@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
+using System.Windows.Threading;
 using VinceApp.Data;
 using VinceApp.Data.Enums;
 using VinceApp.Data.Models;
@@ -26,7 +27,8 @@ namespace VinceApp
         private const int TABLE_PAID = 2;
         private int? _ParentOrderID = null;
         private bool _initialized = false;
-
+        private readonly System.Collections.Generic.List<(TextBlock TextBlock, DateTime StartTime)> _activeTimers = new();
+        private DispatcherTimer _globalClockTimer;
         public TablesWindow()
         {
             InitializeComponent();
@@ -36,12 +38,13 @@ namespace VinceApp
         {
             public int? tableID { get; set; }
             public decimal? TotalPrice { get; set; }
+            public DateTime? OrderDate { get; set; }
         }
         private async Task LoadTables()
         {
             if (_isLoading) return;
             _isLoading = true;
-
+            _activeTimers.Clear();
             TablesPanel.Children.Clear();
            
             if (TakeawayPanel != null) TakeawayPanel.Children.Clear();
@@ -62,6 +65,7 @@ namespace VinceApp
                         {
                             tableID = o.TableId,
                             TotalPrice = o.TotalAmount,
+                            OrderDate = o.OrderDate,
                         } )
                         .Distinct()
                         .ToListAsync();
@@ -73,12 +77,13 @@ namespace VinceApp
                         .Select(g => new BusyTable
                         {
                             tableID = g.Key,
-                            TotalPrice =g.Sum(x => x.TotalAmount)
+                            TotalPrice =g.Sum(x => x.TotalAmount),
+                            OrderDate = g.Max(x => x.OrderDate),
                         })
                         .ToListAsync();
 
-                    var busySet = busyTableIds.ToDictionary(x => x.tableID,x=> x.TotalPrice);
-                    var paidSet = paidTableIds.ToDictionary(x => x.tableID,x=> x.TotalPrice);
+                    var busySet = busyTableIds.ToDictionary(x => x.tableID,x => new { x.TotalPrice, x.OrderDate });
+                    var paidSet = paidTableIds.ToDictionary(x => x.tableID, x => new { x.TotalPrice, x.OrderDate });
 
                     foreach (var table in tables)
                     {
@@ -93,7 +98,7 @@ namespace VinceApp
                         Button btnTable = new Button
                         {
                             Width = 220,
-                            Height = 200,
+                            Height = 210,
                             Margin = new Thickness(8),
                             Tag = table,
                             Cursor = Cursors.Hand,
@@ -122,7 +127,7 @@ namespace VinceApp
                         var txtNumber = new TextBlock { Text = $"طاولة {table.TableNumber}", FontSize = 18, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
                         var txtStatus = new TextBlock { FontSize = 16, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 5, 0, 0) };
                         var txtPrice = new TextBlock {FontSize = 16,FontWeight = FontWeights.Bold,HorizontalAlignment = HorizontalAlignment.Center,Margin = new Thickness(0, 5, 0, 0)};
-
+                        var txtTimerDisplay = new TextBlock { FontSize = 14, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
                         // --- الألوان والحالات (عاد للطبيعي بدون ذكر الملحق) ---
                         if (computedStatus == TABLE_FREE)
                         {
@@ -139,7 +144,12 @@ namespace VinceApp
                             txtStatus.Text = "(مشغولة)";
                             txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(229, 57, 53));
                             txtNumber.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40));
-                            txtPrice.Text = $"{busySet[table.Id]:N0} د.ع";
+                            txtPrice.Text = $"{busySet[table.Id].TotalPrice:N0} د.ع";
+                            if (busySet[table.Id].OrderDate.HasValue)
+                            {
+                                txtTimerDisplay.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40));
+                                _activeTimers.Add((txtTimerDisplay, busySet[table.Id].OrderDate.Value));
+                            }
                         }
                         else // TABLE_PAID
                         {
@@ -148,19 +158,25 @@ namespace VinceApp
                             txtStatus.Text = "(مدفوع)";
                             txtStatus.Foreground = new SolidColorBrush(Color.FromRgb(239, 108, 0));
                             txtNumber.Foreground = new SolidColorBrush(Color.FromRgb(239, 108, 0));
-                            txtPrice.Text = $"{paidSet[table.Id]:N0} د.ع";
+                            txtPrice.Text = $"{paidSet[table.Id].TotalPrice:N0} د.ع";
+                            if (paidSet[table.Id].OrderDate.HasValue)
+                            {
+                                txtTimerDisplay.Foreground = new SolidColorBrush(Color.FromRgb(239, 108, 0));
+                                _activeTimers.Add((txtTimerDisplay, paidSet[table.Id].OrderDate.Value));
+                            }
                         }
 
                         stack.Children.Add(txtIcon);
                         stack.Children.Add(txtNumber);
                         stack.Children.Add(txtStatus);
                         if (computedStatus != TABLE_FREE)
-                            stack.Children.Add(txtPrice);
+                            { stack.Children.Add(txtPrice); stack.Children.Add(txtTimerDisplay); }
                         btnTable.Content = stack;
 
                         TablesPanel.Children.Add(btnTable);
                     }
-
+                    UpdateAllLiveTimers();
+                    InitializeGlobalClock();
                     // --- قسم الطلبات السفري ---
                     if (TakeawayPanel != null)
                     {
@@ -222,7 +238,7 @@ namespace VinceApp
                             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
                             var infoStack = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-                            infoStack.Children.Add(new TextBlock { Text = $"#{order.OrderNumber} {statusText}", FontWeight = FontWeights.Bold, FontSize = 20, Foreground = Brushes.Black, Margin = new Thickness(0, 0, 10, 0) });
+                            infoStack.Children.Add(new TextBlock { Text = $"#{order.Id} {statusText}", FontWeight = FontWeights.Bold, FontSize = 20, Foreground = Brushes.Black, Margin = new Thickness(0, 0, 10, 0) });
                             infoStack.Children.Add(new TextBlock{Text = $"{order.TotalAmount:N0} د.ع",FontWeight = FontWeights.Bold,FontSize = 18,Foreground = Brushes.DarkGreen,Margin = new Thickness(0, 0, 10, 0)});
                             infoStack.Children.Add(new TextBlock { Text = statusIcon, FontSize = 18, VerticalAlignment = VerticalAlignment.Center });
 
@@ -315,7 +331,38 @@ namespace VinceApp
             }
             finally { _isLoading = false; }
         }
+        private void InitializeGlobalClock()
+        {
+            // إنشاء التايمر المركزي إذا لم يكن موجوداً لتحديث نصوص الساعات دورياً
+            if (_globalClockTimer == null)
+            {
+                _globalClockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) }; // تحديث كل 60 ثانية (دقيقة) لضمان الأداء الصافي
+                _globalClockTimer.Tick += (s, e) => UpdateAllLiveTimers();
+                _globalClockTimer.Start();
+            }
+        }
 
+        private void UpdateAllLiveTimers()
+        {
+            if (!_activeTimers.Any()) return;
+
+            DateTime now = DateTime.Now;
+
+            foreach (var item in _activeTimers)
+            {
+                TimeSpan elapsed = now - item.StartTime;
+
+                // تنسيق الوقت ليظهر بشكل احترافي (ساعة : دقيقة)
+                if (elapsed.TotalHours >= 1)
+                {
+                    item.TextBlock.Text = $"⏱️ {(int)elapsed.TotalHours} ساعة و {elapsed.Minutes} دقيقة";
+                }
+                else
+                {
+                    item.TextBlock.Text = $"⏱️ {elapsed.Minutes} دقيقة";
+                }
+            }
+        }
         public void ApplyPermissions()
         {
             if (CurrentUser.Role == (int)UserRole.Cashier)

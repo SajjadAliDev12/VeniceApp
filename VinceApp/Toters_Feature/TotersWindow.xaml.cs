@@ -191,7 +191,7 @@ namespace VinceApp.Toters_Feature
 
             var txtOrderNum = new TextBlock
             {
-                Text = $"طلب #{order.OrderNumber}",
+                Text = $"طلب #{order.Id}",
                 FontSize = 16,
                 FontWeight = FontWeights.Bold,
                 Foreground = (Brush)FindResource("TitleBrush"),

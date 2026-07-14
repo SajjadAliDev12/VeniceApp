@@ -35,7 +35,7 @@ namespace VinceApp
 
                     if (order != null)
                     {
-                        txtTitle.Text = $"فاتورة رقم #{order.OrderNumber}";
+                        txtTitle.Text = $"فاتورة رقم #{order.Id}";
                         txtDate.Text = $"التاريخ: {order.OrderDate:yyyy/MM/dd hh:mm tt}";
 
                         // معالجة حالة الإلغاء
@@ -68,7 +68,7 @@ namespace VinceApp
                         {
                             var parentOrderNum = await context.Orders
                                 .Where(o => o.Id == order.ParentOrderId)
-                                .Select(o => o.OrderNumber)
+                                .Select(o => o.Id)
                                 .FirstOrDefaultAsync();
 
                             if (parentOrderNum > 0)
