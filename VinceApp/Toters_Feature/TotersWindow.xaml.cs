@@ -32,7 +32,15 @@ namespace VinceApp.Toters_Feature
         }
         private async void btnNewTotersOrder_Click(object sender, RoutedEventArgs e)
         {
-            var btn = sender as Button;
+            var dailog = new TotersOrderNumberInput();
+            string TotersOrderId = "";
+            if (dailog.ShowDialog() == true)
+            {
+                TotersOrderId = dailog.TotersOrderId;
+            }
+            else
+                return;
+                var btn = sender as Button;
             if (btn != null) btn.IsEnabled = false;
             try
             { 
@@ -44,6 +52,7 @@ namespace VinceApp.Toters_Feature
                     var newOrder = new Order
                     {
                         OrderNumber = await GenerateDailyOrderNumber(context),
+                        TotersOrderNumber = TotersOrderId,
                         TableId = null,
                         isPaid = false,          // 🟢 تم التصحيح: ليس مدفوعاً بعد
                         isSentToKitchen = false,

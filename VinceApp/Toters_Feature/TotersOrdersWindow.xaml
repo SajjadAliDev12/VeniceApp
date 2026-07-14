@@ -5,10 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VinceApp.Toters_Feature"
         mc:Ignorable="d" WindowStyle="None" WindowState="Maximized" ResizeMode="NoResize" FlowDirection="RightToLeft"
-        Title="شاشة فواتير طلبات توترز" Height="450" Width="800">
+        Title="شاشة فواتير طلبات توترز" Height="700" Width="1100">
     <Window.Resources>
-
-
 
         <SolidColorBrush x:Key="BgBrush" Color="#F2F5F8"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF"/>
@@ -138,6 +136,48 @@
     </Window.Resources>
 
     <Grid Background="{StaticResource BgBrush}">
+        <!-- زر الخروج الدائري عائم ومثبت بدقة في أعلى اليمين ولا يتأثر بتمدد الحقول -->
+        <Button Click="ExitButton_Click"
+                Background="#FFEBEE"
+                Width="40"
+                Height="40"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="15"
+                Panel.ZIndex="100"
+                Cursor="Hand">
+            <Button.Template>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="b" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="20"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
+                        <TextBlock Text="✕" 
+                                   Foreground="#E53935" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center" 
+                                   FontSize="16" 
+                                   FontWeight="Bold"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Value="#FFCDD2" Property="Background"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="b" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="0.92" ScaleY="0.92"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
         <Grid Margin="22">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -145,122 +185,153 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
+            <!-- 1) شريط البحث العلوي الديناميكي: يستغل المساحة كاملة أفقياً وهامش أيسر لترك مساحة لزر الإغلاق الموحد -->
             <Border Grid.Row="0"
-                Background="{StaticResource CardBrush}"
-                Padding="16"
-                CornerRadius="16"
-                Margin="10,0,70,14"
-                BorderBrush="{StaticResource BorderSoft}"
-                BorderThickness="1"
-                >
+                    Background="{StaticResource CardBrush}"
+                    Padding="16"
+                    CornerRadius="16"
+                    Margin="0,0,70,14"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1">
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <!-- العمود المطاطي: حقل الإدخال يتمدد تلقائياً مع كبر الشاشة -->
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
                     <TextBlock x:Name="txtPageTitle"
-                           Text="سجل الطلبات"
-                           FontSize="18"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextDark}"
-                           Margin="0,0,20,0"/>
+                               Text="سجل الطلبات"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextDark}"
+                               Grid.Column="0"
+                               VerticalAlignment="Center"
+                               Margin="0,0,15,0"/>
 
-                    <Rectangle Width="1" Fill="{StaticResource BorderSoft}" Margin="0,6,16,6"/>
+                    <Rectangle Grid.Column="1" Width="1" Fill="{StaticResource BorderSoft}" Margin="0,6,16,6"/>
 
                     <TextBlock Text="رقم الفاتورة:"
-                           VerticalAlignment="Center"
-                           FontWeight="SemiBold"
-                           Foreground="#546E7A"
-                           Margin="0,0,10,0"/>
+                               Grid.Column="2"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold"
+                               Foreground="#546E7A"
+                               Margin="0,0,10,0"/>
 
                     <TextBox x:Name="txtSearch"
-                         Width="200"
-                         Style="{StaticResource InputTextBoxStyle}"
-                         KeyDown="TxtSearch_KeyDown"/>
+                             Grid.Column="3"
+                             HorizontalAlignment="Stretch"
+                             Style="{StaticResource InputTextBoxStyle}"
+                             KeyDown="TxtSearch_KeyDown"
+                             Margin="0,0,10,0"/>
 
                     <Button Content="🔍 بحث"
-                        Width="90"
-                        Margin="10,0"
-                        Background="#1976D2"
-                        Style="{StaticResource TouchButtonStyle}"
-                        Click="Search_Click"/>
+                            Grid.Column="4"
+                            Width="95"
+                            Margin="0,0,10,0"
+                            Background="#1976D2"
+                            Style="{StaticResource TouchButtonStyle}"
+                            Click="Search_Click"/>
 
                     <Button Content="🔄 تحديث"
-                        Width="90"
-                        Background="#607D8B"
-                        Style="{StaticResource TouchButtonStyle}"
-                        Click="Refresh_Click"/>
+                            Grid.Column="5"
+                            Width="95"
+                            Margin="0,0,15,0"
+                            Background="#607D8B"
+                            Style="{StaticResource TouchButtonStyle}"
+                            Click="Refresh_Click"/>
 
                     <CheckBox x:Name="chkShowVoided"
-                          Content="عرض الفواتير الملغاة"
-                          FontSize="14"
-                          FontWeight="SemiBold"
-                          Foreground="#455A64"
-                          VerticalAlignment="Center"
-                          Margin="20,0,0,0"
-                          Checked="chkShowVoided_Checked"
-                          Unchecked="chkShowVoided_Unchecked"/>
-                </StackPanel>
+                              Grid.Column="6"
+                              Content="عرض الفواتير الملغاة"
+                              FontSize="14"
+                              FontWeight="SemiBold"
+                              Foreground="#455A64"
+                              VerticalAlignment="Center"
+                              Checked="chkShowVoided_Checked"
+                              Unchecked="chkShowVoided_Unchecked"/>
+                </Grid>
             </Border>
 
+            <!-- 2) جدول عرض البيانات الرئيسي: يستغل 100% من المساحة المتاحة للنافذة متجاوباً بالكامل -->
             <Border Grid.Row="1"
-                Background="{StaticResource CardBrush}"
-                CornerRadius="16"
-                BorderBrush="{StaticResource BorderSoft}"
-                BorderThickness="1"
-                Padding="1"
-                >
-
+                    Background="{StaticResource CardBrush}"
+                    CornerRadius="16"
+                    BorderBrush="{StaticResource BorderSoft}"
+                    BorderThickness="1"
+                    Padding="1">
                 <Border CornerRadius="16" ClipToBounds="True">
                     <DataGrid x:Name="dgOrders"
-                          Style="{StaticResource BaseDataGridStyle}"
-                          ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
-                          RowStyle="{StaticResource BaseRowStyle}">
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch"
+                              VerticalContentAlignment="Stretch"
+                              Style="{StaticResource BaseDataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource BaseHeaderStyle}"
+                              RowStyle="{StaticResource BaseRowStyle}">
 
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="رقم الفاتورة"
-                                            Binding="{Binding Id}"
-                                            Width="120"
-                                            FontWeight="Bold"/>
+                                                Binding="{Binding Id}"
+                                                Width="1.5*"
+                                                FontWeight="Bold"/>
+
+                            <DataGridTextColumn Header="رقم طلب توترز"
+                                                Binding="{Binding TotersOrderNumber}"
+                                                Width="1.5*"
+                                                FontWeight="Bold"/>
 
                             <DataGridTextColumn Header="التاريخ والوقت"
-                                            Binding="{Binding OrderDate, StringFormat='yyyy/MM/dd hh:mm tt'}"
-                                            Width="180"/>
+                                                Binding="{Binding OrderDate, StringFormat='yyyy/MM/dd hh:mm tt'}"
+                                                Width="1.8*"/>
 
                             <DataGridTextColumn Header="المبلغ"
-                                            Binding="{Binding OriginalTotal, StringFormat={}{0:N0}}"
-                                            Width="110"/>
+                                                Binding="{Binding OriginalTotal, StringFormat={}{0:N0}}"
+                                                Width="1.2*"/>
 
                             <DataGridTextColumn Header="الخصم"
-                                            Binding="{Binding Discount, StringFormat={}{0:N0}}"
-                                            Width="100"
-                                            Foreground="#D32F2F"/>
-                            <DataGridTextColumn Header="الصافي"
-                                            Binding="{Binding FinalTotal, StringFormat={}{0:N0} د.ع}"
-                                            Width="130"
-                                            FontWeight="Bold"
-                                            Foreground="#2E7D32"/>
-                            <DataGridTextColumn Header="الحالة"
-                                            Binding="{Binding StatusText}"
-                                            Width="120"/>
+                                                Binding="{Binding Discount, StringFormat={}{0:N0}}"
+                                                Width="1*"
+                                                Foreground="#D32F2F"/>
 
-                            <DataGridTemplateColumn Header="العمليات" Width="220">
+                            <DataGridTextColumn Header="الصافي"
+                                                Binding="{Binding FinalTotal, StringFormat={}{0:N0} د.ع}"
+                                                Width="1.5*"
+                                                FontWeight="Bold"
+                                                Foreground="#2E7D32"/>
+
+                            <DataGridTextColumn Header="الحالة"
+                                                Binding="{Binding StatusText}"
+                                                Width="1.2*"/>
+
+                            <DataGridTemplateColumn Header="العمليات" Width="2.2*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                             <Button Content="👁️ تفاصيل"
-                                                Margin="4,0"
-                                                Background="#FB8C00"
-                                                Style="{StaticResource GridActionButtonStyle}"
-                                                Click="ViewDetails_Click"
-                                                Tag="{Binding Id}"/>
+                                                    Margin="4,0"
+                                                    Background="#FB8C00"
+                                                    Style="{StaticResource GridActionButtonStyle}"
+                                                    Click="ViewDetails_Click"
+                                                    Tag="{Binding Id}"/>
 
                                             <Button Content="🚫 إلغاء"
-                                                Margin="4,0"
-                                                Background="#E53935"
-                                                Click="DeleteOrder_Click"
-                                                Tag="{Binding Id}">
+                                                    Margin="4,0"
+                                                    Background="#E53935"
+                                                    Click="DeleteOrder_Click"
+                                                    Tag="{Binding Id}">
                                                 <Button.Style>
                                                     <Style TargetType="Button" BasedOn="{StaticResource GridActionButtonStyle}">
                                                         <Style.Triggers>
+                                                            <Trigger Property="IsEnabled" Value="False">
+                                                                <Setter Property="Opacity" Value="0.5"/>
+                                                            </Trigger>
                                                             <DataTrigger Binding="{Binding isDeleted}" Value="True">
                                                                 <Setter Property="IsEnabled" Value="False"/>
                                                                 <Setter Property="Opacity" Value="0.3"/>
@@ -274,90 +345,44 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
             </Border>
 
+            <!-- 3) أزرار التنقل السفلية (Pagination) متمركزة في المنتصف -->
             <Border Grid.Row="2" Background="{x:Null}" Margin="0,14,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button x:Name="btnPrev"
-                        Content="السابق"
-                        Width="120"
-                        Background="#ECEFF1"
-                        Foreground="#455A64"
-                        Style="{StaticResource TouchButtonStyle}"
-                        Click="PrevPage_Click"/>
+                            Content="السابق"
+                            Width="120"
+                            Background="#ECEFF1"
+                            Foreground="#455A64"
+                            Style="{StaticResource TouchButtonStyle}"
+                            Click="PrevPage_Click"/>
 
                     <Border Background="#FFFFFF"
-                        CornerRadius="12"
-                        BorderBrush="{StaticResource BorderSoft}"
-                        BorderThickness="1"
-                        Padding="20,10"
-                        Margin="14,0"
-                        >
+                            CornerRadius="12"
+                            BorderBrush="{StaticResource BorderSoft}"
+                            BorderThickness="1"
+                            Padding="20,10"
+                            Margin="14,0">
                         <TextBlock x:Name="txtPageInfo"
-                               Text="صفحة 1"
-                               FontSize="16"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource TextDark}"/>
+                                   Text="صفحة 1"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource TextDark}"/>
                     </Border>
 
                     <Button x:Name="btnNext"
-                        Content="التالي"
-                        Width="120"
-                        Background="#ECEFF1"
-                        Foreground="#455A64"
-                        Style="{StaticResource TouchButtonStyle}"
-                        Click="NextPage_Click"/>
+                            Content="التالي"
+                            Width="120"
+                            Background="#ECEFF1"
+                            Foreground="#455A64"
+                            Style="{StaticResource TouchButtonStyle}"
+                            Click="NextPage_Click"/>
                 </StackPanel>
             </Border>
-            <Button Click="ExitButton_Click"
-                Background="#FFEBEE"
-                Width="40"
-                Height="40"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Margin="706,17,0,0"
-                Cursor="Hand">
-                <Button.Template>
-                    <ControlTemplate TargetType="{x:Type Button}">
-                        <!-- جعل الـ CornerRadius مساوياً لنصف الارتفاع والعرض ليعطي شكلاً دائرياً مثقوباً بدقة -->
-                        <Border x:Name="b" 
-                            Background="{TemplateBinding Background}" 
-                            CornerRadius="20"
-                            RenderTransformOrigin="0.5,0.5">
-
-                            <Border.RenderTransform>
-                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                            </Border.RenderTransform>
-
-                            <TextBlock Text="✕" 
-                                Foreground="#E53935" 
-                                HorizontalAlignment="Center" 
-                                VerticalAlignment="Center" 
-                                FontSize="16" 
-                                FontWeight="Bold"/>
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="b" Property="Background" Value="#FFCDD2"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="b" Property="RenderTransform">
-                                    <Setter.Value>
-                                        <ScaleTransform ScaleX="0.92" ScaleY="0.92"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
-
         </Grid>
-
     </Grid>
 </Window>

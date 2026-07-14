@@ -68,6 +68,7 @@ namespace VinceApp.Toters_Feature
                         .Select(o => new
                         {
                             o.Id,
+                            o.TotersOrderNumber,
                             o.OrderNumber,
                             o.OrderDate,
                             o.StatusText,
@@ -128,6 +129,7 @@ namespace VinceApp.Toters_Feature
                         .Select(o => new
                         {
                             o.Id,
+                            o.TotersOrderNumber,
                             o.OrderNumber,
                             o.OrderDate,
                             o.TotalAmount,
