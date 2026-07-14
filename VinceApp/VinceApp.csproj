@@ -7,9 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>v1.ico</ApplicationIcon>
-    <AssemblyVersion>2.0.7.5</AssemblyVersion>
-    <FileVersion>2.0.7.5</FileVersion>
-    <Version>2.0.7.5</Version>
+    <AssemblyVersion>2.1.0.1</AssemblyVersion>
+    <FileVersion>2.1.0.1</FileVersion>
+    <Version>2.1.0.1</Version>
     <Product>VeniceApp</Product>
     <Company>SajjadAlmosawy</Company>
     <Authors>SajjadAlmosawy</Authors>
