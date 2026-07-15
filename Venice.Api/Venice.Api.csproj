@@ -24,4 +24,8 @@
     <ProjectReference Include="..\VinceApp.Services\VinceApp.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

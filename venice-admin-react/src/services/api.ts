@@ -4,7 +4,7 @@ import type { Product } from '../models/products';
 import type { Category } from '../models/products';
 import type { UserRow } from '../models/UserRow';
 
-const API_BASE_URL = 'http://192.168.88.50:5000/api/';
+const API_BASE_URL = '/api/';
 
 const api = axios.create({
     baseURL: API_BASE_URL,

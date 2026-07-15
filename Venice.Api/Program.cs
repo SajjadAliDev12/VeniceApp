@@ -70,9 +70,11 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection(); // ممتاز أنك أوقفت هذا
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapControllers();
 
-
+app.MapFallbackToFile("index.html");
 try
 {
     app.Run();
