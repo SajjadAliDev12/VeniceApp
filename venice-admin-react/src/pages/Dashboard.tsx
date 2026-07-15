@@ -9,26 +9,235 @@ export default function Dashboard() {
         getSalesSummary().then(setSummary).catch(err => console.error(err));
     }, []);
 
-    if (!summary) return <p style={{ textAlign: 'center', padding: '20px' }}>جاري تحميل البيانات...</p>;
+    if (!summary)
+        return (
+            <div
+                style={{
+                    textAlign: 'center',
+                    padding: '60px',
+                    fontSize: '18px',
+                    color: '#666'
+                }}
+            >
+                جاري تحميل البيانات...
+            </div>
+        );
+
+    const cardStyle = {
+        background: "#fff",
+        borderRadius: "18px",
+        padding: "24px",
+        boxShadow: "0 10px 30px rgba(0,0,0,.08)",
+        transition: ".3s",
+        cursor: "default"
+    } as const;
 
     return (
-        <div style={{ padding: '20px', direction: 'rtl', fontFamily: 'sans-serif' }}>
-            <h2 style={{ color: '#37474F', marginBottom: '20px' }}>📊 داشبورد حلويات البندقية</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                <div style={{ background: '#66BB6A', padding: '20px', borderRadius: '16px', color: 'white' }}>
-                    <h4>📅 مبيعات اليوم</h4>
-                    <h2>{summary.today.toLocaleString()} د.ع</h2>
-                    <p>عدد الطلبات: {summary.todayOrders}</p>
+        <div
+            style={{
+                padding: "30px",
+                direction: "rtl",
+                fontFamily: "Cairo, sans-serif",
+                background: "#f4f6f9",
+                minHeight: "100vh"
+            }}
+        >
+            <div style={{ marginBottom: "30px" }}>
+                <h1
+                    style={{
+                        margin: 0,
+                        color: "#263238",
+                        fontSize: "32px",
+                        fontWeight: "bold"
+                    }}
+                >
+                    📊 داشبورد حلويات البندقية
+                </h1>
+
+                <p
+                    style={{
+                        marginTop: "8px",
+                        color: "#757575",
+                        fontSize: "15px"
+                    }}
+                >
+                    نظرة سريعة على أداء المبيعات الحالية
+                </p>
+            </div>
+
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+                    gap: "24px"
+                }}
+            >
+                {/* Today */}
+                <div
+                    style={{
+                        ...cardStyle,
+                        borderTop: "6px solid #4CAF50"
+                    }}
+                >
+                    <div
+                        style={{
+                            fontSize: "42px",
+                            marginBottom: "15px"
+                        }}
+                    >
+                        💰
+                    </div>
+
+                    <div
+                        style={{
+                            color: "#777",
+                            fontSize: "15px"
+                        }}
+                    >
+                        مبيعات اليوم
+                    </div>
+
+                    <div
+                        style={{
+                            fontSize: "34px",
+                            fontWeight: "bold",
+                            color: "#2E7D32",
+                            margin: "15px 0"
+                        }}
+                    >
+                        {summary.today.toLocaleString()} د.ع
+                    </div>
+
+                    <div
+                        style={{
+                            color: "#666",
+                            fontSize: "15px"
+                        }}
+                    >
+                        عدد الطلبات
+                    </div>
+
+                    <div
+                        style={{
+                            marginTop: "6px",
+                            fontWeight: "bold",
+                            fontSize: "22px"
+                        }}
+                    >
+                        {summary.todayOrders}
+                    </div>
                 </div>
-                <div style={{ background: '#29B6F6', padding: '20px', borderRadius: '16px', color: 'white' }}>
-                    <h4>📅 آخر 7 أيام</h4>
-                    <h2>{summary.week.toLocaleString()} د.ع</h2>
-                    <p>عدد الطلبات: {summary.weekOrders}</p>
+
+                {/* Week */}
+                <div
+                    style={{
+                        ...cardStyle,
+                        borderTop: "6px solid #2196F3"
+                    }}
+                >
+                    <div
+                        style={{
+                            fontSize: "42px",
+                            marginBottom: "15px"
+                        }}
+                    >
+                        📈
+                    </div>
+
+                    <div
+                        style={{
+                            color: "#777",
+                            fontSize: "15px"
+                        }}
+                    >
+                        آخر 7 أيام
+                    </div>
+
+                    <div
+                        style={{
+                            fontSize: "34px",
+                            fontWeight: "bold",
+                            color: "#1565C0",
+                            margin: "15px 0"
+                        }}
+                    >
+                        {summary.week.toLocaleString()} د.ع
+                    </div>
+
+                    <div
+                        style={{
+                            color: "#666",
+                            fontSize: "15px"
+                        }}
+                    >
+                        عدد الطلبات
+                    </div>
+
+                    <div
+                        style={{
+                            marginTop: "6px",
+                            fontWeight: "bold",
+                            fontSize: "22px"
+                        }}
+                    >
+                        {summary.weekOrders}
+                    </div>
                 </div>
-                <div style={{ background: '#7E57C2', padding: '20px', borderRadius: '16px', color: 'white' }}>
-                    <h4>📅 الشهر الحالي</h4>
-                    <h2>{summary.month.toLocaleString()} د.ع</h2>
-                    <p>عدد الطلبات: {summary.monthOrders}</p>
+
+                {/* Month */}
+                <div
+                    style={{
+                        ...cardStyle,
+                        borderTop: "6px solid #7E57C2"
+                    }}
+                >
+                    <div
+                        style={{
+                            fontSize: "42px",
+                            marginBottom: "15px"
+                        }}
+                    >
+                        🏆
+                    </div>
+
+                    <div
+                        style={{
+                            color: "#777",
+                            fontSize: "15px"
+                        }}
+                    >
+                        الشهر الحالي
+                    </div>
+
+                    <div
+                        style={{
+                            fontSize: "34px",
+                            fontWeight: "bold",
+                            color: "#6A1B9A",
+                            margin: "15px 0"
+                        }}
+                    >
+                        {summary.month.toLocaleString()} د.ع
+                    </div>
+
+                    <div
+                        style={{
+                            color: "#666",
+                            fontSize: "15px"
+                        }}
+                    >
+                        عدد الطلبات
+                    </div>
+
+                    <div
+                        style={{
+                            marginTop: "6px",
+                            fontWeight: "bold",
+                            fontSize: "22px"
+                        }}
+                    >
+                        {summary.monthOrders}
+                    </div>
                 </div>
             </div>
         </div>

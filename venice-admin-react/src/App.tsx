@@ -1,20 +1,39 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
-import Users from './pages/Users'; // 🌟 استيراد الصفحة الجديدة
-import Navbar from './components/Navbar'; // 🌟 استيراد الـ Navbar المشترك
+import Users from './pages/Users';
 
-// مكوّن الحماية يضمن وجود التوكن ويضيف الـ Navbar تلقائياً للصفحات الداخلية
+import Navbar from './components/Navbar';
+
 function ProtectedLayout({ children }: { children: JSX.Element }) {
     const token = localStorage.getItem('token');
-    if (!token) return <Navigate to="/" replace />;
-    
+
+    if (!token) {
+        return <Navigate to="/" replace />;
+    }
+
     return (
-        <>
-            <Navbar /> {/* شريط التنقل يظهر هنا دائماً فوق الصفحات الداخلية */}
-            {children}
-        </>
+        <div
+            style={{
+                minHeight: '100vh',
+                background: '#f4f6f9',
+                direction: 'rtl'
+            }}
+        >
+            <Navbar />
+
+            <main
+                style={{
+                    padding: '25px',
+                    maxWidth: '1600px',
+                    margin: '0 auto'
+                }}
+            >
+                {children}
+            </main>
+        </div>
     );
 }
 
@@ -22,13 +41,39 @@ export default function App() {
     return (
         <Router>
             <Routes>
-                {/* صفحة الدخول بدون شريط تنقل */}
+                {/* صفحة تسجيل الدخول */}
                 <Route path="/" element={<Login />} />
 
-                {/* الصفحات الداخلية المحمية تظهر تحت الـ Layout المشترك تلقائياً */}
-                <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
-                <Route path="/products" element={<ProtectedLayout><Products /></ProtectedLayout>} />
-                <Route path="/users" element={<ProtectedLayout><Users /></ProtectedLayout>} />
+                {/* الصفحات المحمية */}
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedLayout>
+                            <Dashboard />
+                        </ProtectedLayout>
+                    }
+                />
+
+                <Route
+                    path="/products"
+                    element={
+                        <ProtectedLayout>
+                            <Products />
+                        </ProtectedLayout>
+                    }
+                />
+
+                <Route
+                    path="/users"
+                    element={
+                        <ProtectedLayout>
+                            <Users />
+                        </ProtectedLayout>
+                    }
+                />
+
+                {/* أي رابط غير معروف */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
         </Router>
     );

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getUsers, createUser, updateUser, disableUser } from '../services/api';
 import type { UserRow } from '../models/UserRow';
+
 export default function Users() {
     const [users, setUsers] = useState<UserRow[]>([]);
     const [loading, setLoading] = useState(true);
@@ -11,11 +12,22 @@ export default function Users() {
     const [username, setUsername] = useState('');
     const [fullName, setFullName] = useState('');
     const [emailAddress, setEmailAddress] = useState('');
-    const [role, setRole] = useState(2); // الافتراضي Cashier
+    const [role, setRole] = useState(0);
     const [password, setPassword] = useState('');
+
+    // State محلي لتحديد ما إذا كانت الشاشة شاشة هاتف
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         loadUsers();
+
+        // فحص حجم الشاشة عند التحميل وعند تغيير المقاس
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const loadUsers = async () => {
@@ -78,83 +90,425 @@ export default function Users() {
         }
     };
 
-    if (loading) return <p style={{ textAlign: 'center', padding: '20px' }}>جاري تحميل قائمة المستخدمين...</p>;
-
+if (loading)
     return (
-        <div style={{ padding: '20px', direction: 'rtl', fontFamily: 'sans-serif', background: '#F2F5F8', minHeight: '100vh' }}>
-            <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', marginBottom: '20px', gap: '10px' }}>
-                <h2 style={{ color: '#37474F', margin: 0 }}>👥 إدارة الموظفين والصلاحيات</h2>
-                <button onClick={openAddModal} style={{ padding: '10px 20px', background: '#7E57C2', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>➕ إضافة مستخدم جديد</button>
-            </div>
-
-            <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', overflowX: 'auto', padding: '10px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
-                    <thead>
-                        <tr style={{ background: '#37474F', color: 'white' }}>
-                            <th style={{ padding: '12px' }}>الاسم الكامل</th>
-                            <th style={{ padding: '12px' }}>اسم المستخدم</th>
-                            <th style={{ padding: '12px' }}>الصلاحية</th>
-                            <th style={{ padding: '12px', textAlign: 'center' }}>العمليات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {users.map(u => (
-                            <tr key={u.id} style={{ borderBottom: '1px solid #ECEFF1', background: u.role === 3 ? '#FFEBEE' : 'transparent' }}>
-                                <td style={{ padding: '12px', fontWeight: 'bold' }}>{u.fullName}</td>
-                                <td style={{ padding: '12px' }}>{u.username}</td>
-                                <td style={{ padding: '12px' }}>
-                                    <span style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', background: u.role === 1 ? '#E8F5E9' : u.role === 2 ? '#E3F2FD' : '#FFEBEE', color: u.role === 1 ? '#2E7D32' : u.role === 2 ? '#1565C0' : '#C62828' }}>
-                                        {u.role === 1 ? 'مدير نظام' : u.role === 2 ? 'كاشير' : 'حساب معطل'}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '12px', textAlign: 'center' }}>
-                                    <button onClick={() => openEditModal(u)} style={{ padding: '6px 12px', background: '#FB8C00', color: 'white', border: 'none', borderRadius: '8px', marginLeft: '5px', cursor: 'pointer' }}>📝 تعديل</button>
-                                    {u.role !== 3 && (
-                                        <button onClick={() => handleDisable(u.id)} style={{ padding: '6px 12px', background: '#E53935', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>🚫 تعطيل</button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* نافذة الإضافة والتعديل */}
-            {isModalOpen && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <form onSubmit={handleSubmit} style={{ background: 'white', padding: '24px', borderRadius: '18px', width: '90%', maxWidth: '400px' }}>
-                        <h3 style={{ color: '#37474F', marginBottom: '15px' }}>{editingUser ? '📝 تعديل حساب موظف' : '➕ إنشاء حساب جديد'}</h3>
-                        
-                        <div style={{ marginBottom: '12px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', color: '#546E7A' }}>الاسم الكامل</label>
-                            <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CFD8DC' }} required />
-                        </div>
-
-                        <div style={{ marginBottom: '12px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', color: '#546E7A' }}>اسم المستخدم (Login Name)</label>
-                            <input type="text" value={username} onChange={e => setUsername(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CFD8DC' }} required disabled={!!editingUser} />
-                        </div>
-
-                        <div style={{ marginBottom: '12px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', color: '#546E7A' }}>كلمة المرور {editingUser && '(اكتبها فقط إذا أردت تغييرها)'}</label>
-                            <input type="password" value={password} onChange={e => setPassword(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CFD8DC' }} required={!editingUser} />
-                        </div>
-
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', color: '#546E7A' }}>الصلاحية</label>
-                            <select value={role} onChange={e => setRole(Number(e.target.value))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CFD8DC', background: 'white' }}>
-                                <option value={2}>كاشير (Cashier)</option>
-                                <option value={1}>مدير نظام (Admin)</option>
-                            </select>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button type="submit" style={{ flex: 1, padding: '10px', background: '#7E57C2', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>حفظ البيانات</button>
-                            <button type="button" onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: '10px', background: '#90A4AE', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
-                        </div>
-                    </form>
-                </div>
-            )}
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '60vh',
+                direction: 'rtl',
+                fontFamily: 'Cairo, sans-serif',
+                color: '#64748B',
+                fontSize: '18px',
+                padding: '20px',
+                textAlign: 'center'
+            }}
+        >
+            ⏳ جاري تحميل قائمة المستخدمين...
         </div>
     );
+
+return (
+    <div
+        style={{
+            padding: isMobile ? '16px' : '30px',
+            direction: 'rtl',
+            fontFamily: 'Cairo, sans-serif',
+            background: '#F8FAFC',
+            minHeight: '100vh',
+            boxSizing: 'border-box'
+        }}
+    >
+        {/* Header */}
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'space-between',
+                alignItems: isMobile ? 'stretch' : 'center',
+                marginBottom: '25px',
+                gap: '15px'
+            }}
+        >
+            <div>
+                <h2
+                    style={{
+                        margin: 0,
+                        color: '#1E293B',
+                        fontSize: isMobile ? '22px' : '30px',
+                        fontWeight: 700,
+                        lineHeight: 1.3
+                    }}
+                >
+                    👥 إدارة الموظفين والصلاحيات
+                </h2>
+
+                <p
+                    style={{
+                        marginTop: '6px',
+                        marginBottom: 0,
+                        color: '#64748B',
+                        fontSize: isMobile ? '14px' : '15px'
+                    }}
+                >
+                    إدارة حسابات المستخدمين وصلاحيات الوصول للنظام
+                </p>
+            </div>
+
+            <button
+                onClick={openAddModal}
+                style={{
+                    background: '#2563EB',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '12px 22px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    fontSize: isMobile ? '14px' : '15px',
+                    boxShadow: '0 8px 18px rgba(37,99,235,.25)',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap'
+                }}
+            >
+                ➕ إضافة مستخدم جديد
+            </button>
+        </div>
+
+        {/* Table Container (Responsive) */}
+        <div
+            style={{
+                background: '#fff',
+                borderRadius: '18px',
+                overflowX: 'auto', // تمرير أفقي على الشاشات الصغيرة لمنع تشوه التصميم
+                WebkitOverflowScrolling: 'touch',
+                boxShadow: '0 10px 30px rgba(15,23,42,.08)',
+                border: '1px solid #E2E8F0',
+                width: '100%'
+            }}
+        >
+            <table
+                style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    textAlign: 'right',
+                    minWidth: '600px' // يحافظ على تباعد الأعمدة على الموبايل
+                }}
+            >
+                <thead>
+                    <tr
+                        style={{
+                            background: '#F1F5F9',
+                            color: '#334155'
+                        }}
+                    >
+                        <th style={{ padding: isMobile ? '14px 12px' : '18px', fontWeight: 700 }}>الاسم الكامل</th>
+                        <th style={{ padding: isMobile ? '14px 12px' : '18px', fontWeight: 700 }}>اسم المستخدم</th>
+                        <th style={{ padding: isMobile ? '14px 12px' : '18px', fontWeight: 700 }}>الصلاحية</th>
+                        <th style={{ padding: isMobile ? '14px 12px' : '18px', textAlign: 'center', fontWeight: 700 }}>
+                            العمليات
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {users.map(u => (
+                        <tr
+                            key={u.id}
+                            style={{
+                                borderTop: '1px solid #EEF2F7',
+                                background: u.role === 0 ? '#FEF2F2' : '#fff'
+                            }}
+                        >
+                            <td
+                                style={{
+                                    padding: isMobile ? '14px 12px' : '18px',
+                                    fontWeight: 'bold',
+                                    color: '#1E293B'
+                                }}
+                            >
+                                {u.fullName}
+                            </td>
+
+                            <td
+                                style={{
+                                    padding: isMobile ? '14px 12px' : '18px',
+                                    color: '#475569'
+                                }}
+                            >
+                                {u.username}
+                            </td>
+
+                            <td style={{ padding: isMobile ? '14px 12px' : '18px' }}>
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        padding: '4px 10px',
+                                        borderRadius: '999px',
+                                        fontWeight: 600,
+                                        fontSize: '12px',
+                                        whiteSpace: 'nowrap',
+                                        background:
+                                            u.role === 1
+                                                ? '#DBEAFE'
+                                                : u.role === 2
+                                                ? '#DCFCE7'
+                                                : u.role === 3
+                                                ? '#FEF3C7'
+                                                : '#FEE2E2',
+                                        color:
+                                            u.role === 1
+                                                ? '#1D4ED8'
+                                                : u.role === 2
+                                                ? '#15803D'
+                                                : u.role === 3
+                                                ? '#B45309'
+                                                : '#B91C1C'
+                                    }}
+                                >
+                                    {u.role === 1
+                                        ? 'مدير نظام'
+                                        : u.role === 2
+                                        ? 'مدير'
+                                        : u.role === 3
+                                        ? 'كاشير'
+                                        : 'حساب معطل'}
+                                </span>
+                            </td>
+
+                            <td
+                                style={{
+                                    padding: isMobile ? '14px 12px' : '18px',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    flexWrap: 'wrap'
+                                }}>
+                                    <button
+                                        onClick={() => openEditModal(u)}
+                                        style={{
+                                            background: '#F59E0B',
+                                            color: '#fff',
+                                            border: 'none',
+                                            borderRadius: '10px',
+                                            padding: '8px 12px',
+                                            cursor: 'pointer',
+                                            fontWeight: 'bold',
+                                            fontSize: '13px',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        ✏ تعديل
+                                    </button>
+
+                                    {u.role !== 0 && (
+                                        <button
+                                            onClick={() => handleDisable(u.id)}
+                                            style={{
+                                                background: '#EF4444',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '10px',
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                fontWeight: 'bold',
+                                                fontSize: '13px',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            🚫 تعطيل
+                                        </button>
+                                    )}
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+
+        {/* Modal */}
+        {isModalOpen && (
+            <div
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(15,23,42,.45)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                    padding: '16px', // أمان للشاشات الصغيرة لتجنب الالتصاق التام بالحواف
+                    boxSizing: 'border-box'
+                }}
+            >
+                <form
+                    onSubmit={handleSubmit}
+                    style={{
+                        background: '#fff',
+                        borderRadius: '20px',
+                        width: '100%',
+                        maxWidth: '470px',
+                        maxHeight: '90vh', // تضمن عدم تمدد الفورم خارج شاشة الموبايل
+                        overflowY: 'auto', // تفعيل التمرير الداخلي للفورم عند صغر الشاشة
+                        padding: isMobile ? '20px' : '28px',
+                        boxShadow: '0 25px 60px rgba(0,0,0,.25)',
+                        boxSizing: 'border-box'
+                    }}
+                >
+                    <h3
+                        style={{
+                            marginTop: 0,
+                            marginBottom: '20px',
+                            color: '#1E293B',
+                            fontSize: isMobile ? '20px' : '24px'
+                        }}
+                    >
+                        {editingUser
+                            ? '✏ تعديل بيانات الموظف'
+                            : '➕ إنشاء مستخدم جديد'}
+                    </h3>
+
+                    <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>
+                            الاسم الكامل
+                        </label>
+
+                        <input
+                            type="text"
+                            value={fullName}
+                            onChange={e => setFullName(e.target.value)}
+                            required
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                borderRadius: '10px',
+                                border: '1px solid #CBD5E1',
+                                fontSize: '15px',
+                                boxSizing: 'border-box',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>
+                            اسم المستخدم
+                        </label>
+
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={e => setUsername(e.target.value)}
+                            disabled={!!editingUser}
+                            required
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                borderRadius: '10px',
+                                border: '1px solid #CBD5E1',
+                                fontSize: '15px',
+                                boxSizing: 'border-box',
+                                outline: 'none',
+                                background: editingUser ? '#F1F5F9' : '#fff'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>
+                            كلمة المرور {editingUser && '(اختياري)'}
+                        </label>
+
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            required={!editingUser}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                borderRadius: '10px',
+                                border: '1px solid #CBD5E1',
+                                fontSize: '15px',
+                                boxSizing: 'border-box',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '14px' }}>
+                            الصلاحية
+                        </label>
+
+                        <select
+                            value={role}
+                            onChange={e => setRole(Number(e.target.value))}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                borderRadius: '10px',
+                                border: '1px solid #CBD5E1',
+                                fontSize: '15px',
+                                background: '#FFFFFF',
+                                boxSizing: 'border-box',
+                                outline: 'none'
+                            }}
+                        >
+                            <option value={2}>مدير (Manager)</option>
+                            <option value={1}>مدير نظام (Admin)</option>
+                            <option value={3}>كاشير (Cashier)</option>
+                            <option value={0}>معطل (Disabled)</option>
+                        </select>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                            type="submit"
+                            style={{
+                                flex: 1,
+                                background: '#2563EB',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '10px',
+                                padding: '12px',
+                                fontWeight: 'bold',
+                                fontSize: '15px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            💾 حفظ
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            style={{
+                                flex: 1,
+                                background: '#94A3B8',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '10px',
+                                padding: '12px',
+                                fontWeight: 'bold',
+                                fontSize: '15px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            إلغاء
+                        </button>
+                    </div>
+                </form>
+            </div>
+        )}
+    </div>
+);
 }
