@@ -115,7 +115,7 @@
                             <Border x:Name="borderType"
                                 CornerRadius="10"
                                 Padding="12,6"
-                                DockPanel.Dock="Left"
+                                DockPanel.Dock="Right"
                                 Background="#EDE7F6"
                                 BorderBrush="{StaticResource PrimaryColor}"
                                 BorderThickness="1">
