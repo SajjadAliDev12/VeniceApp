@@ -30,7 +30,10 @@ export const getSalesSummary = async (): Promise<SalesSummaryDto> => {
     const response = await api.get<SalesSummaryDto>('reports/sales-summary');
     return response.data;
 };
-
+export const GetTotersSalesSummary = async ():Promise<SalesSummaryDto> => {
+    const response = await api.get<SalesSummaryDto>('reports/TotersSales-summary');
+    return response.data;
+};
 // خدمات المنتجات والتصنيفات
 export const getProducts = async (): Promise<Product[]> => {
     const response = await api.get<Product[]>('products');
