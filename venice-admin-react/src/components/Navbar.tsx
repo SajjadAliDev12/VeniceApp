@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-
+import logoimg from '../assets/logo.png'
 export default function Navbar() {
     const navigate = useNavigate();
 
@@ -71,7 +71,7 @@ export default function Navbar() {
                 fontFamily: "Cairo,sans-serif"
             }}
         >
-            {/* الشعار */}
+            {/* الشعار المحدث */}
             <div
                 style={{
                     display: "flex",
@@ -81,18 +81,24 @@ export default function Navbar() {
             >
                 <div
                     style={{
-                        width: 46,
-                        height: 46,
-                        borderRadius: 12,
-                        background: "linear-gradient(135deg,#4CAF50,#2E7D32)",
+                        width: 100,
+                        height: 100,
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
-                        color: "#fff",
-                        fontSize: 22
+                        overflow: "hidden",
                     }}
                 >
-                    🍬
+                    {/* استدعاء مسار صورة الـ PNG من مجلد public */}
+                    <img 
+                        src={logoimg} 
+                        alt="شعار البندقية" 
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain"
+                        }} 
+                    />
                 </div>
 
                 <div>
@@ -225,9 +231,10 @@ export default function Navbar() {
                     style={{
                         background: "transparent",
                         border: "none",
-                        fontSize: 30,
+                        fontSize: 28,
                         cursor: "pointer",
-                        color: "#37474F"
+                        color: "#37474F",
+                        padding: "4px 8px"
                     }}
                 >
                     ☰
@@ -248,33 +255,58 @@ export default function Navbar() {
             />
         )}
 
-        {/* Drawer */}
+        {/* Drawer المعدل ليفتح من جهة اليسار ليتوافق مع زر القائمة */}
         <div
             style={{
                 position: "fixed",
                 top: 0,
-                right: menuOpen ? 0 : "-300px",
+                left: menuOpen ? 0 : "-300px", // التعديل هنا: استخدام left بدلاً من right ليتوافق مع زر الجوال
                 width: 280,
                 height: "100%",
                 background: "#fff",
-                transition: ".3s",
-                boxShadow: "-5px 0 20px rgba(0,0,0,.18)",
+                transition: "left .3s ease-in-out",
+                boxShadow: "5px 0 20px rgba(0,0,0,.18)",
                 zIndex: 1999,
-                overflowY: "auto"
+                overflowY: "auto",
+                direction: "rtl",
+                fontFamily: "Cairo,sans-serif"
             }}
         >
             <div
                 style={{
                     padding: 24,
                     background: "#2E7D32",
-                    color: "#fff"
+                    color: "#fff",
+                    position: "relative"
                 }}
             >
-                <div style={{ fontSize: 22 }}>🍬</div>
+                {/* زر إغلاق القائمة من الداخل */}
+                <button
+                    onClick={closeMenu}
+                    style={{
+                        position: "absolute",
+                        top: 16,
+                        left: 16,
+                        background: "rgba(255,255,255,.2)",
+                        border: "none",
+                        color: "#fff",
+                        fontSize: 18,
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}
+                >
+                    ✕
+                </button>
+
 
                 <div
                     style={{
-                        marginTop: 10,
+                        marginTop: 12,
                         fontWeight: "bold",
                         fontSize: 20
                     }}
@@ -284,8 +316,9 @@ export default function Navbar() {
 
                 <div
                     style={{
-                        marginTop: 6,
-                        opacity: .85
+                        marginTop: 4,
+                        opacity: .85,
+                        fontSize: 14
                     }}
                 >
                     {user?.fullName || user?.username}
@@ -329,6 +362,7 @@ export default function Navbar() {
                         background: "#EF5350",
                         color: "#fff",
                         fontWeight: "bold",
+                        fontSize: "16px",
                         cursor: "pointer"
                     }}
                 >
